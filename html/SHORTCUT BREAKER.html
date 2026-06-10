@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Shortcut Breaker</title>
+    <style>
+        body { background: #1a1a1a; color: #fff; font-family: 'Courier New', Courier, monospace; overflow: hidden; margin: 0; }
+        
+        /* 共通オーバーレイ */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(26, 26, 26, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100;
+        }
+        h1 { font-size: 3.5rem; color: #00d4ff; text-shadow: 0 0 20px #00d4ff; margin-bottom: 20px; }
+        h2 { font-size: 1.5rem; color: #aaa; margin-bottom: 15px; }
+        
+        .mode-container, .diff-container { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        
+        .btn {
+            padding: 15px 50px; font-size: 1.2rem; background: transparent;
+            border: 2px solid #00d4ff; color: #00d4ff; cursor: pointer; transition: 0.3s;
+            width: 300px; text-align: center;
+        }
+        .btn:hover { background: #00d4ff; color: #1a1a1a; box-shadow: 0 0 20px #00d4ff; }
+        .btn.survival:hover { border-color: #ff4b4b; background: #ff4b4b; box-shadow: 0 0 20px #ff4b4b; }
+        
+        /* 難易度ボタンの個別カラー */
+        .btn.easy { border-color: #4caf50; color: #4caf50; }
+        .btn.easy:hover { background: #4caf50; color: #1a1a1a; box-shadow: 0 0 20px #4caf50; }
+        .btn.normal { border-color: #ffeb3b; color: #ffeb3b; }
+        .btn.normal:hover { background: #ffeb3b; color: #1a1a1a; box-shadow: 0 0 20px #ffeb3b; }
+        .btn.hard { border-color: #ff4b4b; color: #ff4b4b; }
+        .btn.hard:hover { background: #ff4b4b; color: #1a1a1a; box-shadow: 0 0 20px #ff4b4b; }
+        
+        /* ゲーム画面表示 */
+        #game-info {
+            position: fixed; top: 20px; width: 100%; display: flex;
+            justify-content: space-around; font-size: 1.5rem; color: #00d4ff; z-index: 10;
+        }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: none; }
+        
+        /* ターゲット用スタイル */
+        .target {
+            position: absolute; width: 160px; padding: 12px 10px;
+            background: #333; border: 2px solid #00d4ff; border-radius: 8px;
+            text-align: center; font-weight: bold; font-size: 1.1rem;
+            box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 4px; justify-content: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        /* 初期状態は非表示（opacity: 0） */
+        .target-hint {
+            font-size: 0.85rem;
+            color: #ffeb3b;
+            opacity: 0;
+            font-family: sans-serif;
+            letter-spacing: 0.5px;
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        /* 崖っぷち（ピンチ状態）の赤枠スタイル */
+        .target.danger-zone {
+            border-color: #ff4b4b;
+            box-shadow: 0 0 10px #ff4b4b;
+        }
+
+        /* コンボ表示用のスタイル */
+        #combo-container {
+            position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-weight: bold; pointer-events: none; text-align: center; z-index: 8;
+            font-style: italic; opacity: 0;
+        }
+        .combo-animation { animation: comboPop 0.3s ease-out forwards; }
+        .break-animation { animation: comboBreak 0.6s ease-in forwards; }
+        
+        @keyframes comboPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+            100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.0); }
+        }
+        @keyframes comboBreak {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); filter: blur(0); }
+            100% { opacity: 0; transform: translate(-50%, -30%) scale(0.8); filter: blur(4px); }
+        }
+
+        .origin-text {
+            position: absolute; font-size: 2rem; color: #ffeb3b; font-weight: bold;
+            animation: fadeUp 0.8s forwards; pointer-events: none;
+        }
+        @keyframes fadeUp { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-50px); } }
+        .miss-text {
+            position: absolute; font-size: 1.8rem; color: #ff4b4b; font-weight: bold;
+            text-shadow: 0 0 15px #ff4b4b;
+            white-space: nowrap; 
+            animation: fadeMiss 0.8s forwards; pointer-events: none; z-index: 5;
+        }
+        @keyframes fadeMiss { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.8) translateY(-10px); } }
+        .miss-highlight { color: #ff4b4b; text-shadow: 0 0 10px #ff4b4b; }
+    </style>
+</head>
+<body>
+
+<div id="menu-screen" class="overlay">
+    <h1>SHORTCUT BREAKER</h1>
+    <h2>ゲームモードを選択してください</h2>
+    <div class="mode-container">
+        <button class="btn" onclick="selectMode('TIME')">60秒モード</button>
+        <button class="btn" onclick="selectMode('COUNT')">ノルマモード</button>
+        <button class="btn survival" onclick="selectMode('SURVIVAL')">サバイバルモード</button>
+    </div>
+</div>
+
+<div id="diff-screen" class="overlay" style="display:none;">
+    <h1>SHORTCUT BREAKER</h1>
+    <h2>難易度（スピード）を選択してください</h2>
+    <div class="diff-container">
+        <button class="btn easy" onclick="initGame('EASY')">EASY (ゆっくり)</button>
+        <button class="btn normal" onclick="initGame('NORMAL')">NORMAL (標準)</button>
+        <button class="btn hard" onclick="initGame('HARD')">HARD (高速)</button>
+        <button class="btn" onclick="location.reload()">TITLE BACK (戻る)</button>
+    </div>
+</div>
+
+<div id="result-screen" class="overlay" style="display:none;">
+    <h1 id="result-title">FINISH</h1>
+    <div id="result-stat" style="font-size: 1.5rem; margin-bottom: 30px; text-align: center; line-height: 2;"></div>
+    <button class="btn" onclick="location.reload()">TITLE BACK</button>
+</div>
+
+<div id="game-info">
+    <div id="stat-left"></div>
+    <div id="stat-center"></div>
+    <div id="stat-right"></div>
+</div>
+
+<div id="combo-container"></div>
+<div id="game-container"></div>
+
+<script>
+    const menuScreen = document.getElementById('menu-screen');
+    const diffScreen = document.getElementById('diff-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const container = document.getElementById('game-container');
+    const comboContainer = document.getElementById('combo-container');
+    const statLeft = document.getElementById('stat-left');
+    const statCenter = document.getElementById('stat-center');
+    const statRight = document.getElementById('stat-right');
+
+    let score = 0;
+    let missCount = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let gameActive = false;
+    let currentMode = ''; 
+    let currentDifficulty = '';
+    let timer = 60;
+    let remainingTasks = 20;
+    let activeTargets = [];
+    let spawnInterval;
+    
+    let startTime = 0;
+    let survivalTime = 0;
+    let survivalTimerInterval;
+
+    let spawnRate = 1500; 
+    let fallSpeed = 2;    
+
+    // ★元の問題データを維持しつつ、ウインドウを直接操作しない安全なAlt系を新しく追加しました
+    const problems = [
+        // --- 旧Ctrl系（元のデータを完全維持） ---
+        { label: "全選択", key: "a", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+A" },
+        { label: "太字", key: "b", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+B" },
+        { label: "コピー", key: "c", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+C" },
+        { label: "検索", key: "f", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+F" },
+        { label: "斜体", key: "i", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+I" },
+        { label: "リンク挿入", key: "k", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+K" },
+        { label: "開く", key: "o", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+O" },
+        { label: "印刷", key: "p", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+P" },
+        { label: "保存", key: "s", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+S" },
+        { label: "下線", key: "u", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+U" },
+        { label: "貼り付け", key: "v", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+V" },
+        { label: "切り取り", key: "x", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+X" },
+        { label: "やり直す", key: "y", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+Y" },
+        { label: "元に戻す", key: "z", ctrl: true, alt: false, shift: false, win: false, origin: "Ctrl+Z" },
+        { label: "半角スペース", key: " ", ctrl: false, alt: false, shift: true, win: false, origin: "Shift+Space" },
+        { label: "プロパティ表示", key: "enter", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+Enter" },
+        { label: "編集（メニュー表示）", key: "e", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+E" },
+        { label: "ホームタブを開く", key: "h", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+H" },
+        { label: "プレビューを表示", key: "p", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+P" },
+        { label: "共有タブを開く", key: "s", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+S" },
+        { label: "表示タブを開く", key: "v", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+V" },
+        { label: "プロパティを開く", key: "1", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+1" },
+        { label: "新しいフォルダ作成", key: "2", ctrl: false, alt: true, shift: false, win: false, origin: "Alt+2" }
+    ];
+
+    function selectMode(mode) {
+        currentMode = mode;
+        menuScreen.style.display = 'none';
+        
+        if (mode === 'SURVIVAL') {
+            initGame('NONE'); 
+        } else {
+            diffScreen.style.display = 'flex';
+        }
+    }
+
+    function initGame(difficulty) {
+        currentDifficulty = difficulty;
+        diffScreen.style.display = 'none';
+        container.style.display = 'block';
+        gameActive = true;
+        
+        score = 0;
+        missCount = 0;
+        combo = 0;
+        maxCombo = 0;
+        comboContainer.innerText = "";
+        statCenter.innerText = ``;
+
+        if (currentMode === 'SURVIVAL') {
+            fallSpeed = 2.0;
+            spawnRate = 1500;
+            
+            startTime = Date.now();
+            statRight.innerText = `Time: 0.0s`;
+            
+            survivalTimerInterval = setInterval(() => {
+                if (!gameActive) return;
+                survivalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                statRight.innerText = `Time: ${survivalTime}s`;
+            }, 100);
+
+        } else {
+            if (difficulty === 'EASY') {
+                fallSpeed = 1.2; spawnRate = 2000;
+            } else if (difficulty === 'NORMAL') {
+                fallSpeed = 2.2; spawnRate = 1400;
+            } else if (difficulty === 'HARD') {
+                fallSpeed = 3.5; spawnRate = 900;
+            }
+        }
+
+        if (currentMode === 'TIME') {
+            statLeft.innerText = `Score: ${score}`;
+            timer = 60;
+            statRight.innerText = `Time: ${timer}`;
+            const t = setInterval(() => {
+                if (!gameActive) { clearInterval(t); return; }
+                timer--;
+                statRight.innerText = `Time: ${timer}`;
+                if (timer <= 0) endGame("TIME UP");
+            }, 1000);
+        } else if (currentMode === 'COUNT') {
+            statCenter.innerText = `Miss: ${missCount}`;
+            remainingTasks = 20;
+            statRight.innerText = `Left: ${remainingTasks}`;
+        }
+
+        spawnInterval = setInterval(createTarget, spawnRate);
+        update();
+    }
+
+    function createTarget() {
+        if (!gameActive) return;
+        const prob = problems[Math.floor(Math.random() * problems.length)];
+        const el = document.createElement('div');
+        el.className = 'target';
+        
+        el.innerHTML = `
+            <div>${prob.label}</div>
+            <div class="target-hint">${prob.origin}</div>
+        `;
+        
+        el.style.left = Math.random() * (window.innerWidth - 160) + "px";
+        el.style.top = "-70px";
+        container.appendChild(el);
+        
+        const hintEl = el.querySelector('.target-hint');
+        activeTargets.push({ el, hintEl, ...prob, y: -70, hintShown: false });
+    }
+
+    function update() {
+        if (!gameActive) return;
+        
+        const triggerLine = window.innerHeight * 0.55;
+
+        activeTargets.forEach((target, index) => {
+            target.y += fallSpeed;
+            target.el.style.top = target.y + "px";
+            
+            if (target.y > triggerLine && !target.hintShown) {
+                target.hintEl.style.opacity = "1";
+                target.el.classList.add('danger-zone');
+                target.hintShown = true; 
+            }
+            
+            if (target.y > window.innerHeight) {
+                triggerComboBreak();
+                if (currentMode === 'SURVIVAL') {
+                    endGame("GAME OVER"); 
+                } else if (currentMode === 'COUNT') {
+                    missCount++;
+                    statCenter.innerText = `Miss: ${missCount}`;
+                    statCenter.classList.add('miss-highlight');
+                    setTimeout(() => statCenter.classList.remove('miss-highlight'), 500);
+                }
+                showMiss(target.el.offsetLeft, window.innerHeight - 60, target.origin);
+                target.el.remove();
+                activeTargets.splice(index, 1);
+            }
+        });
+        requestAnimationFrame(update);
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (!gameActive) return;
+
+        if (["control", "shift", "alt", "meta"].includes(e.key.toLowerCase())) {
+            return;
+        }
+
+        e.preventDefault(); 
+
+        const pressedKey = e.key.toLowerCase();
+
+        const hitIndex = activeTargets.findIndex(t => 
+            t.key === pressedKey &&
+            t.ctrl === e.ctrlKey &&
+            t.alt === e.altKey &&
+            t.shift === e.shiftKey &&
+            t.win === e.metaKey
+        );
+
+        if (hitIndex !== -1) {
+            const target = activeTargets[hitIndex];
+            showOrigin(target.el.offsetLeft, target.el.offsetTop, target.origin);
+            target.el.remove();
+            activeTargets.splice(hitIndex, 1);
+
+            combo++;
+            if (combo > maxCombo) maxCombo = combo;
+            updateComboDisplay();
+
+            let bonusMultiplier = 1;
+            if (combo >= 20) bonusMultiplier = 2;
+            else if (combo >= 10) bonusMultiplier = 1.5;
+            
+            score += Math.floor(100 * bonusMultiplier);
+            statLeft.innerText = `Score: ${score}`;
+
+            if (currentMode === 'SURVIVAL') {
+                if (spawnRate > 400) {
+                    clearInterval(spawnInterval);
+                    spawnRate -= 35; 
+                    spawnInterval = setInterval(createTarget, spawnRate);
+                }
+                fallSpeed += 0.08; 
+            }
+
+            if (currentMode === 'COUNT') {
+                remainingTasks--;
+                statRight.innerText = `Left: ${remainingTasks}`;
+                if (remainingTasks <= 0) endGame("CLEAR");
+            }
+        }
+    }, { passive: false });
+
+    window.addEventListener('beforeunload', (e) => {
+        if (gameActive) {
+            e.preventDefault();
+            e.returnValue = ''; 
+        }
+    });
+
+    function updateComboDisplay() {
+        if (combo < 2) return;
+
+        let size = 2 + (combo * 0.05);
+        if (size > 4.5) size = 4.5;
+
+        let color = "#00d4ff";
+        if (combo >= 20) color = "#ff4b4b";
+        else if (combo >= 10) color = "#ffeb3b";
+
+        comboContainer.style.fontSize = `${size}rem`;
+        comboContainer.style.color = color;
+        comboContainer.style.textShadow = `0 0 ${combo * 1.5}px ${color}`;
+        comboContainer.innerText = `${combo} COMBO!`;
+
+        comboContainer.className = "";
+        void comboContainer.offsetWidth; 
+        comboContainer.className = "combo-animation";
+    }
+
+    function triggerComboBreak() {
+        if (combo >= 2) { 
+            comboContainer.style.fontSize = "2.5rem";
+            comboContainer.style.color = "#ff4b4b";
+            comboContainer.style.textShadow = "0 0 15px #ff4b4b";
+            comboContainer.innerText = "COMBO BREAK!";
+            
+            comboContainer.className = "";
+            void comboContainer.offsetWidth;
+            comboContainer.className = "break-animation";
+        }
+        combo = 0;
+    }
+
+    function endGame(title) {
+        gameActive = false;
+        clearInterval(spawnInterval);
+        clearInterval(survivalTimerInterval);
+        
+        activeTargets.forEach(t => t.el.remove());
+        activeTargets = [];
+        comboContainer.innerText = "";
+        
+        document.getElementById('result-title').innerText = title;
+        
+        let rank = "E";
+        let rankColor = "#fff";
+        let resultHTML = "";
+
+        if (currentMode === 'TIME') {
+            if (score >= 4000) { rank = "S"; rankColor = "#ffeb3b"; }
+            else if (score >= 2800) { rank = "A"; rankColor = "#ff4b4b"; }
+            else if (score >= 1600) { rank = "B"; rankColor = "#00d4ff"; }
+            else if (score >= 800)  { rank = "C"; rankColor = "#4caf50"; }
+            else { rank = "D"; rankColor = "#aaaaaa"; }
+            resultHTML = `Score: ${score}`;
+
+        } else if (currentMode === 'COUNT') {
+            if (missCount === 0) { rank = "S"; rankColor = "#ffeb3b"; }
+            else if (missCount <= 2) { rank = "A"; rankColor = "#ff4b4b"; }
+            else if (missCount <= 5) { rank = "B"; rankColor = "#00d4ff"; }
+            else if (missCount <= 8) { rank = "C"; rankColor = "#4caf50"; }
+            else { rank = "D"; rankColor = "#aaaaaa"; }
+            resultHTML = `Miss: ${missCount}`;
+
+        } else if (currentMode === 'SURVIVAL') {
+            const sec = parseFloat(survivalTime);
+            if (sec >= 45.0) { rank = "S"; rankColor = "#ffeb3b"; }
+            else if (sec >= 30.0) { rank = "A"; rankColor = "#ff4b4b"; }
+            else if (sec >= 20.0) { rank = "B"; rankColor = "#00d4ff"; }
+            else if (sec >= 10.0) { rank = "C"; rankColor = "#4caf50"; }
+            else { rank = "D"; rankColor = "#aaaaaa"; }
+            
+            resultHTML = `Survival Time: ${survivalTime}秒`;
+        }
+
+        let modeDetail = (currentMode === 'SURVIVAL') ? `MODE: ${currentMode}` : `MODE: ${currentMode} (${currentDifficulty})`;
+
+        document.getElementById('result-stat').innerHTML = `
+            <div style="font-size: 1.1rem; color: #aaa; margin-bottom: 5px;">${modeDetail}</div>
+            ${resultHTML}<br>
+            <div style="font-size: 1.2rem; color: #ffeb3b; margin-top: 5px;">MAX COMBO: ${maxCombo}</div>
+            <div style="font-size: 1.2rem; margin-top: 10px; color: #aaa;">RANK</div>
+            <div style="font-size: 5rem; font-weight: bold; color: ${rankColor}; text-shadow: 0 0 20px ${rankColor}; line-height: 1;">${rank}</div>
+        `;
+        
+        resultScreen.style.display = 'flex';
+    }
+
+    function showOrigin(x, y, text) {
+        const el = document.createElement('div');
+        el.className = 'origin-text';
+        el.innerText = text;
+        el.style.left = x + "px"; el.style.top = y + "px";
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 800);
+    }
+
+    function showMiss(x, y, text) {
+        const el = document.createElement('div');
+        el.className = 'miss-text';
+        el.innerText = text;
+        el.style.left = x + "px"; el.style.top = y + "px";
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 800);
+    }
+</script>
+</body>
+</html>
