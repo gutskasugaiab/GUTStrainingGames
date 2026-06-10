@@ -29,12 +29,14 @@
             <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4B3PIW+912PUI+348+1C71F5" alt="">
         </div>
 
-    <iframe src="ファウンデイションタイピング.html" frameborder="no" scrolling="no"></iframe>
-
+    
     <main class="container">
         <div class="content">
-            <section class="game-description">
+            <div class="hamburger" id="hamburger">
                 <h2>このゲームについて</h2>
+            </div>
+            <section class="game-description" id="game-description">
+                
 
                 <p>
                 「ファウンデイションタイピング」は、パソコンのショートカットキーの配置を
@@ -78,6 +80,7 @@
                 ・正解・不正解は即時反映
                 </p>
             </section>
+            <iframe src="ファウンデイションタイピング.html" frameborder="no" scrolling="no"></iframe>
         </div>
 
         <aside class="sidebar">
@@ -124,4 +127,13 @@
         });
     </script>
 </body>
+<script>
+    const hamburger = document.getElementById("hamburger");
+    const gameDescription = document.getElementById("game-description");
+
+    hamburger.addEventListener("click", () => {
+        gameDescription.classList.toggle("active");
+        hamburger.classList.toggle("active");
+    });
+</script>
 </html>

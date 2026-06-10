@@ -29,12 +29,14 @@
             <img border="0" width="1" height="1" src="https://www17.a8.net/0.gif?a8mat=4B3PIW+912PUI+348+1BU6GH" alt="">
         </div>
 
-    <iframe src="クイズで冒険.html" frameborder="no" scrolling="no"></iframe>
-
+    
     <main class="container">
         <div class="content">
-            <section class="game-description">
+            <div class="hamburger" id="hamburger">
                 <h2>このゲームについて</h2>
+            </div>
+            <section class="game-description" id="game-description">
+                
 
                 <p>
                 「クイズで冒険」は、パソコンのショートカットキーを
@@ -128,6 +130,7 @@
                 <strong>「まずは覚えたい」「気軽に練習したい」方におすすめです。</strong>
                 </p>
             </section>
+            <iframe src="クイズで冒険.html" frameborder="no" scrolling="no"></iframe>
         </div>
 
         <aside class="sidebar">
@@ -163,4 +166,13 @@
             <p>&copy; 2026 GUTS1.0株式会社 All Rights Reserved.</p>
     </footer>
 </body>
+<script>
+    const hamburger = document.getElementById("hamburger");
+    const gameDescription = document.getElementById("game-description");
+
+    hamburger.addEventListener("click", () => {
+        gameDescription.classList.toggle("active");
+        hamburger.classList.toggle("active");
+    });
+</script>
 </html>

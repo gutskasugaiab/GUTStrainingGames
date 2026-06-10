@@ -29,12 +29,14 @@
             <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4B3PIW+912PUI+348+1C71F5" alt="">
         </div>
 
-    <iframe src="春日井タイピングマスター.html" frameborder="no" scrolling="no" ></iframe>
-
+    
     <main class="container">
         <div class="content">
-            <section class="game-description">
+            <div class="hamburger" id="hamburger">
                 <h2>このゲームについて</h2>
+            </div>
+            <section class="game-description" id="game-description">
+                
 
                 <p>
                 「春日井タイピングマスター」は、表示された日本語をローマ字で入力していくタイピングゲームです。<br>
@@ -81,6 +83,7 @@
                 ・ミスするとコンボがリセットされます
                 </p>
             </section>
+            <iframe src="春日井タイピングマスター.html" frameborder="no" scrolling="no" ></iframe>
         </div>
 
         <aside class="sidebar">
@@ -124,6 +127,14 @@
             iframe.focus();
             iframe.contentWindow.postMessage({ type: 'start' }, '*');
         }
+    });
+
+    const hamburger = document.getElementById("hamburger");
+    const gameDescription = document.getElementById("game-description");
+
+    hamburger.addEventListener("click", () => {
+        gameDescription.classList.toggle("active");
+        hamburger.classList.toggle("active");
     });
     </script>
 </body>

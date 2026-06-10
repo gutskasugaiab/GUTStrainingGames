@@ -29,12 +29,14 @@
             <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4B3PIW+912PUI+348+1C71F5" alt="">
         </div>
 
-    <iframe src="SHORTCUT BREAKER.html" frameborder="no" scrolling="no" ></iframe>
-
+    
     <main class="container">
         <div class="content">
-            <section class="game-description">
-            <h2>このゲームについて</h2>
+            <div class="hamburger" id="hamburger">
+                <h2>このゲームについて</h2>
+            </div>
+            <section class="game-description" id="game-description">
+            
 
             <p>
             「SHORTCUT BREAKER」は、画面上から落ちてくる操作内容に対応する
@@ -116,8 +118,8 @@
             ミスをした時点でゲームオーバー。<br>
             時間経過とともにターゲットの出現速度と落下速度が上昇します。
             </p>
-
             </section>
+            <iframe src="SHORTCUT BREAKER.html" frameborder="no" scrolling="no" ></iframe>
         </div>
 
         <aside class="sidebar">
@@ -154,4 +156,13 @@
     </footer>
     
 </body>
+<script>
+    const hamburger = document.getElementById("hamburger");
+    const gameDescription = document.getElementById("game-description");
+
+    hamburger.addEventListener("click", () => {
+        gameDescription.classList.toggle("active");
+        hamburger.classList.toggle("active");
+    });
+</script>
 </html>
