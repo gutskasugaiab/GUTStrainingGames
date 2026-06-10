@@ -72,27 +72,69 @@ footer a {
     justify-content: center;
 }
 
-iframe {
-    display: block;
-    margin: 0 auto;
-    cursor: default;
-    width: 1050px;
-    height: 825px;
+.hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
+
+    margin: 20px auto 0;
+    padding: 18px 24px;
+
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+    transition:
+        background .3s,
+        transform .2s,
+        box-shadow .3s;
+}
+
+.hamburger h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
 }
 
 /* 説明文 */
-.game-description {
-    padding: 20px;
-    margin: 20px;
-    background: #f9f9f9;
-    border-radius: 10px;
-    border-left: 5px solid #00adb5;
-    border-radius: 8px;
-    line-height: 1.6;
-}
 
-.game-description h2 {
-    margin-top: 0;
+.game-description {
+    font-size: 20px;
+
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
+
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+
+    margin: 0 auto 20px;
+    padding: 0 20px;
+
+    background: #fff;
+
+    border: 1px solid #e5e7eb;
+    border-top: none;
+
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+    transition:
+        max-height .5s ease,
+        opacity .3s ease,
+        padding .5s ease;
 }
 
 .game-description p {
@@ -104,6 +146,51 @@ iframe {
     color: #00adb5;
     text-decoration: none;
     font-weight: bold;
+}
+
+/* 矢印 */
+.hamburger::after {
+    content: "▼";
+
+    font-size: 0.9rem;
+    color: #6b7280;
+
+    transition: transform .3s;
+}
+
+/* 開いた状態 */
+.hamburger.active {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+}
+
+.hamburger.active::after {
+    transform: rotate(180deg);
+}
+
+.game-description.active {
+    max-height: 2000px;
+    opacity: 1;
+
+    padding: 20px;
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.game-description:not(.active) {
+    border: none;
+    box-shadow: none;
+}
+
+
+iframe {
+    display: block;
+    margin: 0 auto;
+    cursor: default;
+    width: 1050px;
+    height: 825px;
 }
 
 /* 2カラム */
