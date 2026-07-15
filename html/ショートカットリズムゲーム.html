@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ショートカットリズムゲーム</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+    --bg: #12121a;
+    --panel: #1b1c26;
+    --panel-light: #242534;
+    --line: #33344a;
+    --text: #eef0f6;
+    --text-dim: #8b8da3;
+
+    --mod: #4fd8ff;
+    --key: #ffcf4d;
+    --perfect: #6effa3;
+    --miss: #ff5c6c;
+    --extreme: #ff2e88;
+
+    --beat-duration: 1s;
+    --eq-duration: .7s; /* JS側からBPMに応じて上書きされる */
+}
+
+*{
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Rajdhani", sans-serif;
+    text-align: center;
+    background:
+        linear-gradient(180deg, rgba(10,10,16,0.72) 0%, rgba(10,10,16,0.55) 45%, rgba(10,10,16,0.8) 100%),
+        url('../img/7/ショートカットリズムゲーム背景.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    color: var(--text);
+    overflow-x: hidden;
+}
+
+.mono{
+    font-family: "JetBrains Mono", monospace;
+}
+
+/* ===== 共通：キーキャップボタン ===== */
+
+.keycap-btn{
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    background: linear-gradient(180deg, var(--panel-light), var(--panel));
+    border: 1px solid var(--line);
+    border-bottom: 4px solid #08080c;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .08s ease, border-bottom-width .08s ease, box-shadow .15s ease;
+}
+
+.keycap-btn:hover{
+    box-shadow: 0 0 24px rgba(79, 216, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.keycap-btn:active{
+    transform: translateY(3px);
+    border-bottom-width: 1px;
+}
+
+/* ===== タイトル画面 ===== */
+
+#titleScreen{
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.floating-chip{
+    position: absolute;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 16px;
+    opacity: 0.55;
+    animation: chipFloat 6s ease-in-out infinite;
+}
+
+.floating-chip:nth-child(1){ top: 14%; left: 12%; animation-delay: 0s; }
+.floating-chip:nth-child(2){ top: 22%; right: 14%; animation-delay: 1.2s; }
+.floating-chip:nth-child(3){ bottom: 20%; left: 16%; animation-delay: 2.1s; }
+.floating-chip:nth-child(4){ bottom: 16%; right: 18%; animation-delay: 0.6s; }
+
+@keyframes chipFloat{
+    0%, 100%{ transform: translateY(0px); }
+    50%{ transform: translateY(-14px); }
+}
+
+#titleScreen h1{
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    letter-spacing: 0.06em;
+    margin: 0 0 6px;
+    z-index: 1;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.6);
+}
+
+#titleScreen h1::before{
+    content: "⌨ ";
+}
+
+.title-sub{
+    font-family: "JetBrains Mono", monospace;
+    color: var(--mod);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 46px;
+    z-index: 1;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+}
+
+#startButton{
+    z-index: 1;
+    padding: 18px 56px;
+    font-size: 1.3rem;
+}
+
+/* ===== 難易度選択 ===== */
+
+#difficultyScreen{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#difficultyScreen h2{
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+}
+
+.difficulty-row{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.difficulty-btn{
+    width: 220px;
+    height: 130px;
+    padding: 18px 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.difficulty-btn::before{
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+}
+
+.difficulty-btn[data-difficulty="easy"]::before{ background: var(--perfect); }
+.difficulty-btn[data-difficulty="normal"]::before{ background: var(--key); }
+.difficulty-btn[data-difficulty="hard"]::before{ background: var(--miss); }
+
+/* EXTREME：最上位難易度なので、上部バーだけでなくボタン全体を強調 */
+.difficulty-btn[data-difficulty="extreme"]::before{
+    background: linear-gradient(90deg, var(--miss), var(--extreme));
+}
+.difficulty-btn[data-difficulty="extreme"]{
+    box-shadow:
+        0 8px 0 #08080c,
+        0 0 18px rgba(255, 46, 136, 0.35);
+}
+
+.difficulty-btn .diff-name{
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.difficulty-btn .diff-example{
+    display: block;
+    margin-top: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+/* ===== ゲーム画面 ===== */
+
+#gameScreen{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+}
+
+#score{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    margin-top: 0;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+}
+
+/* EXTREMEモード専用のカウントダウンタイマー表示 */
+#time{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--extreme);
+    margin-top: 4px;
+    min-height: 1.3rem;
+    text-shadow: 0 0 10px rgba(255, 46, 136, 0.5);
+}
+
+/* コンボ表示：画面中央に大きくオーバーレイ表示し、更新のたびにポップさせる */
+#combo{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    z-index: 5;
+    pointer-events: none;
+
+    font-family: "JetBrains Mono", monospace;
+    font-size: 4.2rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--key);
+    text-shadow:
+        0 0 18px rgba(255, 207, 77, 0.85),
+        0 0 40px rgba(255, 207, 77, 0.45);
+
+    opacity: 0;
+}
+
+#combo.pop{
+    animation: comboPop .45s cubic-bezier(.2, 1.4, .4, 1);
+}
+
+@keyframes comboPop{
+    0%{
+        transform: translate(-50%, -50%) scale(1.9);
+        opacity: 0;
+    }
+    35%{
+        opacity: 1;
+    }
+    60%{
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100%{
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* BPMに合わせて脈動するEQバー（signature要素） */
+
+/* 左下 */
+#equalizer-left{
+    position:absolute;
+    left:30px;
+    bottom:20px;
+
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+
+    height:180px;
+    pointer-events:none;
+}
+
+/* 右下 */
+#equalizer-right{
+    position:absolute;
+    right:30px;
+    bottom:20px;
+
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+
+    height:180px;
+    pointer-events:none;
+}
+
+/* バー：世界観に合わせて mod → key のテーマカラーグラデーションに統一 */
+.eq-bar{
+
+    width:14px;
+    height:60px;
+
+    border-radius:10px 10px 0 0;
+
+    background:linear-gradient(
+        to top,
+        var(--mod),
+        var(--perfect),
+        var(--key)
+    );
+
+    box-shadow:
+        0 0 6px rgba(79, 216, 255, 0.5),
+        0 0 14px rgba(79, 216, 255, 0.25);
+}
+
+/* ゲーム開始後（#equalizerにactiveが付いた時）だけアニメーションを付与
+   ※animationショートハンドを使うとanimation-delay:0sも暗黙的に指定され、
+     nth-childで設定した個別delay（詳細度が低い）を上書きしてしまうため、
+     ショートハンドではなく個別プロパティで指定する */
+#equalizer.active .eq-bar{
+    animation-name: eq;
+    animation-duration: var(--eq-duration, .7s);
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+/* 少しずつタイミングをずらす（実際に存在する8本分のみ） */
+.eq-bar:nth-child(1){ animation-delay: .05s; }
+.eq-bar:nth-child(2){ animation-delay: .1s; }
+.eq-bar:nth-child(3){ animation-delay: .2s; }
+.eq-bar:nth-child(4){ animation-delay: .3s; }
+.eq-bar:nth-child(5){ animation-delay: .4s; }
+.eq-bar:nth-child(6){ animation-delay: .2s; }
+.eq-bar:nth-child(7){ animation-delay: .1s; }
+.eq-bar:nth-child(8){ animation-delay: .5s; }
+
+/* 高さが変化：滑らかな2段の脈動に */
+@keyframes eq{
+
+    0%{
+        height: 30px;
+    }
+
+    50%{
+        height: 150px;
+    }
+
+    100%{
+        height: 30px;
+    }
+
+}
+
+#meaning {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-top: 26px;
+    min-height: 2.2rem;
+    color: var(--text);
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+}
+
+#shortcut{
+    display:flex;
+    justify-content:center;
+    gap:36px;
+    margin-top:50px;
+}
+
+.lane{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#mod,
+#key{
+    width:230px;
+    height:190px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-family: "JetBrains Mono", monospace;
+    font-size:3.2rem;
+    font-weight: 700;
+
+    border-radius:18px;
+    position: relative;
+
+    background: linear-gradient(180deg, var(--panel-light), var(--panel));
+    border: 1px solid var(--line);
+    box-shadow:
+        0 8px 0 #08080c,
+        inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+#mod{
+    color: var(--mod);
+    border-top: 2px solid rgba(79, 216, 255, 0.4);
+}
+
+#key{
+    color: var(--key);
+    border-top: 2px solid rgba(255, 207, 77, 0.4);
+}
+
+#result1,
+#result2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    height: 40px;
+    margin-top: 14px;
+    letter-spacing: 0.05em;
+}
+
+.correct {
+    color: var(--perfect);
+    text-shadow: 0 0 12px rgba(110, 255, 163, 0.6);
+}
+
+.miss {
+    color: var(--miss);
+    text-shadow: 0 0 12px rgba(255, 92, 108, 0.6);
+}
+
+.hit{
+    box-shadow:
+        0 4px 0 #08080c,
+        0 0 26px rgba(110, 255, 163, 0.55),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    transform: translateY(4px);
+}
+
+.bad{
+    box-shadow:
+        0 8px 0 #08080c,
+        0 0 26px rgba(255, 92, 108, 0.55),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ノーツ：外側から縮んでキーキャップに吸い込まれるリング */
+
+.note {
+    position: relative;
+}
+
+.note::before {
+    content: "";
+    position: absolute;
+    inset: -80px;
+
+    border: 4px solid var(--key);
+    border-radius: 50%;
+
+    animation: beat var(--beat-duration, 1s) linear;
+    animation-fill-mode: forwards;
+}
+
+#mod.note::before{
+    border-color: var(--mod);
+    box-shadow: 0 0 18px rgba(79, 216, 255, 0.5);
+}
+
+#key.note::before{
+    border-color: var(--key);
+    box-shadow: 0 0 18px rgba(255, 207, 77, 0.5);
+}
+
+@keyframes beat {
+
+    from{
+        inset: -80px;
+        opacity: 0.9;
+    }
+
+    99%{
+        inset: 0;
+        opacity: 1;
+        border-radius: 18px;
+    }
+
+    100%{
+        inset: 0;
+        opacity: 0;
+        border-radius: 18px;
+    }
+
+}
+
+/* ===== リザルト画面 ===== */
+
+#resultScreen{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#finalText{
+    font-size: 1.1rem;
+    letter-spacing: 0.4em;
+    color: var(--text-dim);
+    font-weight: 600;
+    margin-bottom: 6px;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+}
+
+#grade{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 10px;
+    color: var(--perfect);
+    text-shadow: 0 0 30px currentColor;
+}
+
+#finalScore{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.5rem;
+    color: var(--text);
+    margin-bottom: 36px;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.6);
+}
+
+#maxCombo{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.3rem;
+    color: var(--mod);
+    margin-bottom: 20px;
+}
+
+/* 判定別集計：キーキャップと同系のパネルに、判定ごとの色でラベルを分ける */
+#judgeStats{
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    gap: 10px 22px;
+    justify-content: center;
+    margin-bottom: 34px;
+    padding: 18px 26px;
+
+    background: linear-gradient(180deg, var(--panel-light), var(--panel));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+
+.judge-item{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.judge-label{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+}
+
+.judge-count{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.judge-count.j-perfect{ color: var(--perfect); text-shadow: 0 0 10px rgba(110,255,163,0.5); }
+.judge-count.j-great{ color: var(--mod); text-shadow: 0 0 10px rgba(79,216,255,0.5); }
+.judge-count.j-good{ color: var(--key); text-shadow: 0 0 10px rgba(255,207,77,0.5); }
+.judge-count.j-miss{ color: var(--miss); text-shadow: 0 0 10px rgba(255,92,108,0.5); }
+
+@media (max-width: 560px){
+    #judgeStats{
+        grid-template-columns: repeat(3, auto);
+    }
+}
+
+.result-buttons{
+    display: flex;
+    gap: 16px;
+}
+
+#retryButton,
+#titleButton{
+    padding: 14px 34px;
+    font-size: 1.05rem;
+}
+
+/* ===== モーション配慮 ===== */
+
+@media (prefers-reduced-motion: reduce){
+    .floating-chip{ animation: none; }
+    .eq-bar{ animation: none; height: 60%; opacity: .8; }
+    .keycap-btn:hover{ transform: none; }
+}
+
+@media (max-width: 560px){
+    #shortcut{ gap: 18px; }
+    #mod, #key{ width: 44vw; height: 44vw; font-size: 2.2rem; }
+    .floating-chip{ display: none; }
+}
+
+</style>
+</head>
+<body>
+    <div id="titleScreen">
+        <div class="floating-chip">ESC</div>
+        <div class="floating-chip">CTRL</div>
+        <div class="floating-chip">ALT</div>
+        <div class="floating-chip">TAB</div>
+
+        <h1>ショートカットリズムゲーム</h1>
+        <div class="title-sub mono">PRESS THE KEY ON THE BEAT</div>
+        <button id="startButton" class="keycap-btn">START</button>
+    </div>
+
+<div id="gameScreen" style="display:none;">
+    <div id="score" class="mono">SCORE : 0</div>
+    <div id="time"></div>
+    <div id="combo"></div>
+
+    <div id="equalizer">
+        <div id="equalizer-left">
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+        </div>
+
+        <div id="equalizer-right">
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+        </div>
+    </div>
+
+    <div id="meaning"></div>
+    <div id="shortcut">
+
+        <div class="lane">
+            <div id="mod"></div>
+            <div id="result1"></div>
+        </div>
+
+        <div class="lane">
+            <div id="key"></div>
+            <div id="result2"></div>
+        </div>
+
+    </div>
+</div>
+
+<div id="difficultyScreen" style="display:none;">
+
+    <h2 class="mono">難易度選択</h2>
+
+    <div class="difficulty-row">
+        <button class="difficulty-btn keycap-btn" data-difficulty="easy">
+            <span class="diff-name">EASY</span>
+            <span class="diff-example">Ctrl + C</span>
+        </button>
+
+        <button class="difficulty-btn keycap-btn" data-difficulty="normal">
+            <span class="diff-name">NORMAL</span>
+            <span class="diff-example">Ctrl + ?</span>
+        </button>
+
+        <button class="difficulty-btn keycap-btn" data-difficulty="hard">
+            <span class="diff-name">HARD</span>
+            <span class="diff-example">? + ?</span>
+        </button>
+
+        <button class="difficulty-btn keycap-btn" data-difficulty="extreme">
+            <span class="diff-name">EXTREME</span>
+            <span class="diff-example">? + ? / 60秒耐久</span>
+        </button>
+    </div>
+
+</div>
+
+<div id="resultScreen" style="display:none;">
+    <h1 id="finalText">RESULT</h1>
+    <div id="grade" class="mono">S</div>
+    <div id="finalScore"></div>
+    <div id="maxCombo"></div>
+    <div id="judgeStats"></div>
+
+    <div class="result-buttons">
+        <button id="retryButton" class="keycap-btn">RETRY</button>
+        <button id="titleButton" class="keycap-btn">TITLE</button>
+    </div>
+</div>
+
+<audio id="bgm" src="drumbit_bpm100.mp3"></audio>
+
+<script>
+
+const shortcuts = [
+    {
+        meaning: "コピー",
+        mod: "Control",
+        key: "c"
+    },
+    {
+        meaning: "貼り付け",
+        mod: "Control",
+        key: "v"
+    },
+    {
+        meaning: "保存",
+        mod: "Control",
+        key: "s"
+    },
+    {
+        meaning: "元に戻す",
+        mod: "Control",
+        key: "z"
+    },
+    {
+        meaning: "検索",
+        mod: "Control",
+        key: "f"
+    },
+    {
+        meaning: "全選択",
+        mod: "Control",
+        key: "a"
+    },
+    {
+        meaning: "新しいタブ",
+        mod: "Control",
+        key: "t"
+    },
+    {
+        meaning: "アプリ切替",
+        mod: "Alt",
+        key: "tab"
+    },
+    {
+        meaning: "切り取り",
+        mod: "Control",
+        key: "x"
+    },
+    {
+        meaning: "やり直し",
+        mod: "Control",
+        key: "y"
+    },
+    {
+        meaning: "太字",
+        mod: "Control",
+        key: "b"
+    },
+    {
+        meaning: "斜体",
+        mod: "Control",
+        key: "i"
+    },
+    {
+        meaning: "下線",
+        mod: "Control",
+        key: "u"
+    },
+    {
+        meaning: "タブを閉じる",
+        mod: "Control",
+        key: "w"
+    },
+    {
+        meaning: "新しいウィンドウ",
+        mod: "Control",
+        key: "n"
+    },
+    {
+        meaning: "再読み込み",
+        mod: "Control",
+        key: "r"
+    },
+    {
+        meaning: "ブックマーク登録",
+        mod: "Control",
+        key: "d"
+    },
+    {
+        meaning: "印刷",
+        mod: "Control",
+        key: "p"
+    },
+    {
+        meaning: "ファイルを開く",
+        mod: "Control",
+        key: "o"
+    },
+    {
+        meaning: "終了",
+        mod: "Control",
+        key: "q"
+    }
+];
+
+let shortcutIndex = 0;
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let beatStartTime = 0;
+let phase = "mod";
+let judged = false;
+let missTimer;
+let gameStartTime = 0;
+let beatCount = 0;
+
+// ★判定別の集計（結果画面で表示するため）
+let judgeCounts = {
+    "PERFECT!": 0,
+    "GREAT": 0,
+    "GOOD": 0,
+    "MISS": 0,
+    "BAD": 0
+};
+
+// ★実際に判定した総数（EXTREMEは時間制のため可変。満点計算に使う）
+let totalJudgedCount = 0;
+
+// ★EXTREMEモード用：現在出題中のショートカット・終了時刻・タイマー
+let currentShortcut = null;
+let extremeEndTime = 0;
+let extremeTimerInterval = null;
+const EXTREME_DURATION = 60000; // 60秒
+
+let difficulty = "normal";
+const bpm = 100;
+const beatTime = 120000 / bpm;
+const animDuration = 60000 / bpm;
+
+const target = animDuration;
+const missTime = beatTime;
+
+// ★イコライザーのアニメーション速度をBPMに同期させる
+// 1拍(beatTime)で1往復するイメージにすることで、ノーツの拍と視覚的に揃う
+document.documentElement.style.setProperty("--eq-duration", `${beatTime / 1000}s`);
+
+
+const meaningEl = document.getElementById("meaning");
+const scoreEl = document.getElementById("score");
+const comboEl = document.getElementById("combo");
+const timeEl = document.getElementById("time");
+const modEl = document.getElementById("mod");
+const keyEl = document.getElementById("key");
+const result1El = document.getElementById("result1");
+const result2El = document.getElementById("result2");
+const bgm = document.getElementById("bgm");
+const equalizerEl = document.getElementById("equalizer");
+
+const titleScreen = document.getElementById("titleScreen");
+const gameScreen = document.getElementById("gameScreen");
+const difficultyScreen = document.getElementById("difficultyScreen");
+const resultScreen = document.getElementById("resultScreen");
+
+const finalScore = document.getElementById("finalScore");
+const gradeEl = document.getElementById("grade");
+const retryButton = document.getElementById("retryButton");
+const titleButton = document.getElementById("titleButton");
+
+bgm.loop = true;
+
+startButton.addEventListener("click", () => {
+
+    titleScreen.style.display = "none";
+    difficultyScreen.style.display = "flex";
+
+});
+
+// ★ランダムに1問選ぶ（可能な限り直前と同じ問題は避ける）
+function pickRandomShortcut(excludeShortcut){
+    if(shortcuts.length <= 1){
+        return shortcuts[0];
+    }
+    let candidate;
+    do{
+        candidate = shortcuts[Math.floor(Math.random() * shortcuts.length)];
+    } while(candidate === excludeShortcut);
+    return candidate;
+}
+
+// ★現在出題中のショートカットを取得（EXTREMEはランダム選出、それ以外は配列順）
+function getCurrentShortcut(){
+    if(difficulty === "extreme"){
+        return currentShortcut;
+    }
+    return shortcuts[shortcutIndex];
+}
+
+function resetRunState(){
+    score = 0;
+    combo = 0;
+    maxCombo = 0;
+    shortcutIndex = 0;
+    phase = "mod";
+    judgeCounts = { "PERFECT!": 0, "GREAT": 0, "GOOD": 0, "MISS": 0, "BAD": 0 };
+    totalJudgedCount = 0;
+
+    clearInterval(extremeTimerInterval);
+    equalizerEl.classList.remove("active");
+
+    scoreEl.textContent = "SCORE : 0";
+    comboEl.textContent = "";
+    comboEl.classList.remove("pop");
+    timeEl.textContent = "";
+}
+
+document
+    .querySelectorAll("[data-difficulty]")
+    .forEach(button => {
+
+        button.addEventListener("click", () => {
+
+        difficulty = button.dataset.difficulty;
+
+        resetRunState();
+
+        if(difficulty === "extreme"){
+            currentShortcut = pickRandomShortcut(null);
+        }
+
+        difficultyScreen.style.display = "none";
+        gameScreen.style.display = "flex";
+
+        startCountdown();
+
+});
+
+    });
+
+function startCountdown(){
+
+    modEl.textContent = "";
+    keyEl.textContent = "";
+
+    const texts = ["3", "2", "1", "GO!"];
+    let index = 0;
+
+    meaningEl.textContent = texts[index];
+    index++;
+
+    const timer = setInterval(() => {
+
+        meaningEl.textContent = texts[index];
+        index++;
+
+        if(index >= texts.length){
+
+            clearInterval(timer);
+
+            setTimeout(() => {
+                bgm.currentTime = 0.023;
+                bgm.play();
+                gameStartTime = performance.now(); // ★ここ
+                beatCount = 0;
+                equalizerEl.classList.add("active"); // ★カウントダウン終了と同時にEQ始動
+
+                if(difficulty === "extreme"){
+                    extremeEndTime = performance.now() + EXTREME_DURATION;
+                    startExtremeTimer();
+                }
+
+                showCurrentKey();
+                updateNote();
+            }, 1000);
+        }
+
+    }, 1000);
+
+}
+
+// ★EXTREMEモード：残り時間を100msごとに更新し、0になったら即座に終了させる
+function startExtremeTimer(){
+    clearInterval(extremeTimerInterval);
+
+    extremeTimerInterval = setInterval(() => {
+        const remain = extremeEndTime - performance.now();
+        const remainSec = Math.max(0, Math.ceil(remain / 1000));
+        timeEl.textContent = `TIME : ${remainSec}s`;
+
+        if(remain <= 0){
+            clearInterval(extremeTimerInterval);
+            clearGame();
+        }
+    }, 100);
+}
+
+function showCurrentKey() {
+
+    const current = getCurrentShortcut();
+
+    meaningEl.textContent = current.meaning;
+
+    if (phase === "mod"){
+        result2El.textContent = "";
+        result2El.className = "";
+        modEl.classList.remove("hit");
+        keyEl.classList.remove("hit");
+        judged = false;
+    } else if (phase === "key") {
+        result1El.textContent = "";
+        result1El.className = "";
+        judged = false;
+    }
+
+    
+
+    switch(difficulty){
+
+        case "easy":
+            modEl.textContent = current.mod;
+            keyEl.textContent = current.key.toUpperCase();
+            break;
+
+        case "normal":
+            modEl.textContent = current.mod;
+            keyEl.textContent = "?";
+            break;
+
+        case "hard":
+        case "extreme":
+            modEl.textContent = "?";
+            keyEl.textContent = "?";
+            break;
+    }
+
+}
+
+// ★全ノーツPERFECT＆コンボを繋ぎ続けた場合の理論上の満点を計算
+// （コンボボーナスがある以上、単純な「ノーツ数×100」を基準にすると
+//   ボーナス分だけ実際のスコアが超過し、評価が甘くなってしまうため）
+// totalJudgedCountは実際に判定された数（EXTREMEは時間制のため可変）を使う
+function calcMaxScore(){
+
+    const totalJudgements = totalJudgedCount;
+    let total = 0;
+
+    for(let c = 1; c <= totalJudgements; c++){
+        const bonus = c >= 2 ? Math.floor(100 * ((c - 1) * 0.1)) : 0;
+        total += 100 + bonus;
+    }
+
+    return total;
+}
+
+function calcGrade(){
+
+    const maxScore = calcMaxScore();
+    const rate = maxScore === 0 ? 0 : score / maxScore;
+
+    if(rate >= 0.95) return "S";
+    if(rate >= 0.85) return "A";
+    if(rate >= 0.70) return "B";
+    if(rate >= 0.50) return "C";
+    return "D";
+}
+
+function clearGame(){
+    clearTimeout(missTimer);
+    clearInterval(extremeTimerInterval);
+
+    bgm.pause();
+    equalizerEl.classList.remove("active"); // ★クリア時はEQも停止
+
+    meaningEl.textContent = "クリア！";
+    modEl.textContent = "🎉";
+    keyEl.textContent = "🎉";
+
+    result1El.textContent = "";
+    result2El.textContent = "";
+    timeEl.textContent = "";
+
+    modEl.classList.remove("note", "hit", "bad");
+    keyEl.classList.remove("note", "hit", "bad");
+
+    gameScreen.style.display = "none";
+    resultScreen.style.display = "flex";
+
+    finalScore.textContent = `SCORE : ${score}`;
+    gradeEl.textContent = calcGrade();
+
+    document.getElementById("maxCombo").textContent =
+        `MAX COMBO : ${maxCombo}`;
+
+    document.getElementById("judgeStats").innerHTML = `
+        <div class="judge-item">
+            <span class="judge-label">PERFECT</span>
+            <span class="judge-count j-perfect">${judgeCounts["PERFECT!"]}</span>
+        </div>
+        <div class="judge-item">
+            <span class="judge-label">GREAT</span>
+            <span class="judge-count j-great">${judgeCounts["GREAT"]}</span>
+        </div>
+        <div class="judge-item">
+            <span class="judge-label">GOOD</span>
+            <span class="judge-count j-good">${judgeCounts["GOOD"]}</span>
+        </div>
+        <div class="judge-item">
+            <span class="judge-label">MISS</span>
+            <span class="judge-count j-miss">${judgeCounts["MISS"]}</span>
+        </div>
+        <div class="judge-item">
+            <span class="judge-label">BAD</span>
+            <span class="judge-count j-miss">${judgeCounts["BAD"]}</span>
+        </div>
+    `;
+}
+
+retryButton.addEventListener("click", () => {
+    resetRunState();
+
+    if(difficulty === "extreme"){
+        currentShortcut = pickRandomShortcut(null);
+    }
+
+    resultScreen.style.display = "none";
+    difficultyScreen.style.display = "flex";
+});
+
+titleButton.addEventListener("click", () => {
+    resultScreen.style.display = "none";
+    titleScreen.style.display = "flex";
+
+    resetRunState();
+});
+
+function nextStep(){
+
+    if(phase === "mod"){
+        phase = "key";
+    }else{
+
+        if(difficulty === "extreme"){
+            // ★時間切れならここで終了（保険。基本はstartExtremeTimer側で先に検知する）
+            if(performance.now() >= extremeEndTime){
+                clearGame();
+                return;
+            }
+            currentShortcut = pickRandomShortcut(currentShortcut);
+        } else {
+            shortcutIndex++;
+
+            if(shortcutIndex >= shortcuts.length){
+                clearGame();
+                return;
+            }
+        }
+
+        phase = "mod";
+    }
+
+    showCurrentKey();
+    updateNote();
+}
+
+function judge(diff){
+    if(diff <= 100){
+        return "PERFECT!";
+    }
+    else if(diff <= 200){
+        return "GREAT";
+    }
+    else if(diff <= 300){
+        return "GOOD";
+    }
+    else{
+        return "MISS";
+    }
+}
+
+function addScore(result){
+
+    // ★判定別集計をカウント
+    if(judgeCounts.hasOwnProperty(result)){
+        judgeCounts[result]++;
+    }
+    totalJudgedCount++;
+
+    if(result === "MISS" || result === "BAD"){
+        combo = 0;
+    } else {
+        combo++;
+        if(combo > maxCombo) maxCombo = combo;
+    }
+
+    let base = 0;
+
+    switch(result){
+        case "PERFECT!":
+            base = 100;
+            break;
+
+        case "GREAT":
+            base = 70;
+            break;
+
+        case "GOOD":
+            base = 50;
+            break;
+
+        case "MISS":
+        case "BAD":
+            base = 0;
+            break;
+    }
+
+    // ★コンボボーナス：2コンボ目から+10%、以降1コンボごとに+10%ずつ積み上がる（(combo-1) × 10%）
+    const bonus = combo >= 2 ? Math.floor(base * ((combo - 1) * 0.1)) : 0;
+    score += base + bonus;
+
+    scoreEl.textContent = `SCORE : ${score}`;
+
+    if(combo >= 2){
+        comboEl.textContent = `COMBO : ${combo}`;
+        // ★アニメーションを毎回再生させるため、一度クラスを外してリフローを挟んでから付け直す
+        comboEl.classList.remove("pop");
+        void comboEl.offsetWidth;
+        comboEl.classList.add("pop");
+    } else {
+        comboEl.textContent = "";
+        comboEl.classList.remove("pop");
+    }
+}
+
+function updateNote(){
+    clearTimeout(missTimer);
+    judged = false;
+
+    modEl.classList.remove("note");
+    keyEl.classList.remove("note");
+
+    const duration = `${animDuration / 1000}s`;
+    modEl.style.setProperty("--beat-duration", duration);
+    keyEl.style.setProperty("--beat-duration", duration);
+
+    if(phase === "mod"){
+        modEl.classList.add("note");
+    } else {
+        keyEl.classList.add("note");
+    }
+
+    beatStartTime = performance.now();
+
+    beatCount++;
+    const nextBeatTime = gameStartTime + beatCount * beatTime;
+    const delay = nextBeatTime - performance.now();
+
+    missTimer = setTimeout(() => {
+        if(!judged){
+            if(phase === "mod"){
+                result1El.textContent = "MISS";
+                result1El.className = "miss";
+            } else {
+                result2El.textContent = "MISS";
+                result2El.className = "miss";
+            }
+            addScore("MISS");
+        }
+        nextStep();
+    }, delay);
+}
+
+document.addEventListener("keydown", (e) => {
+
+        // ★Tabキー単体でもブラウザの「次要素へフォーカス移動」が起きて干渉するため防ぐ
+        if(e.altKey || e.ctrlKey || e.key === "Tab"){
+            e.preventDefault();
+        }
+
+        const current = getCurrentShortcut();
+
+        if(judged){
+            return;
+        }
+
+        if(!current){
+            return;
+        }
+
+        judged = true;
+
+        if (
+            phase === "mod" &&
+            e.key.toLowerCase() === current.mod.toLowerCase()
+        ) {
+            const timing = performance.now() - beatStartTime;
+            const diff = Math.abs(timing - target);
+            const result = judge(diff);
+            result1El.textContent = result;
+            result1El.className = result === "MISS" ? "miss" : "correct";
+            modEl.classList.add("hit");
+            modEl.textContent = current.mod;
+            addScore(result);
+        } else if (
+            phase === "key" &&
+            e.key.toLowerCase() === current.key.toLowerCase()
+        ) {
+            const timing = performance.now() - beatStartTime;
+            const diff = Math.abs(timing - target);
+            const result = judge(diff);
+            result2El.textContent = result;
+            result2El.className = result === "MISS" ? "miss" : "correct";
+            keyEl.classList.add("hit");
+            keyEl.textContent = current.key.toUpperCase();
+            addScore(result);
+        } else {
+            if (phase === "mod"){
+                result1El.textContent = "BAD";
+                result1El.className = "miss";
+                modEl.classList.add("bad");
+                addScore("BAD");
+            } else if (phase === "key") {
+                result2El.textContent = "BAD";
+                result2El.className = "miss";
+                keyEl.classList.add("bad");
+                addScore("BAD");
+            }
+        }
+
+        return;
+    });
+
+
+
+</script>
+
+</body>
+</html>
