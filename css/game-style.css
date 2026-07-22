@@ -105,6 +105,13 @@ footer a {
     color: #1f2937;
 }
 
+.game-h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 10px 0 15px;
+}
+
 /* 説明文 */
 
 .game-description {

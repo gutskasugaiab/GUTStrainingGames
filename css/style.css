@@ -77,6 +77,14 @@ footer a {
     line-height: 1.6;
 }
 
+.site-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 15px 0 0;
+    color: #222;
+}
+
 .site-description h2 {
     margin-top: 0;
 }
