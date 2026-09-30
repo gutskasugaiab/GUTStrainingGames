@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>モグラン - MOGURA RUN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Zen+Maru+Gothic:wght@500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+    --soil-deep: #3a2c23;
+    --soil-mid: #4a3222;
+    --soil-light: #6b4a30;
+    --cream: #f3e3c3;
+    --gem-amber: #ffb238;
+    --gem-glow: #ffd77a;
+    --moss: #7ba05b;
+    --sky: #7dd3f0;
+    --danger: #e8563f;
+    --panel: rgba(46, 31, 22, 0.92);
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--soil-deep);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+#game-wrap {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--soil-deep);
+}
+
+#stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 900px;
+    max-height: 100vh;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+}
+
+@media (max-aspect-ratio: 16/9) {
+    #stage {
+        width: 100vw;
+        height: calc(100vw * 9 / 16);
+    }
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--soil-mid);
+}
+
+/* The mole GIF is a real, visible element layered on top of the canvas —
+   JS just moves it to follow the player's position every frame. Drawing an
+   animated GIF onto a <canvas> only ever captures a single still frame in
+   most browsers (worse still, some browsers pause decoding entirely when the
+   <img> is hidden via display:none/visibility:hidden), so keeping it as a
+   normal on-screen image is the reliable way to keep the animation playing. */
+#mole-sprite {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 8%;
+    /* 8% of #stage's width ≈ 72px at the game's 900px logical width;
+       #stage's aspect-ratio (16/9) matches the canvas logical size (900x506),
+       so a width-based percentage scales correctly on both axes. */
+    height: auto;
+    transform: translate(-50%, -100%);
+    /* anchors the sprite's bottom-center to the (left, top) point we set in JS */
+    z-index: 3;
+    pointer-events: none;
+    display: none;
+}
+
+#mole-sprite.invincible {
+    animation: mole-flicker 0.12s steps(1, end) infinite;
+    filter: drop-shadow(0 0 10px var(--gem-glow)) drop-shadow(0 0 18px rgba(255, 178, 56, 0.6));
+}
+
+@keyframes mole-flicker {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}
+
+.hud {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 18px;
+    pointer-events: none;
+    font-family: 'Baloo 2', sans-serif;
+    z-index: 5;
+}
+
+.hud-chip {
+    background: var(--panel);
+    border: 2px solid var(--soil-light);
+    border-radius: 12px;
+    padding: 6px 14px;
+    color: var(--cream);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hud-chip .val {
+    color: var(--gem-glow);
+    font-size: 17px;
+}
+
+.hud-chip.shield-active {
+    border-color: var(--gem-amber);
+    box-shadow: 0 0 14px rgba(255, 178, 56, 0.85);
+    animation: shield-chip-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes shield-chip-pulse {
+    from {
+        box-shadow: 0 0 8px rgba(255, 178, 56, 0.5);
+    }
+
+    to {
+        box-shadow: 0 0 18px rgba(255, 178, 56, 0.95);
+    }
+}
+
+/* ---------- Bottom-half typing zone ---------- */
+#type-zone {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    bottom: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(180deg, var(--soil-mid) 0%, var(--soil-deep) 100%);
+    border-top: 3px solid rgba(255, 178, 56, 0.45);
+    pointer-events: none;
+}
+
+.type-next-label {
+    font-family: 'Baloo 2', sans-serif;
+    font-size: clamp(12px, 2.4vw, 15px);
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--cream);
+    opacity: 0.75;
+}
+
+.keycap-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 92%;
+    font-family: 'Baloo 2', sans-serif;
+}
+
+.keycap-bracket {
+    font-size: clamp(28px, 6vw, 44px);
+    font-weight: 800;
+    color: var(--gem-amber);
+    opacity: 0.8;
+}
+
+.keycap {
+    border-radius: 18px;
+    background: #3a2818;
+    border: 3px solid var(--gem-amber);
+    color: var(--gem-glow);
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(255, 178, 56, 0.35), 0 4px 0 #1f150d;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    flex: none;
+}
+
+.keycap.pending {
+    opacity: 0.4;
+    border-color: var(--soil-light);
+    box-shadow: none;
+    color: var(--cream);
+}
+
+.keycap.done {
+    opacity: 0.5;
+    border-color: var(--moss);
+    color: var(--moss);
+    box-shadow: none;
+}
+
+.keycap.miss {
+    border-color: var(--danger);
+    box-shadow: 0 0 20px rgba(232, 86, 63, 0.55), 0 4px 0 #1f150d;
+    animation: keyshake 0.28s ease;
+}
+
+@keyframes keyshake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-7px);
+    }
+
+    75% {
+        transform: translateX(7px);
+    }
+}
+
+.type-caption {
+    font-size: clamp(11px, 2.2vw, 13px);
+    color: var(--cream);
+    opacity: 0.6;
+    margin-top: 2px;
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    /* fully opaque so the canvas/typing zone never shows through the title & result screens */
+    background: radial-gradient(ellipse at center, var(--soil-mid) 0%, #140d09 100%);
+    color: var(--cream);
+    padding: 24px;
+    z-index: 10;
+    gap: 10px;
+}
+
+.overlay.hidden {
+    display: none;
+}
+
+.title {
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: clamp(32px, 8vw, 56px);
+    color: var(--gem-amber);
+    text-shadow: 3px 3px 0 var(--soil-deep), 0 0 24px rgba(255, 178, 56, 0.4);
+    line-height: 1.05;
+    margin: 0;
+}
+
+/* title illustration anchored to the bottom-right corner of the title screen */
+.topvisual {
+    position: absolute;
+    right: 3%;
+    bottom: 0;
+    width: clamp(80px, 27vw, 250px);
+    height: auto;
+    margin: 0;
+    pointer-events: auto;
+    cursor: pointer;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+    z-index: 0;
+}
+
+.topvisual.bounce {
+    animation: topvisual-hop 0.55s ease;
+}
+
+@keyframes topvisual-hop {
+    0% {
+        transform: translateY(0);
+    }
+
+    28% {
+        transform: translateY(-30px);
+    }
+
+    52% {
+        transform: translateY(0);
+    }
+
+    70% {
+        transform: translateY(-12px);
+    }
+
+    85% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.subtitle {
+    font-size: clamp(13px, 2.6vw, 16px);
+    color: var(--cream);
+    opacity: 0.85;
+    margin: 0 0 6px;
+    max-width: 380px;
+    z-index: 1;
+    position: relative;
+}
+
+.cta {
+    margin-top: 10px;
+    font-family: 'Baloo 2', sans-serif;
+    font-size: clamp(16px, 3vw, 20px);
+    font-weight: 700;
+    background: var(--gem-amber);
+    color: var(--soil-deep);
+    border: none;
+    border-radius: 999px;
+    padding: 12px 34px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #b57414;
+    transition: transform 0.08s ease;
+    z-index: 1;
+    position: relative;
+}
+
+.cta:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #b57414;
+}
+
+.btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    z-index: 1;
+    position: relative;
+}
+
+.cta.secondary {
+    background: transparent;
+    color: var(--cream);
+    border: 2px solid var(--soil-light);
+    box-shadow: none;
+    padding: 10px 28px;
+}
+
+.cta.secondary:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+
+.resultvisual {
+    position: absolute;
+    left: 10%;
+    width: clamp(90px, 22vw, 170px);
+    height: auto;
+    margin: 0;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+}
+
+.result-row {
+    display: flex;
+    gap: 22px;
+    margin: 8px 0 4px;
+    font-family: 'Baloo 2', sans-serif;
+    z-index: 1;
+    position: relative;
+}
+
+.result-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.result-label {
+    font-size: 12px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
+.result-value {
+    font-size: clamp(24px, 5vw, 34px);
+    font-weight: 800;
+    color: var(--gem-glow);
+}
+
+.result-value.best {
+    color: var(--sky);
+}
+
+.new-best {
+    font-size: 13px;
+    color: var(--gem-amber);
+    font-weight: 700;
+    opacity: 0;
+    animation: pop 0.6s ease 0.2s forwards;
+    z-index: 1;
+    position: relative;
+}
+
+@keyframes pop {
+    from {
+        opacity: 0;
+        transform: scale(0.6);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hint {
+    font-size: 12px;
+    opacity: 0.55;
+    margin-top: 2px;
+    z-index: 1;
+    position: relative;
+}
+
+#flash {
+    position: absolute;
+    inset: 0;
+    background: var(--danger);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 8;
+}
+
+/* ---------- Online ranking UI ---------- */
+.rank-submit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    z-index: 1;
+    position: relative;
+}
+
+.rank-name-input {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--soil-light);
+    background: #2a1c12;
+    color: var(--cream);
+    text-align: center;
+    width: min(220px, 70vw);
+    outline: none;
+}
+
+.rank-name-input:focus {
+    border-color: var(--gem-amber);
+}
+
+.cta.small {
+    margin-top: 0;
+    font-size: clamp(13px, 2.6vw, 15px);
+    padding: 9px 22px;
+}
+
+.cta:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none !important;
+}
+
+.rank-status {
+    font-size: 12px;
+    color: var(--gem-glow);
+    opacity: 0.85;
+    min-height: 14px;
+    margin: 0;
+}
+
+.ranking-list-wrap {
+    width: min(360px, 84vw);
+    max-height: 46vh;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.25);
+    border: 2px solid var(--soil-light);
+    border-radius: 14px;
+    padding: 8px 4px;
+    z-index: 1;
+    position: relative;
+}
+
+.ranking-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ranking-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-family: 'Baloo 2', sans-serif;
+}
+
+.ranking-list li:nth-child(odd) {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ranking-list li:nth-child(1) .rank-no {
+    color: var(--gem-amber);
+}
+
+.ranking-list li:nth-child(2) .rank-no {
+    color: #d8d8d8;
+}
+
+.ranking-list li:nth-child(3) .rank-no {
+    color: #d99a5b;
+}
+
+.rank-no {
+    width: 22px;
+    font-weight: 800;
+    color: var(--cream);
+    opacity: 0.8;
+    flex: none;
+    text-align: right;
+}
+
+.rank-name {
+    flex: 1;
+    color: var(--cream);
+    font-size: 14px;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rank-score {
+    color: var(--gem-glow);
+    font-weight: 700;
+    font-size: 14px;
+    flex: none;
+}
+  </style>
+  <!-- Firebase (Firestore) for the online ranking feature.
+       firebase-config.js must define window.FIREBASE_CONFIG with your own
+       Firebase project's web app credentials — see firebase-config.js. -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <script>
+    // ============================================================
+// Firebase 設定ファイル
+// ============================================================
+// 1. https://console.firebase.google.com/ でプロジェクトを新規作成(無料枠でOK)
+// 2. [プロジェクトの設定](⚙アイコン) → [全般] → [マイアプリ] で
+//    「ウェブアプリを追加」(</> アイコン) を選択
+// 3. 表示された firebaseConfig オブジェクトの中身を、
+//    そのまま下の window.FIREBASE_CONFIG に貼り付ける
+// 4. 左メニューの [Firestore Database] → [データベースの作成] で
+//    Firestore を有効化する(ロケーションは asia-northeast1 など任意)
+// 5. Firestore の [ルール] タブで、下記のようなルールを設定する
+//    (詳細はチャットの回答本文を参照してください)
+//
+// window.FIREBASE_CONFIG が未設定(下記のプレースホルダーのまま)の場合、
+// script.js 側がそれを検知してオンラインランキング機能を自動的に無効化し、
+// ゲーム本体はオフラインのままいつも通り遊べます。
+// ============================================================
+
+window.FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+};
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBGVODLJNzagSklKzhX5zxMvP1R5_E6Ezo",
+  authDomain: "guts1-0.firebaseapp.com",
+  projectId: "guts1-0",
+  storageBucket: "guts1-0.firebasestorage.app",
+  messagingSenderId: "863249306480",
+  appId: "1:863249306480:web:818c3527d8dfd7391c75b5",
+  measurementId: "G-KBC7QF14GD",
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+  </script>
+</head>
+
+<body>
+  <div id="game-wrap">
+    <div id="stage">
+      <canvas id="c"></canvas>
+      <img id="mole-sprite" src="../img/8/moguko.gif" alt="">
+
+      <!-- Bottom half: the key sequence you need to type to jump -->
+      <div id="type-zone">
+        <div class="type-next-label">NEXT</div>
+        <div class="keycap-row" id="keycap-row"></div>
+        <div class="type-caption">キーボードでこの順番にキーを押してジャンプ！</div>
+      </div>
+
+      <div id="flash"></div>
+
+      <div class="hud">
+        <div class="hud-chip">距離 <span class="val" id="hud-score">0</span>m</div>
+        <div class="hud-chip" id="gem-chip">💎 <span class="val" id="hud-gems">0</span></div>
+      </div>
+
+      <div class="overlay" id="start-overlay">
+        <img class="topvisual" src="../img/8/topvisual.png" alt="moguko">
+        <p class="title">モグラン<br>MOGURA RUN</p>
+        <p class="subtitle">地中を掘り進むモグラを操作しよう。画面下に出てくるキーをキーボードで押してジャンプ！岩や落石を飛び越えて、宝石を集めながらどこまでも走れ。</p>
+        <button class="cta" id="start-btn">タップしてスタート</button>
+        <button class="cta secondary" id="start-rank-view-btn">🏆 ランキングを見る</button>
+        <p class="hint">毎回ランダムなキーが出るよ。慌てず狙って押そう</p>
+        <p class="hint">💎を持っていれば、障害物に当たっても1個消費して1秒間無敵になれるよ！</p>
+        <p class="hint" id="best-preview"></p>
+      </div>
+
+      <div class="overlay hidden" id="over-overlay">
+        <img class="resultvisual" src="../img/8/resultvisual.png" alt="resurltmoguko">
+        <p class="title" style="font-size: clamp(26px,6vw,38px);">掘削終了</p>
+        <div class="result-row">
+          <div class="result-item">
+            <div class="result-label">SCORE</div>
+            <div class="result-value" id="final-score">0</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">BEST</div>
+            <div class="result-value best" id="final-best">0</div>
+          </div>
+        </div>
+        <div class="new-best" id="new-best-tag">✨ 自己ベスト更新！ ✨</div>
+        <div class="rank-submit" id="rank-submit">
+          <input type="text" id="rank-name-input" class="rank-name-input" maxlength="10" placeholder="ニックネーム(10文字まで)">
+          <button class="cta small" id="rank-submit-btn">ランキングに登録</button>
+          <p class="rank-status" id="rank-status"></p>
+        </div>
+        <div class="btn-row">
+          <button class="cta secondary" id="rank-view-btn">🏆 ランキングを見る</button>
+          <button class="cta" id="retry-btn">もう一度掘る</button>
+          <button class="cta secondary" id="title-btn">タイトルへ戻る</button>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="ranking-overlay">
+        <p class="title" style="font-size: clamp(24px,5vw,32px);">🏆 ランキング</p>
+        <div class="ranking-list-wrap">
+          <ol class="ranking-list" id="ranking-list"></ol>
+          <p class="rank-status" id="ranking-load-status">読み込み中...</p>
+        </div>
+        <button class="cta secondary" id="ranking-close-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const stage = document.getElementById("stage");
+
+  const W = 900,
+    H = 506; // logical resolution (16:9-ish ratio matching CSS)
+  canvas.width = W;
+  canvas.height = H;
+
+  // ---------- Screen split: top half = mole run, bottom half = typing zone ----------
+  const TOP_H = H / 2; // 253 — everything below this is covered by the HTML #type-zone panel
+  const GROUND_Y = TOP_H - 58; // ground line for the mole, comfortably inside the top half
+
+  // ---------- Persistent storage (best score / total gems) ----------
+  let bestScore = 0;
+  let totalGemsEver = 0;
+  const STORAGE_KEY = "mogura-run-best";
+  const GEMS_KEY = "mogura-run-total-gems";
+
+  async function loadStorage() {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v != null) bestScore = parseInt(v, 10) || 0;
+    } catch (e) {
+      bestScore = 0;
+    }
+    try {
+      const v2 = localStorage.getItem(GEMS_KEY);
+      if (v2 != null) totalGemsEver = parseInt(v2, 10) || 0;
+    } catch (e) {
+      totalGemsEver = 0;
+    }
+    document.getElementById("best-preview").textContent =
+      bestScore > 0 ? `自己ベスト: ${bestScore}m` : "";
+  }
+
+  async function saveBest(score) {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(score));
+    } catch (e) {}
+  }
+  async function saveGems(total) {
+    try {
+      localStorage.setItem(GEMS_KEY, String(total));
+    } catch (e) {}
+  }
+
+  // ---------- Online ranking (Firebase Firestore) ----------
+  // Requires firebase-config.js (loaded before this file, see index.html)
+  // to define window.FIREBASE_CONFIG with a real Firebase project's web
+  // app config. If it's missing or still holds the placeholder values,
+  // ranking is silently disabled and the game works fully offline as before.
+  const RANKING_COLLECTION = "mogura_run_scores";
+  const RANKING_TOP_N = 20;
+  const RANK_NAME_KEY = "mogura-run-name";
+  let db = null;
+  let rankingEnabled = false;
+  try {
+    const cfg = window.FIREBASE_CONFIG;
+    if (
+      cfg &&
+      typeof firebase !== "undefined" &&
+      cfg.apiKey &&
+      cfg.apiKey !== "YOUR_API_KEY"
+    ) {
+      firebase.initializeApp(cfg);
+      db = firebase.firestore();
+      rankingEnabled = true;
+    }
+  } catch (e) {
+    console.warn("Firebase init failed; online ranking disabled.", e);
+    rankingEnabled = false;
+  }
+
+  // Sends one score to Firestore. Name/score are clamped client-side so a
+  // stray bug (or a casual tamperer) can't write obviously-broken rows, but
+  // this is NOT real anti-cheat — a determined cheater can still call the
+  // Firestore REST API directly with any value. Firestore security rules
+  // (see the chat reply) are the actual enforcement point; this is just
+  // input hygiene.
+  async function submitScore(name, score) {
+    if (!rankingEnabled || !db) return { ok: false, reason: "disabled" };
+    const cleanName = (name || "").trim().slice(0, 10) || "名無しモグラ";
+    const cleanScore = Math.max(0, Math.min(1000000, Math.floor(score) || 0));
+    try {
+      await db.collection(RANKING_COLLECTION).add({
+        name: cleanName,
+        score: cleanScore,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      try {
+        localStorage.setItem(RANK_NAME_KEY, cleanName);
+      } catch (e) {}
+      return { ok: true };
+    } catch (e) {
+      console.error("submitScore failed", e);
+      return { ok: false, reason: "error" };
+    }
+  }
+
+  async function fetchTopScores(n) {
+    if (!rankingEnabled || !db) return null;
+    try {
+      const snap = await db
+        .collection(RANKING_COLLECTION)
+        .orderBy("score", "desc")
+        .limit(n)
+        .get();
+      return snap.docs.map((d) => d.data());
+    } catch (e) {
+      console.error("fetchTopScores failed", e);
+      return null;
+    }
+  }
+
+  function renderRankingList(rows) {
+    const listEl = document.getElementById("ranking-list");
+    const statusEl = document.getElementById("ranking-load-status");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    if (rows === null) {
+      if (statusEl)
+        statusEl.textContent =
+          "読み込みに失敗しました。通信環境を確認してもう一度お試しください。";
+      return;
+    }
+    if (rows.length === 0) {
+      if (statusEl)
+        statusEl.textContent = "まだ記録がありません。最初のランカーになろう！";
+      return;
+    }
+    if (statusEl) statusEl.textContent = "";
+    rows.forEach((r, i) => {
+      const li = document.createElement("li");
+      const rank = document.createElement("span");
+      rank.className = "rank-no";
+      rank.textContent = i + 1;
+      const nm = document.createElement("span");
+      nm.className = "rank-name";
+      nm.textContent = r.name || "名無しモグラ"; // textContent, never innerHTML — untrusted data
+      const sc = document.createElement("span");
+      sc.className = "rank-score";
+      sc.textContent = (r.score || 0) + "m";
+      li.appendChild(rank);
+      li.appendChild(nm);
+      li.appendChild(sc);
+      listEl.appendChild(li);
+    });
+  }
+
+  async function openRanking() {
+    document.getElementById("ranking-overlay").classList.remove("hidden");
+    const statusEl = document.getElementById("ranking-load-status");
+    const listEl = document.getElementById("ranking-list");
+    if (listEl) listEl.innerHTML = "";
+    if (!rankingEnabled) {
+      if (statusEl)
+        statusEl.textContent =
+          "オンラインランキングは準備中です(Firebase未設定)。";
+      return;
+    }
+    if (statusEl) statusEl.textContent = "読み込み中...";
+    const rows = await fetchTopScores(RANKING_TOP_N);
+    renderRankingList(rows);
+  }
+
+  // ---------- Game state ----------
+  let state = "start"; // start | playing | over
+  let distance = 0;
+  let gemsThisRun = 0;
+  let speed = 3.8;
+  const BASE_SPEED = 3.8;
+  const MAX_SPEED = 12.5;
+  let elapsedFrames = 0;
+
+  const player = {
+    x: 130,
+    y: GROUND_Y,
+    w: 46,
+    h: 38,
+    vy: 0,
+    onGround: true,
+    jumpsUsed: 0,
+    invincibleFrames: 0, // >0 while a gem-shield is protecting the player
+  };
+  const GRAVITY = 0.62;
+  const JUMP_VELOCITY = -12.4;
+  const SHIELD_INVINCIBLE_FRAMES = 75; // ~1.25s grace period after consuming a gem to break through an obstacle
+  let shieldToastText = "";
+  let shieldToastFramesLeft = 0;
+
+  let obstacles = []; // {x, y, w, h, type, vx (own extra speed), rotate}
+  let gems = []; // {x, y, r, collected}
+  let particles = [];
+  let soilBumps = []; // decorative background bumps
+  let rootDangles = []; // decorative
+
+  // ---------- Typing-to-jump mechanic ----------
+  // Every 2000m the jump requires one more key in a row (capped so it never
+  // becomes truly impossible).
+  const KEY_POOL = "abcdefghijklmnopqrstuvwxyz".split("");
+  const MAX_SEQUENCE_LEN = 5;
+  const KEYS_PER_DISTANCE = 2000;
+  let currentSequence = ["a"];
+  let seqProgress = 0; // index of the next key in currentSequence to press
+  let lastKeyLevel = 1;
+  let missFlash = 0; // frames left showing the "wrong key" shake/flash
+  let keyLevelToastText = "";
+  let keyLevelToastFramesLeft = 0;
+  const keycapRowEl = document.getElementById("keycap-row");
+
+  function randomKey(exclude) {
+    const pool = exclude ? KEY_POOL.filter((k) => k !== exclude) : KEY_POOL;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function keysNeededForDistance(dist) {
+    return Math.min(MAX_SEQUENCE_LEN, 1 + Math.floor(dist / KEYS_PER_DISTANCE));
+  }
+
+  function renderKeycapRow() {
+    if (!keycapRowEl) return;
+    const count = currentSequence.length;
+    const size =
+      count <= 1
+        ? 84
+        : count === 2
+          ? 72
+          : count === 3
+            ? 62
+            : count === 4
+              ? 52
+              : 44;
+    keycapRowEl.innerHTML = "";
+    currentSequence.forEach((letter, i) => {
+      const open = document.createElement("span");
+      open.className = "keycap-bracket";
+      open.textContent = "［";
+
+      const cap = document.createElement("div");
+      cap.className = "keycap";
+      cap.style.width = size + "px";
+      cap.style.height = size + "px";
+      cap.style.fontSize = Math.round(size * 0.5) + "px";
+      cap.textContent = letter;
+      cap.classList.add(
+        i < seqProgress ? "done" : i === seqProgress ? "active" : "pending",
+      );
+
+      const close = document.createElement("span");
+      close.className = "keycap-bracket";
+      close.textContent = "］";
+
+      keycapRowEl.appendChild(open);
+      keycapRowEl.appendChild(cap);
+      keycapRowEl.appendChild(close);
+    });
+  }
+
+  function generateSequence() {
+    const count = keysNeededForDistance(distance);
+    const seq = [];
+    // Avoid starting the new sequence with the same letter the previous
+    // sequence just ended on. Without this, a fast typist can trigger the
+    // browser's key-repeat detection (holding the physical key down for the
+    // same letter across two consecutive sequences), and since keydown
+    // events with e.repeat === true are intentionally ignored elsewhere,
+    // the "new" press can silently fail to register.
+    let prev = currentSequence.length
+      ? currentSequence[currentSequence.length - 1]
+      : null;
+    for (let i = 0; i < count; i++) {
+      const k = randomKey(prev);
+      seq.push(k);
+      prev = k;
+    }
+    currentSequence = seq;
+    seqProgress = 0;
+    renderKeycapRow();
+  }
+
+  function flashMissActive() {
+    missFlash = 16;
+    if (!keycapRowEl) return;
+    const activeEl = keycapRowEl.querySelector(".keycap.active");
+    if (activeEl) {
+      activeEl.classList.remove("miss");
+      void activeEl.offsetWidth; // restart the shake animation
+      activeEl.classList.add("miss");
+    }
+  }
+
+  // ---------- Biome themes (change every 2000m) ----------
+  const BIOME_DISTANCE = 2000;
+  const TRANSITION_ZONE = 400; // meters of cross-fade before each boundary
+  const THEMES = [
+    {
+      name: "土の浅層",
+      skyTop: "#5a3d28",
+      skyMid: "#4a3222",
+      skyBottom: "#2e1f16",
+      groundLine: "#3d2a1a",
+      groundFloor: "#231710",
+      root: "#7ba05b",
+      bump: "0,0,0",
+    },
+    {
+      name: "苔の回廊",
+      skyTop: "#3c4a2c",
+      skyMid: "#33402a",
+      skyBottom: "#1c2416",
+      groundLine: "#2f3a20",
+      groundFloor: "#161d10",
+      root: "#a9d66b",
+      bump: "0,10,0",
+    },
+    {
+      name: "鉱石の岩盤",
+      skyTop: "#3a4652",
+      skyMid: "#2e3944",
+      skyBottom: "#171e24",
+      groundLine: "#28323b",
+      groundFloor: "#10151a",
+      root: "#7fb8c9",
+      bump: "0,10,20",
+    },
+    {
+      name: "紫水晶の洞窟",
+      skyTop: "#4a3358",
+      skyMid: "#3c2a4a",
+      skyBottom: "#1f1527",
+      groundLine: "#382848",
+      groundFloor: "#160f1c",
+      root: "#c98bd9",
+      bump: "20,0,20",
+    },
+    {
+      name: "深部のマグマ",
+      skyTop: "#5c2c22",
+      skyMid: "#472119",
+      skyBottom: "#23100c",
+      groundLine: "#3d1b13",
+      groundFloor: "#1a0b08",
+      root: "#e8823f",
+      bump: "30,5,0",
+    },
+  ];
+
+  function hexToRgb(hex) {
+    const v = parseInt(hex.slice(1), 16);
+    return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
+  }
+  function lerpColor(hexA, hexB, t) {
+    const a = hexToRgb(hexA),
+      b = hexToRgb(hexB);
+    const r = Math.round(a.r + (b.r - a.r) * t);
+    const g = Math.round(a.g + (b.g - a.g) * t);
+    const bl = Math.round(a.b + (b.b - a.b) * t);
+    return `rgb(${r},${g},${bl})`;
+  }
+
+  function getCurrentTheme(dist) {
+    const segment = Math.floor(dist / BIOME_DISTANCE);
+    const progress = dist % BIOME_DISTANCE;
+    const current = THEMES[segment % THEMES.length];
+    const next = THEMES[(segment + 1) % THEMES.length];
+    let t = 0;
+    if (progress > BIOME_DISTANCE - TRANSITION_ZONE) {
+      t = (progress - (BIOME_DISTANCE - TRANSITION_ZONE)) / TRANSITION_ZONE;
+    }
+    if (t <= 0) return { c: current, next: null, t: 0 };
+    return {
+      c: {
+        name: t > 0.5 ? next.name : current.name,
+        skyTop: lerpColor(current.skyTop, next.skyTop, t),
+        skyMid: lerpColor(current.skyMid, next.skyMid, t),
+        skyBottom: lerpColor(current.skyBottom, next.skyBottom, t),
+        groundLine: lerpColor(current.groundLine, next.groundLine, t),
+        groundFloor: lerpColor(current.groundFloor, next.groundFloor, t),
+        root: lerpColor(current.root, next.root, t),
+        bump: t > 0.5 ? next.bump : current.bump,
+      },
+      next: next,
+      t,
+    };
+  }
+
+  let lastBiomeSegment = 0;
+  let biomeToastText = "";
+  let biomeToastFramesLeft = 0;
+
+  function resetGame() {
+    distance = 0;
+    gemsThisRun = 3;
+    speed = BASE_SPEED;
+    elapsedFrames = 0;
+    obstacles = [];
+    gems = [];
+    spawnGem();
+    particles = [];
+    player.y = GROUND_Y;
+    player.vy = 0;
+    player.onGround = true;
+    player.invincibleFrames = 0;
+    shieldToastFramesLeft = 0;
+    nextObstacleAt = 60;
+    nextGemAt = 180;
+    lastBiomeSegment = 0;
+    biomeToastFramesLeft = 0;
+    missFlash = 0;
+    lastKeyLevel = keysNeededForDistance(0);
+    keyLevelToastFramesLeft = 0;
+    generateSequence();
+  }
+
+  let nextObstacleAt = 60;
+  let nextGemAt = 180;
+
+  function difficultyFactor() {
+    // 0 -> 1 over ~2400 frames (~40s at 60fps), then stays near 1 but keeps inching up slowly
+    return Math.min(1, elapsedFrames / 2400);
+  }
+
+  function spawnObstacle() {
+    const df = difficultyFactor();
+    const roll = Math.random();
+    let type;
+    if (roll < 0.5) type = "rock";
+    else if (roll < 0.8) type = "root";
+    else type = "falling";
+
+    if (type === "rock") {
+      const h = 34 + Math.random() * 26;
+      obstacles.push({
+        type,
+        x: W + 20,
+        y: GROUND_Y - h,
+        w: 34 + Math.random() * 10,
+        h,
+        vx: 0,
+      });
+    } else if (type === "root") {
+      const h = 44 + Math.random() * 20;
+      obstacles.push({
+        type,
+        x: W + 20,
+        y: GROUND_Y - h,
+        w: 22,
+        h,
+        vx: 0,
+        sway: Math.random() * Math.PI,
+      });
+    } else {
+      // falling rock from ceiling — has its own extra downward speed, forces earlier reaction
+      const extra = 2 + Math.random() * (2.5 + df * 3); // faster as difficulty rises
+      obstacles.push({
+        type,
+        x: W + 60 + Math.random() * 40,
+        y: -30,
+        w: 30,
+        h: 30,
+        vx: extra,
+        targetY: GROUND_Y - 30 - Math.random() * 10,
+        falling: true,
+      });
+    }
+
+    const gapBase = 118 - df * 26; // frames until next spawn shrinks with difficulty (widened for easier difficulty)
+    nextObstacleAt = elapsedFrames + gapBase + Math.random() * 40;
+  }
+
+  function spawnGem() {
+    const height = Math.random() < 0.5 ? GROUND_Y - 30 : GROUND_Y - 95;
+    gems.push({
+      x: W + 20,
+      y: height,
+      r: 11,
+      collected: false,
+      bob: Math.random() * Math.PI * 2,
+    });
+    nextGemAt = elapsedFrames + 90 + Math.random() * 120;
+  }
+
+  function initDecor() {
+    soilBumps = [];
+    for (let i = 0; i < 14; i++) {
+      soilBumps.push({
+        x: i * 90,
+        r: 30 + Math.random() * 30,
+        depth: Math.random(),
+      });
+    }
+    rootDangles = [];
+    for (let i = 0; i < 8; i++) {
+      rootDangles.push({
+        x: i * 140 + Math.random() * 60,
+        len: 20 + Math.random() * 40,
+      });
+    }
+  }
+
+  function jump() {
+    if (state !== "playing") return;
+    if (player.onGround) {
+      player.vy = JUMP_VELOCITY;
+      player.onGround = false;
+    }
+  }
+
+  function rectsOverlap(a, b) {
+    return (
+      a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+    );
+  }
+
+  function update() {
+    elapsedFrames++;
+    const df = difficultyFactor();
+    speed = BASE_SPEED + (MAX_SPEED - BASE_SPEED) * df;
+
+    distance += speed * 0.09;
+
+    if (missFlash > 0) missFlash--;
+
+    const neededKeys = keysNeededForDistance(distance);
+    if (neededKeys !== lastKeyLevel) {
+      lastKeyLevel = neededKeys;
+      keyLevelToastText =
+        neededKeys >= MAX_SEQUENCE_LEN
+          ? `キー入力 最大${neededKeys}文字！`
+          : `キー入力が${neededKeys}文字に増えた！`;
+      keyLevelToastFramesLeft = 150;
+    }
+    if (keyLevelToastFramesLeft > 0) keyLevelToastFramesLeft--;
+
+    const seg = Math.floor(distance / BIOME_DISTANCE);
+    if (seg !== lastBiomeSegment) {
+      lastBiomeSegment = seg;
+      biomeToastText = THEMES[seg % THEMES.length].name;
+      biomeToastFramesLeft = 150;
+    }
+    if (biomeToastFramesLeft > 0) biomeToastFramesLeft--;
+
+    // player physics
+    player.vy += GRAVITY;
+    player.y += player.vy;
+    if (player.y >= GROUND_Y) {
+      player.y = GROUND_Y;
+      player.vy = 0;
+      player.onGround = true;
+    }
+
+    // spawn
+    if (elapsedFrames >= nextObstacleAt) spawnObstacle();
+    if (elapsedFrames >= nextGemAt) spawnGem();
+
+    // update obstacles
+    for (const o of obstacles) {
+      o.x -= speed;
+      if (o.type === "root" && o.sway !== undefined) o.sway += 0.05;
+      if (o.type === "falling") {
+        if (o.y < o.targetY) {
+          o.y += o.vx;
+          if (o.y > o.targetY) o.y = o.targetY;
+        }
+      }
+    }
+    obstacles = obstacles.filter((o) => o.x + o.w > -40);
+
+    // update gems
+    for (const g of gems) {
+      g.x -= speed;
+      g.bob += 0.08;
+    }
+    gems = gems.filter((g) => g.x > -30 && !g.collected);
+
+    // particles (dust trail) — spawn right at the mole's feet, only while grounded
+    if (player.onGround && elapsedFrames % 4 === 0) {
+      const footX = player.x + player.w * 0.5 + (Math.random() * 10 - 5);
+      const footY = GROUND_Y - 2;
+      particles.push({
+        x: footX,
+        y: footY,
+        vx: -speed * 0.5 - 1,
+        vy: -0.4,
+        life: 18,
+        r: 3 + Math.random() * 2,
+      });
+    }
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+    }
+    particles = particles.filter((p) => p.life > 0);
+
+    // shield countdown — while active the player is immune and simply
+    // passes through obstacles (checked below)
+    if (player.invincibleFrames > 0) player.invincibleFrames--;
+    if (shieldToastFramesLeft > 0) shieldToastFramesLeft--;
+
+    // collisions with obstacles
+    if (player.invincibleFrames <= 0) {
+      const pBox = {
+        x: player.x + 6,
+        y: player.y - player.h + 6,
+        w: player.w - 12,
+        h: player.h - 8,
+      };
+      for (const o of obstacles) {
+        const obox = { x: o.x, y: o.y, w: o.w, h: o.h };
+        if (rectsOverlap(pBox, obox)) {
+          if (gemsThisRun > 0) {
+            gemsThisRun--;
+            useGemShield(o);
+          } else {
+            gameOver();
+            return;
+          }
+          break; // one hit handled per frame is enough
+        }
+      }
+    }
+
+    // collect gems
+    const pCenter = { x: player.x + player.w / 2, y: player.y - player.h / 2 };
+    for (const g of gems) {
+      const dx = pCenter.x - g.x,
+        dy = pCenter.y - g.y;
+      if (Math.sqrt(dx * dx + dy * dy) < g.r + 22) {
+        g.collected = true;
+        gemsThisRun++;
+      }
+    }
+  }
+
+  function gameOver() {
+    state = "over";
+    const finalScore = Math.floor(distance);
+    let isNewBest = false;
+    if (finalScore > bestScore) {
+      bestScore = finalScore;
+      isNewBest = true;
+      saveBest(bestScore);
+    }
+    totalGemsEver += gemsThisRun;
+    saveGems(totalGemsEver);
+
+    document.getElementById("final-score").textContent = finalScore;
+    document.getElementById("final-best").textContent = bestScore;
+    document.getElementById("new-best-tag").style.display = isNewBest
+      ? "block"
+      : "none";
+
+    const rankBtn = document.getElementById("rank-submit-btn");
+    const rankStatus = document.getElementById("rank-status");
+    if (rankBtn) {
+      rankBtn.disabled = false;
+      rankBtn.textContent = "ランキングに登録";
+    }
+    if (rankStatus) {
+      rankStatus.textContent = rankingEnabled
+        ? ""
+        : "オンラインランキングは準備中です(Firebase未設定)。";
+    }
+
+    flashHit();
+    document.getElementById("over-overlay").classList.remove("hidden");
+  }
+
+  // Spend one collected gem to smash through the obstacle that was just hit
+  // instead of ending the run: the obstacle is knocked away with a burst of
+  // particles and the player gets a short grace period of invincibility so
+  // they don't immediately eat another hit while overlapping debris.
+  function useGemShield(o) {
+    const idx = obstacles.indexOf(o);
+    if (idx !== -1) obstacles.splice(idx, 1);
+    spawnKnockBurst(o);
+    player.invincibleFrames = SHIELD_INVINCIBLE_FRAMES;
+    shieldToastText = `💎を1個消費した！ (残り${gemsThisRun})`;
+    shieldToastFramesLeft = 100;
+    flashShield();
+  }
+
+  function spawnKnockBurst(o) {
+    const cx = o.x + o.w / 2,
+      cy = o.y + o.h / 2;
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 2 + Math.random() * 4;
+      particles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(a) * sp + speed * 0.3,
+        vy: Math.sin(a) * sp - 1,
+        life: 26,
+        r: 2 + Math.random() * 3,
+        gem: true,
+      });
+    }
+  }
+
+  function flashShield() {
+    const f = document.getElementById("flash");
+    f.style.transition = "none";
+    f.style.background = "var(--gem-amber)";
+    f.style.opacity = "0.4";
+    requestAnimationFrame(() => {
+      f.style.transition = "opacity 0.35s ease";
+      f.style.opacity = "0";
+    });
+  }
+
+  function flashHit() {
+    document.getElementById("flash").style.background = "var(--danger)";
+    const f = document.getElementById("flash");
+    f.style.transition = "none";
+    f.style.opacity = "0.55";
+    requestAnimationFrame(() => {
+      f.style.transition = "opacity 0.4s ease";
+      f.style.opacity = "0";
+    });
+  }
+
+  // ---------- Drawing ----------
+  function draw() {
+    // clear the whole canvas first — only the top half (mole zone) gets redrawn;
+    // the bottom half is covered by the HTML #type-zone panel anyway.
+    ctx.clearRect(0, 0, W, H);
+
+    const theme = getCurrentTheme(distance).c;
+
+    // background gradient (biome-tinted soil layers) — top half only
+    const grad = ctx.createLinearGradient(0, 0, 0, TOP_H);
+    grad.addColorStop(0, theme.skyTop);
+    grad.addColorStop(0.55, theme.skyMid);
+    grad.addColorStop(1, theme.skyBottom);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, TOP_H);
+
+    // decorative background soil bumps (parallax, slow)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, TOP_H);
+    ctx.clip();
+    for (const b of soilBumps) {
+      b.x -= speed * 0.25;
+      if (b.x < -60) b.x += 14 * 90;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${theme.bump},${0.1 + b.depth * 0.1})`;
+      ctx.ellipse(b.x, 60 + b.depth * 40, b.r, b.r * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // hanging roots decor (foreground parallax slightly faster than bg)
+    ctx.save();
+    ctx.strokeStyle = theme.root;
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 4;
+    for (const r of rootDangles) {
+      r.x -= speed * 0.6;
+      if (r.x < -20) r.x += 8 * 140;
+      ctx.beginPath();
+      ctx.moveTo(r.x, 0);
+      ctx.quadraticCurveTo(r.x + 6, r.len / 2, r.x, r.len);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // ground (kept within the top half)
+    ctx.fillStyle = theme.groundFloor;
+    ctx.fillRect(
+      0,
+      GROUND_Y + player.h,
+      W,
+      Math.max(0, TOP_H - (GROUND_Y + player.h)),
+    );
+    ctx.fillStyle = theme.groundLine;
+    ctx.fillRect(0, GROUND_Y + player.h, W, 6);
+
+    // gems
+    for (const g of gems) {
+      const bobY = g.y + Math.sin(g.bob) * 5;
+      ctx.save();
+      ctx.translate(g.x, bobY);
+      ctx.rotate(g.bob * 0.3);
+      const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, g.r * 2.2);
+      glow.addColorStop(0, "rgba(255,215,122,0.55)");
+      glow.addColorStop(1, "rgba(255,215,122,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, g.r * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(0, -g.r);
+      ctx.lineTo(g.r * 0.8, 0);
+      ctx.lineTo(0, g.r);
+      ctx.lineTo(-g.r * 0.8, 0);
+      ctx.closePath();
+      ctx.fillStyle = "#ffcf5c";
+      ctx.fill();
+      ctx.strokeStyle = "#b5811f";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // obstacles
+    for (const o of obstacles) {
+      if (o.type === "rock") {
+        ctx.fillStyle = "#6b5644";
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y + o.h);
+        ctx.lineTo(o.x + o.w * 0.15, o.y + o.h * 0.3);
+        ctx.lineTo(o.x + o.w * 0.5, o.y);
+        ctx.lineTo(o.x + o.w * 0.85, o.y + o.h * 0.35);
+        ctx.lineTo(o.x + o.w, o.y + o.h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#453423";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else if (o.type === "root") {
+        const sway = Math.sin(o.sway || 0) * 4;
+        ctx.strokeStyle = theme.root;
+        ctx.lineWidth = o.w * 0.55;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(o.x + o.w / 2, o.y);
+        ctx.quadraticCurveTo(
+          o.x + o.w / 2 + sway,
+          o.y + o.h * 0.5,
+          o.x + o.w / 2,
+          o.y + o.h,
+        );
+        ctx.stroke();
+      } else if (o.type === "falling") {
+        ctx.save();
+        ctx.translate(o.x + o.w / 2, o.y + o.h / 2);
+        ctx.rotate(elapsedFrames * 0.05);
+        ctx.fillStyle = "#8a7263";
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const rr = (o.w / 2) * (0.8 + (i % 2 === 0 ? 0.2 : 0));
+          const px = Math.cos(a) * rr,
+            py = Math.sin(a) * rr;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        // warning shadow on ground where it will land, subtle cue
+        if (o.y < o.targetY - 4) {
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.beginPath();
+          ctx.ellipse(
+            o.x + o.w / 2,
+            GROUND_Y + player.h + 4,
+            16,
+            5,
+            0,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+        }
+      }
+    }
+
+    // dust / gem-knock particles
+    for (const p of particles) {
+      const a = Math.max(0, p.life / (p.gem ? 26 : 20));
+      ctx.fillStyle = p.gem
+        ? `rgba(255,178,56,${a * 0.9})`
+        : `rgba(180,140,100,${a * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // player (mole) — a real <img> element positioned to follow the physics
+    // below, or a simple procedural fallback drawn on the canvas if the gif
+    // hasn't loaded yet.
+    if (spriteReady) {
+      positionMoleSprite(player.x, player.y, player.onGround, elapsedFrames);
+    } else {
+      drawMoleFallback(
+        player.x,
+        player.y,
+        player.w,
+        player.h,
+        player.onGround,
+        elapsedFrames,
+      );
+    }
+
+    // biome-change toast
+    if (biomeToastFramesLeft > 0 && state === "playing") {
+      const alpha = biomeToastFramesLeft > 30 ? 1 : biomeToastFramesLeft / 30;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = '700 22px "Baloo 2", sans-serif';
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(20,13,9,0.55)";
+      ctx.fillRect(W / 2 - 140, 34, 280, 40);
+      ctx.fillStyle = "#ffd77a";
+      ctx.fillText(biomeToastText + " へ突入", W / 2, 61);
+      ctx.restore();
+    }
+
+    // key-sequence-length-up toast (fires every KEYS_PER_DISTANCE meters)
+    if (keyLevelToastFramesLeft > 0 && state === "playing") {
+      const alpha =
+        keyLevelToastFramesLeft > 30 ? 1 : keyLevelToastFramesLeft / 30;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = '700 20px "Baloo 2", sans-serif';
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(20,13,9,0.55)";
+      ctx.fillRect(W / 2 - 140, 84, 280, 36);
+      ctx.fillStyle = "#ffb238";
+      ctx.fillText(keyLevelToastText, W / 2, 108);
+      ctx.restore();
+    }
+
+    // gem-shield-used toast
+    if (shieldToastFramesLeft > 0 && state === "playing") {
+      const alpha = shieldToastFramesLeft > 30 ? 1 : shieldToastFramesLeft / 30;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = '800 20px "Baloo 2", sans-serif';
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(20,13,9,0.6)";
+      ctx.fillRect(W / 2 - 160, TOP_H - 70, 320, 38);
+      ctx.fillStyle = "#ffd77a";
+      ctx.fillText(shieldToastText, W / 2, TOP_H - 44);
+      ctx.restore();
+    }
+  }
+
+  const moleSprite = document.getElementById("mole-sprite");
+  let spriteReady = false;
+  moleSprite.addEventListener("load", () => {
+    spriteReady = true;
+    moleSprite.style.display = "block";
+  });
+  moleSprite.addEventListener("error", () => {
+    spriteReady = false;
+    moleSprite.style.display = "none";
+  });
+  if (moleSprite.complete && moleSprite.naturalWidth > 0) {
+    spriteReady = true;
+    moleSprite.style.display = "block";
+  }
+
+  // Moves the real <img> (an animated gif) to sit at the mole's current
+  // position. Drawing an animated gif into a <canvas> only ever captures one
+  // still frame in most browsers, so the sprite is kept as a genuine visible
+  // DOM element layered above the canvas instead — this is the part that
+  // makes the animation actually play.
+  function positionMoleSprite(x, yBase, onGround, frame) {
+    const bob = onGround ? Math.sin(frame * 0.35) * 2 : 0;
+    moleSprite.style.left = ((x + player.w / 2) / W) * 100 + "%";
+    moleSprite.style.top = ((yBase + 6 + bob) / H) * 100 + "%";
+    moleSprite.classList.toggle("invincible", player.invincibleFrames > 0);
+  }
+
+  // Fallback procedural mole, drawn on the canvas — only used if the gif
+  // fails to load at all.
+  function drawMoleFallback(x, yBase, w, h, onGround, frame) {
+    const bob = onGround ? Math.sin(frame * 0.35) * 2 : 0;
+    const y = yBase - h;
+    ctx.save();
+    ctx.translate(x, y);
+    if (player.invincibleFrames > 0) {
+      ctx.globalAlpha = 0.55 + Math.sin(frame * 0.9) * 0.35;
+      ctx.shadowColor = "#ffd77a";
+      ctx.shadowBlur = 16;
+    }
+    ctx.fillStyle = "#8a6a4e";
+    ctx.beginPath();
+    ctx.ellipse(w / 2, h / 2 + bob, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ---------- Main loop ----------
+  function loop() {
+    if (state === "playing") {
+      update();
+    }
+    draw();
+    document.getElementById("hud-score").textContent = Math.floor(distance);
+    document.getElementById("hud-gems").textContent = gemsThisRun;
+    const gemChip = document.getElementById("gem-chip");
+    if (gemChip)
+      gemChip.classList.toggle("shield-active", player.invincibleFrames > 0);
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Input ----------
+  function handleTap(e) {
+    if (state === "start") {
+      beginGame();
+    }
+    // NOTE: jumping is no longer triggered by tap/click — it only responds to
+    // the randomly assigned keyboard letter shown in the typing zone below.
+  }
+
+  function beginGame() {
+    resetGame();
+    state = "playing";
+    document.getElementById("start-overlay").classList.add("hidden");
+    document.getElementById("over-overlay").classList.add("hidden");
+  }
+
+  function goToTitle() {
+    resetGame();
+    state = "start";
+    document.getElementById("best-preview").textContent =
+      bestScore > 0 ? `自己ベスト: ${bestScore}m` : "";
+    document.getElementById("over-overlay").classList.add("hidden");
+    document.getElementById("start-overlay").classList.remove("hidden");
+  }
+
+  document.getElementById("start-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    beginGame();
+  });
+  document.getElementById("retry-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    beginGame();
+  });
+  document.getElementById("title-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    goToTitle();
+  });
+
+  // ---------- Ranking UI wiring ----------
+  const rankNameInput = document.getElementById("rank-name-input");
+  try {
+    const savedName = localStorage.getItem(RANK_NAME_KEY);
+    if (savedName && rankNameInput) rankNameInput.value = savedName;
+  } catch (e) {}
+
+  const rankSubmitBtn = document.getElementById("rank-submit-btn");
+  if (rankSubmitBtn) {
+    rankSubmitBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const rankStatus = document.getElementById("rank-status");
+      if (!rankingEnabled) {
+        if (rankStatus)
+          rankStatus.textContent =
+            "オンラインランキングは準備中です(Firebase未設定)。";
+        return;
+      }
+      rankSubmitBtn.disabled = true;
+      rankSubmitBtn.textContent = "登録中...";
+      const name = rankNameInput ? rankNameInput.value : "";
+      const result = await submitScore(name, distance);
+      if (result.ok) {
+        rankSubmitBtn.textContent = "登録しました！";
+        if (rankStatus) rankStatus.textContent = "ランキングに登録しました。";
+      } else {
+        rankSubmitBtn.disabled = false;
+        rankSubmitBtn.textContent = "ランキングに登録";
+        if (rankStatus)
+          rankStatus.textContent =
+            "登録に失敗しました。通信環境を確認してもう一度お試しください。";
+      }
+    });
+  }
+
+  const rankViewBtn = document.getElementById("rank-view-btn");
+  if (rankViewBtn) {
+    rankViewBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRanking();
+    });
+  }
+  const startRankViewBtn = document.getElementById("start-rank-view-btn");
+  if (startRankViewBtn) {
+    startRankViewBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRanking();
+    });
+  }
+  const rankingCloseBtn = document.getElementById("ranking-close-btn");
+  if (rankingCloseBtn) {
+    rankingCloseBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      document.getElementById("ranking-overlay").classList.add("hidden");
+    });
+  }
+
+  // Playful title-screen easter egg: tapping the mascot art makes it hop in
+  // place. Purely decorative — it doesn't affect gameplay.
+  const topvisualEl = document.querySelector(".topvisual");
+  if (topvisualEl) {
+    topvisualEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      topvisualEl.classList.remove("bounce");
+      void topvisualEl.offsetWidth; // restart the animation even on rapid taps
+      topvisualEl.classList.add("bounce");
+    });
+  }
+
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".overlay")) return; // let buttons handle themselves
+    handleTap(e);
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+
+    // Space / Enter still drive the title & result screens.
+    if (e.code === "Space" || e.code === "Enter") {
+      if (state === "start" || state === "over") {
+        e.preventDefault();
+        beginGame();
+      }
+      return;
+    }
+
+    if (state !== "playing") return;
+
+    const k = e.key.toLowerCase();
+    if (k.length === 1 && k >= "a" && k <= "z") {
+      e.preventDefault();
+      if (k === currentSequence[seqProgress]) {
+        seqProgress++;
+        if (seqProgress >= currentSequence.length) {
+          jump();
+          generateSequence(); // pick the next sequence (length may grow with distance)
+        } else {
+          renderKeycapRow();
+        }
+      } else {
+        flashMissActive();
+        seqProgress = 0;
+        // delay the re-render so the shake/red-flash on the wrong key is
+        // actually visible before the row resets to the start
+        setTimeout(renderKeycapRow, 260);
+      }
+    }
+  });
+
+  // ---------- Init ----------
+  initDecor();
+  resetGame();
+  loadStorage();
+  requestAnimationFrame(loop);
+})();
+
+  </script>
+</body>
+
+</html>
