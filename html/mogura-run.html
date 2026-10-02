@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Zen+Maru+Gothic:wght@500;700&display=swap"
     rel="stylesheet">
   <style>
-    :root {
+      :root {
     --soil-deep: #3a2c23;
     --soil-mid: #4a3222;
     --soil-light: #6b4a30;
@@ -593,63 +593,13 @@ canvas {
     font-size: 14px;
     flex: none;
 }
-  </style>
+    </style>
   <!-- Firebase (Firestore) for the online ranking feature.
        firebase-config.js must define window.FIREBASE_CONFIG with your own
        Firebase project's web app credentials — see firebase-config.js. -->
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-  <script>
-    // ============================================================
-// Firebase 設定ファイル
-// ============================================================
-// 1. https://console.firebase.google.com/ でプロジェクトを新規作成(無料枠でOK)
-// 2. [プロジェクトの設定](⚙アイコン) → [全般] → [マイアプリ] で
-//    「ウェブアプリを追加」(</> アイコン) を選択
-// 3. 表示された firebaseConfig オブジェクトの中身を、
-//    そのまま下の window.FIREBASE_CONFIG に貼り付ける
-// 4. 左メニューの [Firestore Database] → [データベースの作成] で
-//    Firestore を有効化する(ロケーションは asia-northeast1 など任意)
-// 5. Firestore の [ルール] タブで、下記のようなルールを設定する
-//    (詳細はチャットの回答本文を参照してください)
-//
-// window.FIREBASE_CONFIG が未設定(下記のプレースホルダーのまま)の場合、
-// script.js 側がそれを検知してオンラインランキング機能を自動的に無効化し、
-// ゲーム本体はオフラインのままいつも通り遊べます。
-// ============================================================
-
-window.FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-};
-
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBGVODLJNzagSklKzhX5zxMvP1R5_E6Ezo",
-  authDomain: "guts1-0.firebaseapp.com",
-  projectId: "guts1-0",
-  storageBucket: "guts1-0.firebasestorage.app",
-  messagingSenderId: "863249306480",
-  appId: "1:863249306480:web:818c3527d8dfd7391c75b5",
-  measurementId: "G-KBC7QF14GD",
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-  </script>
+  <script src="../js/8/firebase-config.js"></script>
 </head>
 
 <body>
@@ -1493,16 +1443,13 @@ const analytics = getAnalytics(app);
     ctx.globalAlpha = 1;
     ctx.restore();
 
-    // ground (kept within the top half)
+    // ground (kept within the top half) — its top edge sits exactly at
+    // GROUND_Y, the same line the player's feet and every obstacle's base
+    // rest on, so nothing appears to float above it.
     ctx.fillStyle = theme.groundFloor;
-    ctx.fillRect(
-      0,
-      GROUND_Y + player.h,
-      W,
-      Math.max(0, TOP_H - (GROUND_Y + player.h)),
-    );
+    ctx.fillRect(0, GROUND_Y, W, Math.max(0, TOP_H - GROUND_Y));
     ctx.fillStyle = theme.groundLine;
-    ctx.fillRect(0, GROUND_Y + player.h, W, 6);
+    ctx.fillRect(0, GROUND_Y, W, 6);
 
     // gems
     for (const g of gems) {
@@ -1584,7 +1531,7 @@ const analytics = getAnalytics(app);
           ctx.beginPath();
           ctx.ellipse(
             o.x + o.w / 2,
-            GROUND_Y + player.h + 4,
+            GROUND_Y + 4,
             16,
             5,
             0,
