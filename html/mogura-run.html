@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Zen+Maru+Gothic:wght@500;700&display=swap"
     rel="stylesheet">
   <style>
-      :root {
+    :root {
     --soil-deep: #3a2c23;
     --soil-mid: #4a3222;
     --soil-light: #6b4a30;
@@ -345,7 +345,7 @@ canvas {
     color: var(--cream);
     opacity: 0.85;
     margin: 0 0 6px;
-    max-width: 380px;
+    max-width: 450px;
     z-index: 1;
     position: relative;
 }
@@ -463,6 +463,18 @@ canvas {
     margin-top: 2px;
     z-index: 1;
     position: relative;
+}
+
+#reset-best-btn {
+    margin-top: 6px;
+    font-size: 12px;
+    padding: 7px 18px;
+    opacity: 0.75;
+}
+
+#score-breakdown {
+    opacity: 0.8;
+    margin-top: -2px;
 }
 
 #flash {
@@ -593,13 +605,13 @@ canvas {
     font-size: 14px;
     flex: none;
 }
-    </style>
+  </style>
   <!-- Firebase (Firestore) for the online ranking feature.
        firebase-config.js must define window.FIREBASE_CONFIG with your own
        Firebase project's web app credentials — see firebase-config.js. -->
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-  <script src="../js/8/firebase-config.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
 
 <body>
@@ -625,12 +637,13 @@ canvas {
       <div class="overlay" id="start-overlay">
         <img class="topvisual" src="../img/8/topvisual.png" alt="moguko">
         <p class="title">モグラン<br>MOGURA RUN</p>
-        <p class="subtitle">地中を掘り進むモグラを操作しよう。画面下に出てくるキーをキーボードで押してジャンプ！岩や落石を飛び越えて、宝石を集めながらどこまでも走れ。</p>
+        <p class="subtitle">地中を掘り進むモグラを操作しよう。<br>画面下に出てくるキーをキーボードで押してジャンプ！<br>岩や落石を飛び越えて、宝石を集めながらどこまでも走れ！</p>
         <button class="cta" id="start-btn">タップしてスタート</button>
         <button class="cta secondary" id="start-rank-view-btn">🏆 ランキングを見る</button>
         <p class="hint">毎回ランダムなキーが出るよ。慌てず狙って押そう</p>
         <p class="hint">💎を持っていれば、障害物に当たっても1個消費して1秒間無敵になれるよ！</p>
         <p class="hint" id="best-preview"></p>
+        <button class="cta secondary small" id="reset-best-btn">自己ベストをリセット</button>
       </div>
 
       <div class="overlay hidden" id="over-overlay">
@@ -646,6 +659,7 @@ canvas {
             <div class="result-value best" id="final-best">0</div>
           </div>
         </div>
+        <p class="hint" id="score-breakdown"></p>
         <div class="new-best" id="new-best-tag">✨ 自己ベスト更新！ ✨</div>
         <div class="rank-submit" id="rank-submit">
           <input type="text" id="rank-name-input" class="rank-name-input" maxlength="10" placeholder="ニックネーム(10文字まで)">
@@ -705,7 +719,7 @@ canvas {
       totalGemsEver = 0;
     }
     document.getElementById("best-preview").textContent =
-      bestScore > 0 ? `自己ベスト: ${bestScore}m` : "";
+      bestScore > 0 ? `自己ベスト: ${bestScore}pt` : "";
   }
 
   async function saveBest(score) {
@@ -814,7 +828,7 @@ canvas {
       nm.textContent = r.name || "名無しモグラ"; // textContent, never innerHTML — untrusted data
       const sc = document.createElement("span");
       sc.className = "rank-score";
-      sc.textContent = (r.score || 0) + "m";
+      sc.textContent = (r.score || 0) + "pt";
       li.appendChild(rank);
       li.appendChild(nm);
       li.appendChild(sc);
@@ -846,6 +860,10 @@ canvas {
   const BASE_SPEED = 3.8;
   const MAX_SPEED = 12.5;
   let elapsedFrames = 0;
+
+  const GOAL_DISTANCE = 10000; // reaching this many meters clears the run
+  const GEM_SCORE_BONUS = 50; // points added per gem still held at game-end
+  let lastFinalScore = 0; // distance + gem bonus from the most recent run, used for the best-score check and ranking submission
 
   const player = {
     x: 130,
@@ -1194,6 +1212,12 @@ canvas {
 
     distance += speed * 0.09;
 
+    if (distance >= GOAL_DISTANCE) {
+      distance = GOAL_DISTANCE;
+      gameOver(true); // reached the goal — ends the run as a clear, not a hit
+      return;
+    }
+
     if (missFlash > 0) missFlash--;
 
     const neededKeys = keysNeededForDistance(distance);
@@ -1308,9 +1332,13 @@ canvas {
     }
   }
 
-  function gameOver() {
+  function gameOver(cleared = false) {
     state = "over";
-    const finalScore = Math.floor(distance);
+    const distanceScore = Math.floor(distance);
+    const gemBonus = gemsThisRun * GEM_SCORE_BONUS;
+    const finalScore = distanceScore + gemBonus;
+    lastFinalScore = finalScore;
+
     let isNewBest = false;
     if (finalScore > bestScore) {
       bestScore = finalScore;
@@ -1326,6 +1354,17 @@ canvas {
       ? "block"
       : "none";
 
+    const breakdownEl = document.getElementById("score-breakdown");
+    if (breakdownEl) {
+      breakdownEl.textContent =
+        gemBonus > 0
+          ? `距離${distanceScore}m + 💎${gemsThisRun}個(×${GEM_SCORE_BONUS}pt) = ${finalScore}pt`
+          : `距離${distanceScore}m = ${finalScore}pt`;
+    }
+
+    const titleEl = document.querySelector("#over-overlay .title");
+    if (titleEl) titleEl.textContent = cleared ? "🎉 ゴール！！" : "掘削終了";
+
     const rankBtn = document.getElementById("rank-submit-btn");
     const rankStatus = document.getElementById("rank-status");
     if (rankBtn) {
@@ -1338,7 +1377,11 @@ canvas {
         : "オンラインランキングは準備中です(Firebase未設定)。";
     }
 
-    flashHit();
+    if (cleared) {
+      flashShield(); // celebratory amber flash instead of the red hit flash
+    } else {
+      flashHit();
+    }
     document.getElementById("over-overlay").classList.remove("hidden");
   }
 
@@ -1529,15 +1572,7 @@ canvas {
         if (o.y < o.targetY - 4) {
           ctx.fillStyle = "rgba(0,0,0,0.25)";
           ctx.beginPath();
-          ctx.ellipse(
-            o.x + o.w / 2,
-            GROUND_Y + 4,
-            16,
-            5,
-            0,
-            0,
-            Math.PI * 2,
-          );
+          ctx.ellipse(o.x + o.w / 2, GROUND_Y + 4, 16, 5, 0, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -1694,7 +1729,7 @@ canvas {
     resetGame();
     state = "start";
     document.getElementById("best-preview").textContent =
-      bestScore > 0 ? `自己ベスト: ${bestScore}m` : "";
+      bestScore > 0 ? `自己ベスト: ${bestScore}pt` : "";
     document.getElementById("over-overlay").classList.add("hidden");
     document.getElementById("start-overlay").classList.remove("hidden");
   }
@@ -1711,6 +1746,24 @@ canvas {
     e.stopPropagation();
     goToTitle();
   });
+
+  const resetBestBtn = document.getElementById("reset-best-btn");
+  if (resetBestBtn) {
+    resetBestBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (bestScore <= 0) {
+        alert("まだ自己ベストの記録がありません。");
+        return;
+      }
+      const ok = confirm(
+        `自己ベスト(${bestScore}pt)をリセットします。よろしいですか？`,
+      );
+      if (!ok) return;
+      bestScore = 0;
+      saveBest(0);
+      document.getElementById("best-preview").textContent = "";
+    });
+  }
 
   // ---------- Ranking UI wiring ----------
   const rankNameInput = document.getElementById("rank-name-input");
@@ -1733,7 +1786,7 @@ canvas {
       rankSubmitBtn.disabled = true;
       rankSubmitBtn.textContent = "登録中...";
       const name = rankNameInput ? rankNameInput.value : "";
-      const result = await submitScore(name, distance);
+      const result = await submitScore(name, lastFinalScore);
       if (result.ok) {
         rankSubmitBtn.textContent = "登録しました！";
         if (rankStatus) rankStatus.textContent = "ランキングに登録しました。";
@@ -1789,14 +1842,19 @@ canvas {
   window.addEventListener("keydown", (e) => {
     if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
 
-    // Space / Enter still drive the title & result screens.
-    if (e.code === "Space" || e.code === "Enter") {
+    // Space still drives the title & result screens. Enter is deliberately
+    // ignored here (it used to behave the same as Space), since it was too
+    // easy to hit by accident — e.g. right after typing a ranking nickname —
+    // and immediately start/restart a run. Only Space, tapping, or the
+    // on-screen buttons trigger start/retry now.
+    if (e.code === "Space") {
       if (state === "start" || state === "over") {
         e.preventDefault();
         beginGame();
       }
       return;
     }
+    if (e.code === "Enter") return;
 
     if (state !== "playing") return;
 
@@ -1827,7 +1885,6 @@ canvas {
   loadStorage();
   requestAnimationFrame(loop);
 })();
-
   </script>
 </body>
 
