@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>タイプ・ドレミ♪ - たのしいタイピングピアノ</title>
+    <style>
+        body {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 30%, #f0fdf4 70%, #f0f9ff 100%);
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* スマホ: ノッチなどを よける・かくれる URLバーに対応 */
+    height: 100vh;
+    height: 100dvh;
+    box-sizing: border-box;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* 16:9 stage: designed at 1280x720, scaled by JS to fit the window */
+#stage {
+    width: 1280px;
+    height: 720px;
+    flex-shrink: 0;
+    padding: 16px 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transform-origin: center center;
+    position: relative;
+}
+
+/* Piano keys fill the row height */
+.piano-key {
+    height: 100% !important;
+    min-height: 0;
+}
+
+/* Bouncy animation */
+@keyframes bounce-gentle {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.animate-bounce-gentle {
+    animation: bounce-gentle 2s infinite ease-in-out;
+}
+
+/* Key press pop animation */
+@keyframes key-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.15) translateY(-6px);
+    }
+
+    100% {
+        transform: scale(1.05);
+    }
+}
+
+.key-active {
+    animation: key-pop 0.15s forwards ease-out;
+    box-shadow: 0 0 25px rgba(255, 230, 0, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.8) !important;
+    filter: brightness(1.15) contrast(1.1) !important;
+}
+
+/* Note particle animation */
+@keyframes float-up {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.8) rotate(0deg);
+    }
+
+    50% {
+        opacity: 0.9;
+        transform: translateY(-60px) scale(1.3) rotate(15deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-120px) scale(0.5) rotate(-15deg);
+    }
+}
+
+.note-particle {
+    position: absolute;
+    pointer-events: none;
+    animation: float-up 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    font-size: 2.2rem;
+    z-index: 50;
+}
+
+/* Pulsing current guide key */
+@keyframes guide-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(236, 72, 153, 0.6);
+    }
+
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 25px rgba(236, 72, 153, 1);
+    }
+}
+
+.guide-target {
+    animation: guide-pulse 0.8s infinite ease-in-out;
+    border: 4px solid #ec4899 !important;
+}
+
+/* Custom Scrollbar for song selector */
+::-webkit-scrollbar {
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #f472b6;
+    border-radius: 10px;
+}
+
+/* Black keys: sit on top of the boundary between two white keys */
+#piano-keys-row {
+    position: relative;
+}
+
+.black-key {
+    position: absolute !important;
+    top: 0;
+    width: 72px;
+    margin-left: -36px;
+    height: 58% !important;
+    z-index: 10;
+    box-shadow: 0 5px 0 #0f172a, 0 8px 12px rgba(0, 0, 0, 0.3);
+}
+
+
+/* キーボードの文字を隠すモード */
+.hide-key-letters .key-letter {
+    display: none !important;
+}
+
+.hide-key-letters .key-badge {
+    visibility: hidden;
+}
+
+/* おとあてゲーム: ヘッダーと曲えらびの段を、クイズパネルに入れかえる */
+#quiz-panel {
+    display: none;
+}
+
+#stage.quiz-mode #quiz-panel {
+    display: flex;
+}
+
+#stage.quiz-mode>header,
+#stage.quiz-mode #top-row {
+    display: none;
+}
+
+
+/* タッチ: 鍵盤とボタンは、ゆびでなぞっても拡大・スクロールしない */
+.piano-key,
+.octave-btn {
+    touch-action: none;
+}
+
+/* たてむきスマホの「よこむきにしてね」 */
+#rotate-prompt {
+    display: none;
+}
+
+body.portrait-prompt #rotate-prompt {
+    display: flex;
+}
+
+/* 小さい画面（スマホ）: 鍵盤をひろく。キーボード用の説明や モニターはかくす */
+#stage.compact>footer,
+#stage.compact #monitor-section,
+#stage.compact>header p {
+    display: none;
+}
+
+#stage.compact #top-row {
+    grid-template-columns: 1fr;
+}
+
+/* よこむきスマホ(せまい高さ)では スタート画面を小さく */
+@media (max-height: 520px) {
+    #start-overlay {
+        padding: 8px;
+    }
+
+    #start-overlay>div {
+        padding: 12px 20px;
+        gap: 8px;
+    }
+
+    #start-overlay .text-6xl {
+        font-size: 2rem;
+        line-height: 1;
+    }
+
+    #start-overlay p {
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+
+    #start-overlay button {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        font-size: 1.1rem;
+    }
+}
+    </style>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for web audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas-confetti for stage clear effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts for cute rounded text -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="text-slate-800">
+
+    <!-- Floating background decorations -->
+    <div class="fixed top-6 left-6 text-4xl opacity-30 animate-bounce-gentle pointer-events-none">🎵</div>
+    <div class="fixed top-12 right-10 text-5xl opacity-30 animate-bounce-gentle pointer-events-none"
+        style="animation-delay: 0.7s;">⭐</div>
+    <div class="fixed bottom-10 left-12 text-5xl opacity-30 animate-bounce-gentle pointer-events-none"
+        style="animation-delay: 1.2s;">✨</div>
+    <div class="fixed bottom-8 right-8 text-4xl opacity-30 animate-bounce-gentle pointer-events-none"
+        style="animation-delay: 0.4s;">🎶</div>
+
+    <!-- Audio Start Overlay -->
+    <div id="start-overlay"
+        class="fixed inset-0 z-50 bg-amber-100/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
+        <div
+            class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border-4 border-amber-300 flex flex-col items-center gap-6">
+            <div class="text-6xl animate-bounce">♪🎹♬</div>
+            <h1 class="text-3xl sm:text-4xl font-black text-pink-500 tracking-wider">タイプdeドレミ♪</h1>
+            <p class="text-slate-600 font-bold text-lg leading-relaxed">
+                キーボードをたのしくたたいて<br>ピアノをえんそうしよう！
+            </p>
+            <button id="start-btn"
+                class="w-full py-4 bg-gradient-to-r from-pink-500 via-rose-400 to-amber-400 hover:from-pink-600 hover:to-amber-500 text-white font-black text-2xl rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200">
+                あそぶ！（スタート）
+            </button>
+            <button id="quiz-start-btn"
+                class="w-full py-3 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white font-black text-xl rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200">
+                🎼 おとあてゲーム
+            </button>
+        </div>
+    </div>
+
+    <!-- 16:9 Stage (1280x720 design, scaled to fit the window) -->
+    <div id="stage">
+
+        <!-- Header Section -->
+        <header
+            class="w-full flex items-center justify-between gap-3 bg-white/80 backdrop-blur-sm px-5 py-2 rounded-3xl border-4 border-pink-200 shadow-md shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="text-4xl">🎹</span>
+                <div>
+                    <h1
+                        class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500">
+                        タイプdeドレミ♪
+                    </h1>
+                    <p class="text-sm font-bold text-slate-500">おととなかよし！タイピングピアノ</p>
+                </div>
+            </div>
+
+            <!-- Status Displays (Score, Combo, Octave) -->
+            <div class="flex items-center gap-4 justify-center">
+                <button onclick="startQuiz('staff')"
+                    class="px-3 py-1.5 rounded-2xl bg-violet-500 hover:bg-violet-600 text-white font-black text-sm shadow-[0_3px_0_#5b21b6] active:translate-y-0.5 active:shadow-none transition">
+                    🎼 おとあてゲーム
+                </button>
+                <!-- Octave Indicator -->
+                <div class="bg-indigo-50 px-3 py-1.5 rounded-2xl border-2 border-indigo-200 flex items-center gap-2">
+                    <span class="text-xs font-bold text-indigo-400">おくたーぶ:</span>
+                    <span id="octave-badge" class="font-black text-lg text-indigo-600">ふつう<span class="key-letter">
+                            (B)</span></span>
+                </div>
+                <!-- Score Indicator -->
+                <div class="bg-amber-50 px-3 py-1.5 rounded-2xl border-2 border-amber-200 flex items-center gap-1.5">
+                    <span class="text-base">⭐</span>
+                    <span id="score-text" class="font-black text-xl text-amber-600">0</span>
+                </div>
+                <!-- Combo Indicator -->
+                <div class="bg-rose-50 px-3 py-1.5 rounded-2xl border-2 border-rose-200 flex items-center gap-1.5">
+                    <span class="text-base">🔥</span>
+                    <span id="combo-text" class="font-black text-xl text-rose-500">0 コンボ</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Workspace -->
+        <main class="w-full flex-1 min-h-0 flex flex-col gap-3 relative">
+
+            <!-- Quiz panel (おとあてゲーム) : shown instead of header + song row -->
+            <section id="quiz-panel" class="shrink-0 h-[250px] gap-3">
+                <div id="quiz-staff"
+                    class="flex-1 min-w-0 bg-white/95 rounded-3xl border-4 border-violet-300 shadow-md p-2 flex items-center justify-center">
+                </div>
+                <div
+                    class="w-[400px] shrink-0 bg-white/90 rounded-3xl border-4 border-amber-200 shadow-md p-3 flex flex-col gap-2">
+                    <div id="quiz-tabs" class="flex gap-1.5"></div>
+                    <div id="quiz-progress" class="text-sm font-black text-violet-600 min-h-[20px]"></div>
+                    <div id="quiz-message"
+                        class="flex-1 flex items-center text-xl font-black text-slate-800 leading-snug"></div>
+                    <div id="quiz-actions" class="flex gap-2 flex-wrap"></div>
+                </div>
+            </section>
+
+
+            <div id="top-row" class="grid grid-cols-[1fr_360px] grid-rows-[148px] gap-3 shrink-0">
+
+                <!-- Song Selector & Song Play Mode Banner -->
+                <section
+                    class="bg-white/90 rounded-3xl p-3 border-4 border-amber-200 shadow-md flex flex-col gap-2 min-w-0 min-h-0">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🎼</span>
+                            <span class="font-extrabold text-slate-700 text-base">きょくをえらんでれんしゅう：</span>
+                        </div>
+                        <div id="song-buttons" class="flex gap-2 flex-wrap p-1 max-w-full">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Current Song Progress / Prompt Bar -->
+                    <div id="song-prompt-box"
+                        class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-2.5 flex flex-row items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl" id="song-icon">🎵</span>
+                            <div>
+                                <div class="text-xs font-bold text-amber-600" id="song-title-label">じゆうえんそうモード</div>
+                                <div class="text-lg font-black text-slate-800" id="song-next-note-text">すきなキーをおしてみてね！
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sheet Preview / Upcoming Notes -->
+                        <div id="note-sequence-display"
+                            class="flex items-center gap-1.5 overflow-hidden max-w-full px-2 py-1">
+                            <!-- Upcoming note chips injected here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PROMINENT MONITOR: Currently Held / Pressed Keys Monitor -->
+                <section id="monitor-section"
+                    class="bg-indigo-900/90 text-white rounded-3xl p-3 border-4 border-indigo-400 shadow-xl flex flex-col items-center gap-1 relative overflow-hidden min-h-0">
+                    <div class="text-xs font-extrabold tracking-wider text-indigo-200 flex items-center gap-2">
+                        <span>👀</span> いま押しているキー
+                    </div>
+
+                    <!-- Live Active Keys Banner -->
+                    <div id="pressed-keys-monitor"
+                        class="flex-1 min-h-0 overflow-hidden w-full flex items-center justify-center gap-1.5 flex-wrap content-center">
+                        <span class="text-indigo-300/60 font-bold text-sm italic">（キーボードを押すとここに大きく表示されるよ）</span>
+                    </div>
+                </section>
+            </div>
+
+            <!-- PIANO KEYBOARD & OCTAVE CONTROLS CONTAINER -->
+            <section id="piano-container"
+                class="relative flex-1 min-h-0 bg-white/95 rounded-3xl p-4 border-4 border-pink-300 shadow-2xl flex flex-col gap-3">
+
+                <!-- Octave Control Keys Row (V, B, N) -->
+                <div
+                    class="flex items-center justify-center gap-6 bg-slate-100/80 p-2 rounded-2xl shrink-0 border-2 border-slate-200">
+                    <div class="text-xs font-black text-slate-500">オクターブきりかえ:</div>
+
+                    <!-- N Key (Down) -->
+                    <button id="key-n" data-key="n" onclick="changeOctave(-1)"
+                        class="octave-btn flex-1 max-w-[130px] bg-sky-400 hover:bg-sky-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#0284c7] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-sky-300">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-sky-100">さげる (-1)</div>
+                            <div class="text-sm font-black key-letter">N キー</div>
+                        </div>
+                        <span class="text-xl">👇</span>
+                    </button>
+
+                    <!-- B Key (Reset/Standard) -->
+                    <button id="key-b" data-key="b" onclick="resetOctave()"
+                        class="octave-btn flex-1 max-w-[140px] bg-emerald-400 hover:bg-emerald-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#059669] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-emerald-300">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-emerald-100">もとにをもどす</div>
+                            <div class="text-sm font-black key-letter">B キー</div>
+                        </div>
+                        <span class="text-xl">🏠</span>
+                    </button>
+
+                    <!-- V Key (Up) -->
+                    <button id="key-v" data-key="v" onclick="changeOctave(1)"
+                        class="octave-btn flex-1 max-w-[130px] bg-pink-400 hover:bg-pink-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#db2777] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-pink-300">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-pink-100">あげる (+1)</div>
+                            <div class="text-sm font-black key-letter">V キー</div>
+                        </div>
+                        <span class="text-xl">👆</span>
+                    </button>
+
+                    <!-- Toggle: show / hide keyboard letters -->
+                    <button id="letters-toggle-btn" onclick="toggleKeyLetters()"
+                        class="flex-1 max-w-[170px] bg-slate-500 hover:bg-slate-600 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#334155] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-slate-400">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-slate-200">スペースでもOK</div>
+                            <div id="letters-btn-label" class="text-xs font-black">もじをかくす</div>
+                        </div>
+                        <span id="letters-btn-icon" class="text-xl">🙈</span>
+                    </button>
+
+                    <!-- Instrument (sound) selector -->
+                    <button id="inst-btn" onclick="openInstMenu()"
+                        class="flex-1 max-w-[200px] bg-violet-500 hover:bg-violet-600 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#5b21b6] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-violet-400">
+                        <div class="text-left min-w-0">
+                            <div class="text-[10px] font-bold text-violet-100">おとをえらぶ</div>
+                            <div id="inst-btn-label" class="text-xs font-black truncate">🎵 かわいいおと</div>
+                        </div>
+                        <span class="text-xl">🎹</span>
+                    </button>
+                </div>
+
+                <!-- MAIN PIANO KEYS (S, D, F, G, H, J, K, L) -->
+                <div id="piano-keys-row" class="grid grid-cols-8 gap-3 flex-1 min-h-0 pb-1">
+                    <!-- Piano Key Template generated via JS or structured inline for styling -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer Guide -->
+        <footer class="key-badge w-full text-center text-sm font-bold text-slate-500 shrink-0">
+            💡 ほんもののキーボードの <span class="text-pink-600 bg-pink-100 px-1.5 py-0.5 rounded">S D F G H J K L</span>
+            、くろいけんばんは <span class="text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded">E R Y U I</span>、オクターブは <span
+                class="text-sky-600 bg-sky-100 px-1.5 py-0.5 rounded">V B N</span> をおしてあそぼう！
+        </footer>
+
+        <!-- Song selection screen -->
+        <div id="song-menu"
+            class="hidden absolute inset-0 z-40 bg-amber-100/90 backdrop-blur-md items-center justify-center"
+            onclick="if (event.target === this) closeSongMenu()">
+            <div class="bg-white rounded-3xl p-6 w-[1120px] border-4 border-amber-300 shadow-2xl flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-3xl font-black text-pink-500 flex items-center gap-2"><span>🎼</span> きょくをえらんでね！
+                    </h2>
+                    <button onclick="closeSongMenu()"
+                        class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-600 font-black text-sm transition">
+                        ✕ とじる（Esc）
+                    </button>
+                </div>
+                <div id="song-menu-grid" class="grid grid-cols-4 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Instrument selection screen -->
+        <div id="inst-menu"
+            class="hidden absolute inset-0 z-40 bg-violet-100/90 backdrop-blur-md items-center justify-center"
+            onclick="if (event.target === this) closeInstMenu()">
+            <div class="bg-white rounded-3xl p-6 w-[1120px] border-4 border-violet-300 shadow-2xl flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-3xl font-black text-violet-500 flex items-center gap-2"><span>🎹</span> どんな おとで ひく？
+                    </h2>
+                    <button onclick="closeInstMenu()"
+                        class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-600 font-black text-sm transition">
+                        ✕ とじる（Esc）
+                    </button>
+                </div>
+                <div id="inst-menu-grid" class="grid grid-cols-5 gap-4"></div>
+            </div>
+        </div>
+
+    </div><!-- /#stage -->
+
+    <!-- スマホを よこむきに してもらう（たてのままでも あそべる） -->
+    <div id="rotate-prompt" style="z-index:60"
+        class="fixed inset-0 bg-amber-100/95 backdrop-blur-md flex-col items-center justify-center gap-5 p-6 text-center">
+        <div class="text-7xl animate-bounce">📱↻</div>
+        <p class="text-2xl font-black text-pink-500 leading-relaxed">スマホを<br>よこむきに してね！</p>
+        <button onclick="forceRotate = true; fitStage();"
+            class="px-6 py-3 rounded-2xl bg-white border-4 border-amber-300 text-slate-600 font-black text-base shadow-md">
+            たてのまま あそぶ
+        </button>
+    </div>
+
+    <script>
+        // 1280x720 のステージを、画面に合わせて16:9のまま拡大縮小
+        // スマホ：よこむきならそのまま、たてむきなら「よこむきにしてね」→ たてのままなら ステージを90°まわす
+        let forceRotate = false;
+        function isTouchDevice() {
+            return window.matchMedia("(pointer: coarse)").matches;
+        }
+        function fitStage() {
+            const stage = document.getElementById("stage");
+            const cs = getComputedStyle(document.body); // ノッチなどの安全領域ぶん
+            const w = window.innerWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+            const h = window.innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+            const touch = isTouchDevice();
+            const portrait = h > w;
+            const rotate = touch && portrait && forceRotate;
+            const s = rotate ? Math.min(h / 1280, w / 720) : Math.min(w / 1280, h / 720);
+            stage.style.transform = rotate ? `rotate(90deg) scale(${s})` : `scale(${s})`;
+            stage.classList.toggle("compact", s < 0.62); // 小さい画面では、いらない部分をへらす
+            document.body.classList.toggle("portrait-prompt", touch && portrait && !forceRotate);
+        }
+        window.addEventListener("resize", fitStage);
+        window.addEventListener("orientationchange", () => setTimeout(fitStage, 200));
+        if (isTouchDevice()) window.addEventListener("contextmenu", (e) => e.preventDefault());
+        fitStage();
+    </script>
+    <script>
+        const PIANO_KEYS = [
+  {
+    key: "s",
+    noteName: "C",
+    jpName: "ド",
+    emoji: "🐻",
+    color: "from-red-400 to-rose-500",
+    borderColor: "border-rose-300",
+    shadowColor: "#be123c",
+  },
+  {
+    key: "d",
+    noteName: "D",
+    jpName: "レ",
+    emoji: "🐼",
+    color: "from-orange-400 to-amber-500",
+    borderColor: "border-amber-300",
+    shadowColor: "#b45309",
+  },
+  {
+    key: "f",
+    noteName: "E",
+    jpName: "ミ",
+    emoji: "🐶",
+    color: "from-amber-300 to-yellow-500",
+    borderColor: "border-yellow-200",
+    shadowColor: "#a16207",
+  },
+  {
+    key: "g",
+    noteName: "F",
+    jpName: "ファ",
+    emoji: "🐵",
+    color: "from-emerald-400 to-green-500",
+    borderColor: "border-green-300",
+    shadowColor: "#15803d",
+  },
+  {
+    key: "h",
+    noteName: "G",
+    jpName: "ソ",
+    emoji: "🐨",
+    color: "from-sky-400 to-cyan-500",
+    borderColor: "border-cyan-300",
+    shadowColor: "#0369a1",
+  },
+  {
+    key: "j",
+    noteName: "A",
+    jpName: "ラ",
+    emoji: "🐱",
+    color: "from-blue-400 to-indigo-500",
+    borderColor: "border-indigo-300",
+    shadowColor: "#1d4ed8",
+  },
+  {
+    key: "k",
+    noteName: "B",
+    jpName: "シ",
+    emoji: "🐭",
+    color: "from-purple-400 to-violet-500",
+    borderColor: "border-violet-300",
+    shadowColor: "#6d28d9",
+  },
+  {
+    key: "l",
+    noteName: "C5",
+    jpName: "ド",
+    emoji: "🐣",
+    color: "from-pink-400 to-fuchsia-500",
+    borderColor: "border-fuchsia-300",
+    shadowColor: "#a21caf",
+  },
+];
+
+// --- Black keys (sharps) --- 白鍵 PIANO_KEYS[after] と [after+1] の間に置く
+const BLACK_KEYS = [
+  { key: "e", noteName: "C#", jpName: "ド♯", after: 0 },
+  { key: "r", noteName: "D#", jpName: "レ♯", after: 1 },
+  { key: "y", noteName: "F#", jpName: "ファ♯", after: 3 },
+  { key: "u", noteName: "G#", jpName: "ソ♯", after: 4 },
+  { key: "i", noteName: "A#", jpName: "ラ♯", after: 5 },
+].map((k) => ({
+  ...k,
+  emoji: "🖤",
+  color: "from-slate-600 to-slate-800",
+  borderColor: "border-slate-500",
+  black: true,
+}));
+const ALL_KEYS = [...PIANO_KEYS, ...BLACK_KEYS];
+
+// --- Song Presets for Practice ---
+const SONGS = [
+  {
+    id: "free",
+    title: "じゆうえんそう",
+    icon: "🌈",
+    notes: [],
+  },
+  {
+    id: "twinkle",
+    title: "きらきら星",
+    icon: "⭐",
+    notes: [
+      "s",
+      "s",
+      "h",
+      "h",
+      "j",
+      "j",
+      "h",
+      "g",
+      "g",
+      "f",
+      "f",
+      "d",
+      "d",
+      "s",
+      "h",
+      "h",
+      "g",
+      "g",
+      "f",
+      "f",
+      "d",
+      "h",
+      "h",
+      "g",
+      "g",
+      "f",
+      "f",
+      "d",
+      "s",
+      "s",
+      "h",
+      "h",
+      "j",
+      "j",
+      "h",
+      "g",
+      "g",
+      "f",
+      "f",
+      "d",
+      "d",
+      "s",
+    ],
+  },
+  {
+    id: "tulip",
+    title: "チューリップ",
+    icon: "🌷",
+    notes: [
+      "s",
+      "d",
+      "f",
+      "s",
+      "d",
+      "f",
+      "h",
+      "f",
+      "d",
+      "s",
+      "d",
+      "f",
+      "d",
+      "s",
+      "d",
+      "f",
+      "s",
+      "d",
+      "f",
+      "h",
+      "f",
+      "d",
+      "s",
+      "d",
+      "f",
+      "s",
+      "h",
+      "h",
+      "f",
+      "h",
+      "j",
+      "j",
+      "h",
+      "f",
+      "f",
+      "d",
+      "d",
+      "s",
+    ],
+  },
+  {
+    id: "frog",
+    title: "かえるの合唱",
+    icon: "🐸",
+    notes: [
+      "s",
+      "d",
+      "f",
+      "g",
+      "f",
+      "d",
+      "s",
+      "f",
+      "g",
+      "h",
+      "j",
+      "h",
+      "g",
+      "f",
+      "s",
+      "s",
+      "s",
+      "s",
+      "s",
+      "s",
+      "d",
+      "d",
+      "f",
+      "f",
+      "g",
+      "g",
+      "f",
+      "d",
+      "s",
+    ],
+  },
+  {
+    id: "mary",
+    title: "メリーさんのひつじ",
+    icon: "🐑",
+    notes: "f d s d f f f d d d f h h f d s d f f f d d f d s".split(" "),
+  },
+  {
+    id: "butterfly",
+    title: "ちょうちょう",
+    icon: "🦋",
+    notes: (
+      "h f f g d d s d f g h h h " +
+      "h f f f g d d d s f h h f f f " +
+      "d d d d d f g f f f f f g h " +
+      "h f f f g d d d s f h h f f f"
+    ).split(" "),
+  },
+  {
+    id: "ode",
+    title: "歓喜の歌",
+    icon: "🎻",
+    notes: (
+      "f f g h h g f d s s d f f d d " +
+      "f f g h h g f d s s d f d s s " +
+      "d d f s d f g f s d f g f d s d s " +
+      "f f g h h g f d s s d f d s s"
+    ).split(" "),
+  },
+  {
+    id: "jingle",
+    title: "ジングルベル",
+    icon: "🔔",
+    notes: (
+      "f f f f f f f h s d f " +
+      "g g g g g f f f f d d f d h " +
+      "f f f f f f f h s d f " +
+      "g g g g g f f f h h g d s"
+    ).split(" "),
+  },
+];
+
+// むずかしさ（★の数）と、曲えらび画面での ならび順
+const SONG_LEVELS = {
+  mary: 1,
+  frog: 1,
+  butterfly: 2,
+  twinkle: 2,
+  tulip: 2,
+  ode: 2,
+  jingle: 3,
+};
+const LEVEL_LABELS = {
+  1: "★☆☆ かんたん",
+  2: "★★☆ ふつう",
+  3: "★★★ むずかしい",
+};
+const SONG_ORDER = [
+  "free",
+  "mary",
+  "frog",
+  "butterfly",
+  "twinkle",
+  "tulip",
+  "ode",
+  "jingle",
+];
+SONGS.sort((a, b) => SONG_ORDER.indexOf(a.id) - SONG_ORDER.indexOf(b.id));
+
+// --- Global State ---
+let synth = null;
+let octaveOffset = 0; // -1, 0, 1
+let activeKeys = new Set();
+let score = 0;
+let combo = 0;
+let currentSong = SONGS[0];
+let songNoteIndex = 0;
+let isAudioStarted = false;
+let isSongMenuOpen = false;
+let isInstMenuOpen = false;
+let quizActive = false; // おとあてゲーム中か
+
+// --- DOM Elements ---
+const startOverlay = document.getElementById("start-overlay");
+const startBtn = document.getElementById("start-btn");
+const pianoRow = document.getElementById("piano-keys-row");
+const pressedMonitor = document.getElementById("pressed-keys-monitor");
+const octaveBadge = document.getElementById("octave-badge");
+const scoreText = document.getElementById("score-text");
+const comboText = document.getElementById("combo-text");
+const songButtonsContainer = document.getElementById("song-buttons");
+const songTitleLabel = document.getElementById("song-title-label");
+const songNextNoteText = document.getElementById("song-next-note-text");
+const noteSequenceDisplay = document.getElementById("note-sequence-display");
+const songIcon = document.getElementById("song-icon");
+const songMenu = document.getElementById("song-menu");
+const songMenuGrid = document.getElementById("song-menu-grid");
+
+// --- Initialize Web Audio (Tone.js) ---
+function initSynth() {
+  if (synth) return;
+  // Polyphonic Synth for pleasant marimba/piano warm sound
+  synth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "triangle" },
+    envelope: {
+      attack: 0.005,
+      decay: 0.3,
+      sustain: 0.1,
+      release: 0.8,
+    },
+  }).toDestination();
+  synth.volume.value = -4;
+}
+
+// --- Build UI Components ---
+function createPianoKeys() {
+  pianoRow.innerHTML = "";
+  PIANO_KEYS.forEach((item) => {
+    const keyBtn = document.createElement("div");
+    keyBtn.id = `key-${item.key}`;
+    keyBtn.dataset.key = item.key;
+    keyBtn.className = `piano-key cursor-pointer flex flex-col items-center justify-between p-3 rounded-2xl bg-gradient-to-b ${item.color} text-white border-4 ${item.borderColor} shadow-[0_6px_0_${item.shadowColor}] transition duration-100 select-none relative`;
+
+    keyBtn.innerHTML = `
+          <!-- Top English Key Badge -->
+          <div class="key-badge bg-white/30 backdrop-blur-sm px-4 py-0.5 rounded-2xl text-3xl font-black tracking-wider text-white shadow-inner">
+            ${item.key.toUpperCase()}
+          </div>
+
+          <!-- Cute Emoji Icon -->
+          <div class="text-5xl my-1 animate-bounce-gentle pointer-events-none">${item.emoji}</div>
+
+          <!-- Bottom Pitch Label (Do Re Mi) -->
+          <div class="text-center">
+            <div class="text-2xl font-black leading-tight">${item.jpName}</div>
+          </div>
+        `;
+
+    bindKeyEvents(keyBtn, item.key);
+    pianoRow.appendChild(keyBtn);
+  });
+
+  // Black keys (overlaid between white keys)
+  BLACK_KEYS.forEach((item) => {
+    const keyBtn = document.createElement("div");
+    keyBtn.id = `key-${item.key}`;
+    keyBtn.dataset.key = item.key;
+    keyBtn.className =
+      "piano-key black-key cursor-pointer flex flex-col items-center justify-between p-2 rounded-2xl bg-gradient-to-b from-slate-600 to-slate-900 text-white border-4 border-slate-500 select-none";
+    // boundary between white key [after] and [after+1] (grid: 8 cols, gap 12px)
+    keyBtn.style.left = `calc((100% - 84px) / 8 * ${item.after + 1} + ${item.after * 12 + 6}px)`;
+    keyBtn.innerHTML = `
+          <div class="key-badge bg-white/30 px-3 py-0.5 rounded-xl text-2xl font-black tracking-wider text-white shadow-inner pointer-events-none">${item.key.toUpperCase()}</div>
+          <div class="text-center pointer-events-none">
+            <div class="text-lg font-black leading-tight">${item.jpName}</div>
+          </div>
+        `;
+    bindKeyEvents(keyBtn, item.key);
+    pianoRow.appendChild(keyBtn);
+  });
+}
+
+// Touch & Mouse Event Handlers
+function bindKeyEvents(el, keyChar) {
+  const down = (e) => {
+    e.preventDefault();
+    handleKeyPress(keyChar);
+  };
+  const up = (e) => {
+    e.preventDefault();
+    handleKeyRelease(keyChar);
+  };
+  el.addEventListener("mousedown", down);
+  el.addEventListener("mouseup", up);
+  el.addEventListener("mouseleave", up);
+  el.addEventListener("touchstart", down);
+  el.addEventListener("touchend", up);
+  el.addEventListener("touchcancel", up);
+}
+
+function createSongButtons() {
+  // いま えらんでいる曲を見せる、1つのボタン（おすと曲えらび画面がひらく）
+  songButtonsContainer.innerHTML = "";
+  const btn = document.createElement("button");
+  btn.className =
+    "px-4 py-1.5 rounded-2xl font-black text-sm whitespace-nowrap border-2 bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-500 shadow-[0_3px_0_#b45309] active:translate-y-0.5 active:shadow-none transition flex items-center gap-2";
+  btn.innerHTML = `<span>${currentSong.icon}</span> ${currentSong.title} <span class="text-xs bg-white/70 px-2 py-0.5 rounded-full">🎼 きょくをえらぶ</span>`;
+  btn.onclick = openSongMenu;
+  songButtonsContainer.appendChild(btn);
+}
+
+// --- Song selection screen ---
+function createSongMenu() {
+  songMenuGrid.innerHTML = "";
+  SONGS.forEach((song) => {
+    const isCurrent = song.id === currentSong.id;
+    const level =
+      song.id === "free"
+        ? "🌈 すきにひこう"
+        : LEVEL_LABELS[SONG_LEVELS[song.id]];
+    const card = document.createElement("button");
+    card.className = `song-card flex flex-col items-center justify-center gap-1 h-[150px] rounded-2xl border-4 transition duration-150 hover:-translate-y-1 hover:shadow-lg ${
+      isCurrent
+        ? "bg-amber-50 border-amber-400 ring-4 ring-amber-200"
+        : "bg-white border-slate-200 hover:border-pink-300 hover:bg-pink-50"
+    }`;
+    card.innerHTML = `
+      <span class="text-5xl">${song.icon}</span>
+      <span class="text-xl font-black text-slate-800">${song.title}</span>
+      <span class="text-sm font-bold text-amber-500">${level}</span>
+    `;
+    card.onclick = () => {
+      selectSong(song);
+      closeSongMenu();
+    };
+    songMenuGrid.appendChild(card);
+  });
+}
+
+function openSongMenu() {
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+  createSongMenu();
+  songMenu.classList.remove("hidden");
+  songMenu.classList.add("flex");
+  isSongMenuOpen = true;
+}
+
+function closeSongMenu() {
+  songMenu.classList.add("hidden");
+  songMenu.classList.remove("flex");
+  isSongMenuOpen = false;
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+}
+
+// --- Audio Sound Trigger ---
+function playNoteSound(keyChar, hold = false) {
+  if (!isAudioStarted) return;
+  initSynth();
+
+  const keyObj = ALL_KEYS.find((k) => k.key === keyChar);
+  if (!keyObj) return;
+
+  // Calculate Frequency base
+  let baseOctave = 4 + octaveOffset;
+  let noteStr = keyObj.noteName;
+
+  if (noteStr === "C5") {
+    noteStr = `C${baseOctave + 1}`;
+  } else {
+    noteStr = `${noteStr}${baseOctave}`;
+  }
+
+  try {
+    const { id, node } = activeInstrument();
+    const info = INSTRUMENTS[id];
+    if (info.transpose && Tone.Frequency(noteStr).toFrequency() < 1000) {
+      noteStr = Tone.Frequency(noteStr).transpose(info.transpose).toNote();
+    }
+    releaseHeld(keyChar);
+    if (hold && info.sustain) {
+      // おしている間 ずっと なる（はなすと おとがきえる）
+      node.triggerAttack(noteStr);
+      heldNotes[keyChar] = { node, note: noteStr };
+    } else {
+      node.triggerAttackRelease(noteStr, info.sustain ? "4n" : "8n");
+    }
+  } catch (err) {
+    console.log("Audio play exception:", err);
+  }
+}
+
+// --- Key Down / Press Handler ---
+function handleKeyPress(keyChar) {
+  keyChar = keyChar.toLowerCase();
+
+  // おとあてゲーム中は、オクターブは かえない
+  if (quizActive && (keyChar === "v" || keyChar === "b" || keyChar === "n"))
+    return;
+
+  // Octave Keys Handling
+  if (keyChar === "v") {
+    changeOctave(1);
+    highlightControlKey("key-v");
+    return;
+  }
+  if (keyChar === "b") {
+    resetOctave();
+    highlightControlKey("key-b");
+    return;
+  }
+  if (keyChar === "n") {
+    changeOctave(-1);
+    highlightControlKey("key-n");
+    return;
+  }
+
+  const keyData = ALL_KEYS.find((k) => k.key === keyChar);
+  if (!keyData) return;
+
+  if (!activeKeys.has(keyChar)) {
+    activeKeys.add(keyChar);
+    playNoteSound(keyChar, true);
+    triggerVisualEffects(keyChar, keyData);
+    if (quizActive) quizHandleKey(keyChar);
+    else checkSongProgress(keyChar);
+    updatePressedMonitor();
+  }
+}
+
+// --- Key Up / Release Handler ---
+function handleKeyRelease(keyChar) {
+  keyChar = keyChar.toLowerCase();
+  releaseHeld(keyChar);
+  if (activeKeys.has(keyChar)) {
+    activeKeys.delete(keyChar);
+
+    // Remove active class
+    const el = document.getElementById(`key-${keyChar}`);
+    if (el) el.classList.remove("key-active");
+
+    updatePressedMonitor();
+  }
+}
+
+// --- Visual Effects & Floating Notes ---
+function triggerVisualEffects(keyChar, keyData) {
+  const keyEl = document.getElementById(`key-${keyChar}`);
+  if (!keyEl) return;
+
+  // Add Active Glow
+  keyEl.classList.add("key-active");
+
+  // Create Floating Note / Star Particle
+  const rect = keyEl.getBoundingClientRect();
+  const particle = document.createElement("div");
+  particle.className = "note-particle";
+  const symbols = ["🎵", "🎶", "⭐", "✨", "💖", "🌟"];
+  particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+
+  // Position particle above key
+  particle.style.left = `${rect.left + rect.width / 2 - 15}px`;
+  particle.style.top = `${rect.top - 20}px`;
+
+  document.body.appendChild(particle);
+  setTimeout(() => particle.remove(), 1100);
+}
+
+function highlightControlKey(elementId) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.classList.add("scale-105", "brightness-125");
+    setTimeout(() => el.classList.remove("scale-105", "brightness-125"), 200);
+  }
+}
+
+// --- Update Prominent Pressed Key Monitor ---
+function updatePressedMonitor() {
+  if (activeKeys.size === 0) {
+    pressedMonitor.innerHTML = `<span class="text-indigo-300/60 font-bold text-sm italic">（キーボードを押すとここに大きく表示されるよ）</span>`;
+    return;
+  }
+
+  pressedMonitor.innerHTML = "";
+  const compact = activeKeys.size > 6; // たくさん押したときは小さく表示
+  activeKeys.forEach((k) => {
+    const item = ALL_KEYS.find((p) => p.key === k);
+    const chip = document.createElement("div");
+
+    if (item) {
+      chip.className = `flex items-center gap-1.5 bg-gradient-to-r ${item.color} px-2.5 py-1 rounded-2xl shadow-lg border-2 ${item.borderColor} text-white`;
+      chip.innerHTML = `
+            <span class="key-letter text-2xl font-black">${item.key.toUpperCase()}</span>
+            <span class="text-base">${item.emoji}</span>
+            ${compact ? "" : `<span class="text-sm font-bold">${item.jpName}</span>`}
+          `;
+    } else {
+      // Octave or other controls
+      chip.className = `flex items-center gap-1 bg-slate-700 px-3 py-1.5 rounded-2xl text-white font-bold text-sm`;
+      chip.innerHTML = `<span>キー:</span> <span>${k.toUpperCase()}</span>`;
+    }
+    pressedMonitor.appendChild(chip);
+  });
+}
+
+// --- Octave Logic ---
+function changeOctave(delta) {
+  octaveOffset = Math.max(-1, Math.min(1, octaveOffset + delta));
+  updateOctaveDisplay();
+}
+
+function resetOctave() {
+  octaveOffset = 0;
+  updateOctaveDisplay();
+}
+
+function updateOctaveDisplay() {
+  const labels = {
+    "-1": 'ひくい<span class="key-letter"> (N)</span>',
+    0: 'ふつう<span class="key-letter"> (B)</span>',
+    1: 'たかい<span class="key-letter"> (V)</span>',
+  };
+  octaveBadge.innerHTML = labels[octaveOffset];
+
+  // Add feedback pulse
+  octaveBadge.classList.add("scale-110");
+  setTimeout(() => octaveBadge.classList.remove("scale-110"), 200);
+}
+
+// --- Show / hide keyboard letters ---
+let keyLettersVisible = true;
+function toggleKeyLetters() {
+  keyLettersVisible = !keyLettersVisible;
+  document.body.classList.toggle("hide-key-letters", !keyLettersVisible);
+  const label = document.getElementById("letters-btn-label");
+  const icon = document.getElementById("letters-btn-icon");
+  if (label)
+    label.innerText = keyLettersVisible ? "もじをかくす" : "もじをだす";
+  if (icon) icon.innerText = keyLettersVisible ? "🙈" : "👀";
+  // ボタンにフォーカスが残ると、スペースキーが二重に効くのではずす
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+}
+
+// --- Song Practice Mode Logic ---
+function selectSong(song) {
+  currentSong = song;
+  songNoteIndex = 0;
+  createSongButtons();
+  updateSongDisplay();
+}
+
+function updateSongDisplay() {
+  songIcon.innerText = currentSong.icon;
+  songTitleLabel.innerText = currentSong.title;
+
+  if (currentSong.id === "free") {
+    songNextNoteText.innerText = "すきなキーをおして おんがくをたのしもう！";
+    noteSequenceDisplay.innerHTML = "";
+    clearGuideHighlights();
+    return;
+  }
+
+  if (songNoteIndex >= currentSong.notes.length) {
+    // Song Completed!
+    songNextNoteText.innerText = "🎉 クリア！おめでとう！";
+    noteSequenceDisplay.innerHTML = `<span class="text-2xl font-black text-rose-500">✨ STAGE CLEAR! ✨</span>`;
+    clearGuideHighlights();
+    triggerCompletionConfetti();
+    return;
+  }
+
+  const targetKey = currentSong.notes[songNoteIndex];
+  const targetData = PIANO_KEYS.find((p) => p.key === targetKey);
+
+  songNextNoteText.innerHTML = `つぎの音: <span class="text-pink-600 font-black text-xl bg-pink-100 px-2 py-0.5 rounded-xl border border-pink-300">${targetData.jpName}<span class="key-letter"> (${targetData.key.toUpperCase()})</span></span> をおしてね！`;
+
+  // Render Sequence Preview Chips
+  noteSequenceDisplay.innerHTML = "";
+  const visibleRange = currentSong.notes.slice(
+    songNoteIndex,
+    songNoteIndex + 7,
+  );
+
+  visibleRange.forEach((nk, idx) => {
+    const itemData = PIANO_KEYS.find((p) => p.key === nk);
+    const chip = document.createElement("div");
+    if (idx === 0) {
+      chip.className =
+        "bg-pink-500 text-white font-black px-2.5 py-1 rounded-xl text-xs border-2 border-pink-300 shadow-md scale-110 animate-pulse";
+      chip.innerHTML = `${itemData.jpName}<span class="key-letter">(${itemData.key.toUpperCase()})</span>`;
+    } else {
+      chip.className =
+        "bg-white text-slate-600 font-bold px-2 py-0.5 rounded-lg text-xs border border-slate-200 opacity-70";
+      chip.innerText = itemData.jpName;
+    }
+    noteSequenceDisplay.appendChild(chip);
+  });
+
+  // Highlight target key on physical visual piano
+  highlightGuideTargetKey(targetKey);
+}
+
+function highlightGuideTargetKey(targetKey) {
+  clearGuideHighlights();
+  const targetEl = document.getElementById(`key-${targetKey}`);
+  if (targetEl) {
+    targetEl.classList.add("guide-target");
+  }
+}
+
+function clearGuideHighlights() {
+  document.querySelectorAll(".piano-key").forEach((el) => {
+    el.classList.remove("guide-target");
+  });
+}
+
+function checkSongProgress(keyChar) {
+  // 黒鍵は曲の練習中はミス扱いにしない（音だけ鳴らす）
+  const isBlack = BLACK_KEYS.some((b) => b.key === keyChar);
+  if (isBlack && currentSong.id !== "free") return;
+
+  if (currentSong.id === "free" || songNoteIndex >= currentSong.notes.length) {
+    // Just add score in free play
+    score += 10;
+    combo += 1;
+    updateScoreDisplay();
+    return;
+  }
+
+  const expectedKey = currentSong.notes[songNoteIndex];
+  if (keyChar === expectedKey) {
+    // Correct note struck!
+    score += 100 + combo * 10;
+    combo += 1;
+    songNoteIndex += 1;
+    updateScoreDisplay();
+    updateSongDisplay();
+  } else {
+    // Wrong note struck
+    combo = 0;
+    updateScoreDisplay();
+  }
+}
+
+function updateScoreDisplay() {
+  scoreText.innerText = score;
+  comboText.innerText = `${combo} コンボ`;
+}
+
+function triggerCompletionConfetti() {
+  if (typeof confetti === "function") {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  }
+}
+
+// ================= おとの しゅるい =================
+const INSTRUMENTS = {
+  classic: {
+    name: "かわいいおと",
+    icon: "🎵",
+    desc: "いつもの やさしい おと",
+    sustain: false,
+  },
+  piano: {
+    name: "ピアノ",
+    icon: "🎹",
+    desc: "ほんものの ピアノの おと（ネットがひつよう）",
+    sustain: true,
+  },
+  organ: {
+    name: "パイプオルガン",
+    icon: "⛪",
+    desc: "おおきく ひびく おと",
+    sustain: true,
+  },
+  pianica: {
+    name: "ピアニカ",
+    icon: "🎶",
+    desc: "プーッと ふく おと",
+    sustain: true,
+  },
+  musicbox: {
+    name: "オルゴール",
+    icon: "🎁",
+    desc: "キラキラ ひびく おと",
+    sustain: false,
+    transpose: 12,
+  },
+};
+let currentInstrument = "classic";
+let pianoReady = false;
+let pianoFailed = false;
+const instrumentNodes = {};
+const heldNotes = {}; // いま おさえている キー → { node, note }
+
+function buildInstrument(id) {
+  let node;
+  switch (id) {
+    case "piano": {
+      // Salamander Grand Piano のサンプル音（Tone.js 公式）
+      const urls = {};
+      [
+        "A2",
+        "C3",
+        "D#3",
+        "F#3",
+        "A3",
+        "C4",
+        "D#4",
+        "F#4",
+        "A4",
+        "C5",
+        "D#5",
+        "F#5",
+        "A5",
+        "C6",
+      ].forEach((n) => {
+        urls[n] = n.replace("#", "s") + ".mp3";
+      });
+      node = new Tone.Sampler({
+        urls,
+        release: 1,
+        baseUrl: "https://tonejs.github.io/audio/salamander/",
+        onload: () => {
+          pianoReady = true;
+          updateInstrumentButton();
+        },
+        onerror: () => {
+          pianoFailed = true;
+          if (currentInstrument === "piano") currentInstrument = "classic";
+          updateInstrumentButton("ピアノは よみこめなかったよ");
+        },
+      }).toDestination();
+      node.volume.value = 0;
+      return node;
+    }
+    case "organ": {
+      const reverb = new Tone.Freeverb({
+        roomSize: 0.85,
+        dampening: 3000,
+        wet: 0.3,
+      }).toDestination();
+      node = new Tone.PolySynth(Tone.Synth, {
+        oscillator: {
+          type: "custom",
+          partials: [1, 0.7, 0.8, 0.4, 0.5, 0.25, 0.3, 0.15],
+        },
+        envelope: { attack: 0.04, decay: 0.1, sustain: 0.9, release: 0.35 },
+      }).connect(reverb);
+      node.volume.value = -12;
+      return node;
+    }
+    case "pianica": {
+      const filter = new Tone.Filter(2800, "lowpass").toDestination();
+      node = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sawtooth" },
+        envelope: { attack: 0.06, decay: 0.1, sustain: 0.8, release: 0.12 },
+      }).connect(filter);
+      node.volume.value = -14;
+      return node;
+    }
+    case "musicbox": {
+      node = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 3.01,
+        modulationIndex: 14,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.001, decay: 1.2, sustain: 0, release: 1.2 },
+        modulation: { type: "square" },
+        modulationEnvelope: {
+          attack: 0.002,
+          decay: 0.2,
+          sustain: 0,
+          release: 0.2,
+        },
+      }).toDestination();
+      node.volume.value = -10;
+      return node;
+    }
+    default:
+      initSynth();
+      return synth;
+  }
+}
+
+function getInstrument(id) {
+  if (!instrumentNodes[id]) instrumentNodes[id] = buildInstrument(id);
+  return instrumentNodes[id];
+}
+
+// ピアノの よみこみが おわるまでは、かわいいおとで なる
+function activeInstrument() {
+  const id =
+    currentInstrument === "piano" && !pianoReady
+      ? "classic"
+      : currentInstrument;
+  return { id, node: getInstrument(id) };
+}
+
+function releaseHeld(keyChar) {
+  const h = heldNotes[keyChar];
+  if (!h) return;
+  try {
+    h.node.triggerRelease(h.note);
+  } catch (err) {
+    console.log("release error:", err);
+  }
+  delete heldNotes[keyChar];
+}
+
+function updateInstrumentButton(message) {
+  const label = document.getElementById("inst-btn-label");
+  if (!label) return;
+  const info = INSTRUMENTS[currentInstrument];
+  const loading =
+    currentInstrument === "piano" && !pianoReady ? "（よみこみ中…）" : "";
+  label.textContent = message || `${info.icon} ${info.name}${loading}`;
+  if (message) setTimeout(() => updateInstrumentButton(), 4000);
+}
+
+function setInstrument(id) {
+  if (id === "piano" && pianoFailed) {
+    updateInstrumentButton("ピアノは よみこめなかったよ");
+    return;
+  }
+  Object.keys(heldNotes).forEach(releaseHeld);
+  currentInstrument = id;
+  getInstrument(id); // ピアノは ここで よみこみが はじまる
+  updateInstrumentButton();
+  closeInstMenu();
+  playNoteSound("s"); // ためしに ドを ならす
+}
+
+const instMenu = document.getElementById("inst-menu");
+const instGrid = document.getElementById("inst-menu-grid");
+
+function openInstMenu() {
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+  instGrid.innerHTML = "";
+  Object.entries(INSTRUMENTS).forEach(([id, info]) => {
+    const card = document.createElement("button");
+    card.className = `flex flex-col items-center justify-center gap-1 h-[190px] px-2 rounded-2xl border-4 transition duration-150 hover:-translate-y-1 hover:shadow-lg ${
+      id === currentInstrument
+        ? "bg-amber-50 border-amber-400 ring-4 ring-amber-200"
+        : "bg-white border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+    }`;
+    card.innerHTML = `<span class="text-5xl">${info.icon}</span>
+      <span class="text-lg font-black text-slate-800">${info.name}</span>
+      <span class="text-xs font-bold text-slate-500 leading-snug">${info.desc}</span>`;
+    card.onclick = () => setInstrument(id);
+    instGrid.appendChild(card);
+  });
+  instMenu.classList.remove("hidden");
+  instMenu.classList.add("flex");
+  isInstMenuOpen = true;
+}
+
+function closeInstMenu() {
+  instMenu.classList.add("hidden");
+  instMenu.classList.remove("flex");
+  isInstMenuOpen = false;
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+}
+
+// ウィンドウから はなれたら、おしっぱなしの おとを とめる
+window.addEventListener("blur", () => {
+  Object.keys(heldNotes).forEach(releaseHeld);
+  [...activeKeys].forEach(handleKeyRelease);
+});
+
+// ================= おとあてゲーム =================
+// ト音記号の五線に おんぷを出して、鍵盤で こたえるゲーム
+const QUIZ_TOTAL = 10;
+const QUIZ_TABS = [
+  ["scale", "👀 おんかい"],
+  ["staff", "🎼 がくふ"],
+  ["ear", "👂 みみ"],
+];
+let quizMode = "staff";
+let quizQ = -1; // いまの もんだい（PIANO_KEYS の番号）
+let quizRound = 0;
+let quizCorrect = 0;
+let quizMiss = 0;
+let quizLocked = false;
+let quizDone = false;
+let quizTimers = [];
+
+const stageEl = document.getElementById("stage");
+const quizStaffEl = document.getElementById("quiz-staff");
+const quizTabsEl = document.getElementById("quiz-tabs");
+const quizProgressEl = document.getElementById("quiz-progress");
+const quizMessageEl = document.getElementById("quiz-message");
+const quizActionsEl = document.getElementById("quiz-actions");
+
+const INK = "#1e293b";
+// 五線の線は y=50,70,90,110,130（下から ミ ソ シ レ ファ）。ド(i=0)は下の加線 y=150
+const noteY = (i) => 150 - 10 * i;
+
+function staffSVG(notes, extra = "") {
+  let s = `<svg viewBox="0 0 700 210" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">`;
+  for (let n = 0; n < 5; n++) {
+    const y = 50 + n * 20;
+    s += `<line x1="10" x2="690" y1="${y}" y2="${y}" stroke="${INK}" stroke-width="2"/>`;
+  }
+  // ト音記号
+  s += `<g fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 50 152 C 58 112, 70 72, 66 42 C 64 24, 76 14, 82 24 C 90 38, 66 72, 48 94 C 26 118, 34 142, 56 140 C 76 138, 78 114, 60 106 C 46 100, 36 114, 44 124"/>
+    <path d="M 50 152 C 48 174, 26 176, 28 162"/></g>
+    <circle cx="28" cy="161" r="4.5" fill="${INK}"/>`;
+  notes.forEach(({ i, x, label, color }) => {
+    const y = noteY(i);
+    const c = color || INK;
+    if (i === 0)
+      s += `<line x1="${x - 24}" x2="${x + 24}" y1="${y}" y2="${y}" stroke="${INK}" stroke-width="2"/>`;
+    s += `<ellipse cx="${x}" cy="${y}" rx="13" ry="9.5" fill="${c}" transform="rotate(-20 ${x} ${y})"/>`;
+    s +=
+      i < 6
+        ? `<line x1="${x + 12}" x2="${x + 12}" y1="${y}" y2="${y - 52}" stroke="${c}" stroke-width="3"/>`
+        : `<line x1="${x - 12}" x2="${x - 12}" y1="${y}" y2="${y + 52}" stroke="${c}" stroke-width="3"/>`;
+    if (label)
+      s += `<text x="${x}" y="198" text-anchor="middle" font-size="28" font-weight="900" fill="${c}">${label}</text>`;
+  });
+  return s + extra + "</svg>";
+}
+
+function renderScale(active = -1) {
+  quizStaffEl.innerHTML = staffSVG(
+    PIANO_KEYS.map((k, i) => ({
+      i,
+      x: 150 + 70 * i,
+      label: k.jpName,
+      color: i === active ? "#ec4899" : null,
+    })),
+  );
+}
+
+// state: "ask"（もんだい）/ "hint"（ヒント）/ "ok"（せいかい）
+function renderQuestion(state) {
+  const k = PIANO_KEYS[quizQ];
+  if (quizMode === "ear" && state === "ask") {
+    quizStaffEl.innerHTML = staffSVG(
+      [],
+      `<text x="380" y="112" text-anchor="middle" font-size="72" font-weight="900" fill="#a78bfa">？</text>`,
+    );
+    return;
+  }
+  quizStaffEl.innerHTML = staffSVG([
+    {
+      i: quizQ,
+      x: 380,
+      label: state === "ask" ? "" : k.jpName,
+      color: state === "ok" ? "#16a34a" : null,
+    },
+  ]);
+}
+
+function setQuizMessage(text) {
+  quizMessageEl.textContent = text;
+}
+
+function updateQuizProgress() {
+  quizProgressEl.innerHTML =
+    quizMode === "scale"
+      ? ""
+      : `もんだい ${Math.min(quizRound + 1, QUIZ_TOTAL)} / ${QUIZ_TOTAL}　⭐ ${quizCorrect}`;
+}
+
+function renderQuizTabs() {
+  quizTabsEl.innerHTML = "";
+  QUIZ_TABS.forEach(([mode, label]) => {
+    const btn = document.createElement("button");
+    btn.className = `flex-1 py-1.5 rounded-xl font-black text-sm border-2 transition ${
+      mode === quizMode
+        ? "bg-violet-500 text-white border-violet-600"
+        : "bg-white text-slate-600 border-slate-200 hover:bg-violet-50"
+    }`;
+    btn.textContent = label;
+    btn.onclick = () => setQuizMode(mode);
+    quizTabsEl.appendChild(btn);
+  });
+}
+
+function renderQuizActions() {
+  quizActionsEl.innerHTML = "";
+  const add = (label, fn, cls) => {
+    const b = document.createElement("button");
+    b.className = `px-3 py-1.5 rounded-xl font-black text-sm border-2 transition ${cls}`;
+    b.textContent = label;
+    b.onclick = (e) => {
+      e.currentTarget.blur();
+      fn();
+    };
+    quizActionsEl.appendChild(b);
+  };
+  const main =
+    "bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-500";
+  if (quizMode === "scale") add("▶ おんかいをきく", playScale, main);
+  else if (quizDone) add("🔁 もういちど", () => setQuizMode(quizMode), main);
+  else if (quizMode === "ear") add("🔊 もういちどきく", replayQuizNote, main);
+  add(
+    "🎹 えんそうモードへ",
+    exitQuiz,
+    "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+  );
+}
+
+function clearQuizTimers() {
+  quizTimers.forEach(clearTimeout);
+  quizTimers = [];
+}
+
+function startQuiz(mode = "staff") {
+  quizActive = true;
+  octaveOffset = 0;
+  updateOctaveDisplay();
+  clearGuideHighlights();
+  if (isSongMenuOpen) closeSongMenu();
+  stageEl.classList.add("quiz-mode");
+  setQuizMode(mode);
+}
+
+function exitQuiz() {
+  clearQuizTimers();
+  quizActive = false;
+  stageEl.classList.remove("quiz-mode");
+  clearGuideHighlights();
+  // 曲の れんしゅう中だったら、次のキーの ガイドを もどす
+  if (currentSong.id !== "free" && songNoteIndex < currentSong.notes.length) {
+    highlightGuideTargetKey(currentSong.notes[songNoteIndex]);
+  }
+}
+
+function setQuizMode(mode) {
+  clearQuizTimers();
+  clearGuideHighlights();
+  quizMode = mode;
+  quizQ = -1;
+  quizRound = 0;
+  quizCorrect = 0;
+  quizMiss = 0;
+  quizLocked = false;
+  quizDone = false;
+  renderQuizTabs();
+  renderQuizActions();
+  updateQuizProgress();
+  if (mode === "scale") {
+    renderScale();
+    setQuizMessage("キーをおして、おんぷと おとを たしかめよう！");
+  } else {
+    nextQuestion();
+  }
+}
+
+function nextQuestion() {
+  if (!quizActive) return;
+  if (quizRound >= QUIZ_TOTAL) return showQuizResult();
+  let q;
+  do {
+    q = Math.floor(Math.random() * PIANO_KEYS.length);
+  } while (q === quizQ);
+  quizQ = q;
+  quizMiss = 0;
+  quizLocked = false;
+  clearGuideHighlights();
+  renderQuestion("ask");
+  updateQuizProgress();
+  if (quizMode === "staff") {
+    setQuizMessage("この おんぷは どれかな？");
+  } else {
+    setQuizMessage("どの おとかな？ よ〜くきいてね");
+    quizTimers.push(setTimeout(replayQuizNote, 300));
+  }
+}
+
+function replayQuizNote() {
+  if (quizQ >= 0) playNoteSound(PIANO_KEYS[quizQ].key);
+}
+
+function quizHandleKey(keyChar) {
+  const i = PIANO_KEYS.findIndex((k) => k.key === keyChar);
+  if (i < 0) return; // くろいけんばんは おとだけ
+  if (quizMode === "scale") {
+    renderScale(i);
+    setQuizMessage(`${PIANO_KEYS[i].jpName} の おと！`);
+    return;
+  }
+  if (quizLocked || quizDone) return;
+  const answer = PIANO_KEYS[quizQ];
+  if (i === quizQ) {
+    quizLocked = true;
+    if (quizMiss === 0) quizCorrect++;
+    quizRound++;
+    clearGuideHighlights();
+    renderQuestion("ok");
+    updateQuizProgress();
+    setQuizMessage(`⭕ せいかい！ ${answer.jpName} だよ`);
+    quizTimers.push(setTimeout(nextQuestion, 1200));
+  } else {
+    quizMiss++;
+    if (quizMiss >= 2) {
+      renderQuestion("hint");
+      highlightGuideTargetKey(answer.key);
+      setQuizMessage(`ヒント：ひかっている キーをおしてね（${answer.jpName}）`);
+    } else {
+      setQuizMessage(`それは「${PIANO_KEYS[i].jpName}」だね。もういちど！`);
+    }
+  }
+}
+
+function showQuizResult() {
+  quizDone = true;
+  clearGuideHighlights();
+  const stars = quizCorrect >= 9 ? "⭐⭐⭐" : quizCorrect >= 6 ? "⭐⭐" : "⭐";
+  quizStaffEl.innerHTML = `<div class="text-center"><div class="text-6xl">${stars}</div>
+    <div class="text-4xl font-black text-pink-500 mt-2">${QUIZ_TOTAL}もんちゅう ${quizCorrect}もん せいかい！</div></div>`;
+  setQuizMessage("よくがんばったね！");
+  updateQuizProgress();
+  renderQuizActions();
+  if (quizCorrect >= 8) triggerCompletionConfetti();
+}
+
+// おんかいを ドから じゅんばんに きかせる
+function playScale() {
+  clearQuizTimers();
+  PIANO_KEYS.forEach((k, i) => {
+    quizTimers.push(
+      setTimeout(() => {
+        playNoteSound(k.key);
+        renderScale(i);
+        setQuizMessage(`${k.jpName}`);
+        const el = document.getElementById(`key-${k.key}`);
+        if (el) {
+          el.classList.add("key-active");
+          setTimeout(() => el.classList.remove("key-active"), 250);
+        }
+      }, i * 500),
+    );
+  });
+  quizTimers.push(
+    setTimeout(
+      () => {
+        renderScale();
+        setQuizMessage("ドレミファソラシド！");
+      },
+      PIANO_KEYS.length * 500 + 200,
+    ),
+  );
+}
+
+// --- Event Listeners Setup ---
+window.addEventListener("keydown", (e) => {
+  if (isSongMenuOpen || isInstMenuOpen) {
+    if (e.key === "Escape") {
+      closeSongMenu();
+      closeInstMenu();
+    }
+    return;
+  }
+  // スペースキーで、キーボードの文字を いつでも かくす／だす
+  if (e.code === "Space") {
+    e.preventDefault();
+    if (!e.repeat) toggleKeyLetters();
+    return;
+  }
+  if (e.repeat) return; // Prevent key repeat lag
+  handleKeyPress(e.key);
+});
+
+window.addEventListener("keyup", (e) => {
+  handleKeyRelease(e.key);
+});
+
+// Audio context start on initial overlay click
+async function startAudio() {
+  await Tone.start();
+  isAudioStarted = true;
+  initSynth();
+  startOverlay.classList.add("hidden");
+}
+startBtn.addEventListener("click", async () => {
+  await startAudio();
+  if (quizActive) exitQuiz();
+});
+document
+  .getElementById("quiz-start-btn")
+  .addEventListener("click", async () => {
+    await startAudio();
+    startQuiz("staff");
+  });
+
+// --- App Initializer ---
+window.onload = () => {
+  createPianoKeys();
+  createSongButtons();
+  selectSong(SONGS.find((s) => s.id === "free")); // はじめは じゆうえんそう
+  // スマホ（キーボードなし）は、キーの文字を さいしょから かくす
+  if (
+    typeof isTouchDevice === "function" &&
+    isTouchDevice() &&
+    keyLettersVisible
+  )
+    toggleKeyLetters();
+};
+
+    </script>
+</body>
+
+</html>
