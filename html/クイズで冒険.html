@@ -59,6 +59,10 @@
             min-height: 60px;
         }
 
+        #backBtn {
+            margin-top: 20px;
+        }
+
         .hidden {
             display: none;
         }
@@ -133,6 +137,26 @@
             font-size: 14px;
         }
 
+        .slideText {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideFade 0.7s ease forwards;
+        }
+
+        @keyframes slideFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .impact {
+            color: #fb0101e5;
+            font-weight: bold;
+            font-size: 1.5em;
+            text-shadow: 0 0 10px red;
+        }
+
         .hpRow {
             display: flex;
             align-items: center;
@@ -178,6 +202,17 @@
             pointer-events: none;
             z-index: 1;
             /* クリック邪魔しない */
+        }
+
+        body.training #battleLog {
+            top: 430px;
+            left: 50.5%;
+            /* ←好きな位置に調整 */
+        }
+
+        body.training #judgeMark {
+            top: 370px;
+            /* ←×の位置も調整できる */
         }
 
         #title img {
@@ -391,10 +426,6 @@
         .damageHP {
             background: red !important;
             transition: width 0.3s, background 0.3s;
-        }
-
-        .shake {
-            animation: shake 0.3s;
         }
 
         @keyframes shake {
@@ -749,14 +780,106 @@
             color: #ff4444;
             text-shadow: 0 0 10px red;
         }
+
+        rt {
+            font-size: 30%;
+        }
+
+        @media (max-width: 600px) {
+            #choices {
+                grid-template-columns: 1fr;
+                /* 1列にする */
+            }
+
+            button {
+
+                font-size: 16px;
+            }
+
+            #quizBox {
+                padding: 10px;
+            }
+        }
+
+        .choice-img {
+            width: 30px;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .choice-btn {
+            margin: 5px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(to bottom, #66bb6a, #2e7d32);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1b5e20;
+            transition: all 0.1s ease;
+            padding: 2px;
+        }
+
+        .questionTitle {
+            font-size: 36px;
+            text-align: center;
+            animation: popIn 0.4s ease-out, glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .questionText {
+            animation: popInSoft 0.4s ease-out;
+            text-shadow: 0 0 5px #ffffff88;
+        }
+
+        @keyframes popInSoft {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .resultButtons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .resultButtons button {
+            width: 150px;
+        }
     </style>
 </head>
 
 <body class="home">
     <div id="game">
-
         <div id="title">
-            <h1>⚔️ クイズで冒険 ⚔️</h1>
+            <h1>⚔️ クイズで<ruby>冒険<rt>ぼうけん</rt></ruby> ⚔️</h1>
             <h3>ショートカットキーをマスターしよう！</h3>
             <button onclick="startStory()" id="pressStart">ゲームスタート</button>
             <button onclick="startPractice()" id="practiceBtn">練習モード</button>
@@ -765,7 +888,7 @@
         <div id="story" class="hidden">
             <img id="heroImg" src="https://via.placeholder.com/120">
             <div class="box" id="storyText"></div>
-            <button onclick="nextStory()">次へ</button>
+            <button onclick="nextStory()"><ruby>次<rt>つぎ</rt></ruby>へ</button>
         </div>
 
         <div id="battle" class="hidden">
@@ -790,7 +913,7 @@
                 <h3 id="question"></h3>
 
                 <div id="choices"></div>
-
+                <p id="practiceScore" class="hidden"></p>
                 <div class="hpRow">
                     <p>主人公</p>
                     <div class="bar">
@@ -806,12 +929,12 @@
 
     <div id="clear" class="hidden">
         <h1>🎊 クリア！ 🎊</h1>
-        <p>キミは立派なショートカットマスターだ！</p>
+        <p>キミは<ruby>立派<rt>りっぱ</rt></ruby>なショートカットマスターだ！</p>
         <button onclick="location.reload()">タイトルへ</button>
     </div>
     <div id="gameover" class="hidden">
         <h1>💀 GAME OVER 💀</h1>
-        <h3>倒されてしまった...</h3>
+        <h3><ruby>倒<rt>たお</rt></ruby>されてしまった...</h3>
         <button onclick="location.reload()">タイトルへ</button>
     </div>
     <script>
@@ -826,63 +949,73 @@
         let usedHard = [];
 
         const quiz_easy = [
-            { q: "１つ戻りたい時に使うキーは？", choices: ["Ctrl+Z", "Ctrl+X", "Ctrl+C", "Ctrl+V"], answer: "Ctrl+Z" },
-            { q: "１つ進みたい時に使うキーは？", choices: ["Ctrl+S", "Ctrl+X", "Ctrl+Y", "Ctrl+T"], answer: "Ctrl+Y" },
-            { q: "ペースト（貼り付け）したい時に使うキーは？", choices: ["Ctrl+Z", "Ctrl+X", "Ctrl+C", "Ctrl+V"], answer: "Ctrl+V" },
-            { q: "全選択したい時に使うキーは？", choices: ["Ctrl+Z", "Ctrl+A", "Ctrl+X", "Ctrl+D"], answer: "Ctrl+A" },
-            { q: "コピー（記憶）したい時に使うキーは？", choices: ["Ctrl+S", "Ctrl+Z", "Ctrl+D", "Ctrl+C"], answer: "Ctrl+C" },
-            { q: "切り取りたい時に使うキーは？", choices: ["Ctrl+B", "Ctrl+S", "Ctrl+X", "Ctrl+D"], answer: "Ctrl+X" },
-            { q: "保存したい時に使うキーは？", choices: ["Ctrl+S", "Ctrl+B", "Ctrl+V", "Ctrl+A"], answer: "Ctrl+S" },
-            { q: "検索したい時に使うキーは？", choices: ["Ctrl+D", "Ctrl+F", "Ctrl+X", "Ctrl+Z"], answer: "Ctrl+F" },
-            { q: "更新したい時に使うキーは？", choices: ["F3", "F4", "F5", "F6"], answer: "F5" },
-            { q: "スタートメニューを表示するキーは？", choices: ["Windows", "Alt", "Fn", "Ctrl"], answer: "Windows" },
-            { q: "エクスプローラーを起動するキーは？", choices: ["Windows+E", "Windows+R", "Windows+W", "Windows+A"], answer: "Windows+E" },
+            { q: "１つ<ruby>戻<rt>もど</rt></ruby>りたい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+Z", "Ctrl+X", "Ctrl+C", "Ctrl+V"], answer: "Ctrl+Z" },
+            { q: "１つ<ruby>進<rt>すす</rt></ruby>みたい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+S", "Ctrl+X", "Ctrl+Y", "Ctrl+T"], answer: "Ctrl+Y" },
+            { q: "ペースト（<ruby>貼<rt>は</rt></ruby>り<ruby>付<rt>つ</rt></ruby>け）したい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+Z", "Ctrl+X", "Ctrl+C", "Ctrl+V"], answer: "Ctrl+V" },
+            { q: "<ruby>全選択<rt>ぜんせんたく</rt></ruby>したい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+Z", "Ctrl+A", "Ctrl+X", "Ctrl+D"], answer: "Ctrl+A" },
+            { q: "コピー（<ruby>記憶<rt>きおく</rt></ruby>）したい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+S", "Ctrl+Z", "Ctrl+D", "Ctrl+C"], answer: "Ctrl+C" },
+            { q: "<ruby>切<rt>き</rt></ruby>り<ruby>取<rt>と</rt></ruby>りたい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+B", "Ctrl+S", "Ctrl+X", "Ctrl+D"], answer: "Ctrl+X" },
+            { q: "<ruby>保存<rt>ほぞん</rt></ruby>したい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+S", "Ctrl+B", "Ctrl+V", "Ctrl+A"], answer: "Ctrl+S" },
+            { q: "<ruby>検索<rt>けんさく</rt></ruby>したい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+D", "Ctrl+F", "Ctrl+X", "Ctrl+Z"], answer: "Ctrl+F" },
+            { q: "<ruby>更新<rt>こうしん</rt></ruby>したい<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["F3", "F4", "F5", "F6"], answer: "F5" },
+            { q: "スタートメニューを<ruby>表示<rt>ひょうじ</rt></ruby>するキーは？", choices: ["Windows", "Alt", "Fn", "Ctrl"], answer: "Windows" },
+            { q: "エクスプローラーを<ruby>起動<rt>きどう</rt></ruby>するキーは？", choices: ["Windows+E", "Windows+R", "Windows+W", "Windows+A"], answer: "Windows+E" },
         ];
         const quiz_middle = [
-            { q: "半角スペースを入力するキーは？", choices: ["Alt+Space", "Fn+Space", "Ctrl+Space", "Shift+Space"], answer: "Shift+Space" },
-            { q: "ファイルのデータをゴミ箱に移動するキーは？", choices: ["Ctrl+D", "Ctrl+B", "Ctrl+E", "Ctrl+Q"], answer: "Ctrl+D" },
-            { q: "履歴を表示する時に使うキーは？", choices: ["Ctrl+G", "Ctrl+H", "Ctrl+J", "Ctrl+K"], answer: "Ctrl+H" },
-            { q: "新しいタブを開く時に使うキーは？", choices: ["Ctrl+R", "Ctrl+E", "Ctrl+G", "Ctrl+T"], answer: "Ctrl+T" },
-            { q: "デスクトップ画面を表示するキーは？", choices: ["Windows+I", "Windows+S", "Windows+D", "Windows+A"], answer: "Windows+D" },
-            { q: "設定画面を表示するキーは？", choices: ["Windows+I", "Windows+J", "Windows+U", "Windows+K"], answer: "Windows+I" },
+            { q: "<ruby>半角<rt>はんかく</rt></ruby>スペースを<ruby>入力<rt>にゅうりょく</rt></ruby>するキーは？", choices: ["Alt+Space", "Fn+Space", "Ctrl+Space", "Shift+Space"], answer: "Shift+Space" },
+            { q: "ファイルのデータをゴミ<ruby>箱<rt>ばこ</rt></ruby>に<ruby>移動<rt>いどう</rt></ruby>するキーは？", choices: ["Ctrl+D", "Ctrl+B", "Ctrl+E", "Ctrl+Q"], answer: "Ctrl+D" },
+            { q: "<ruby>履歴<rt>りれき</rt></ruby>を<ruby>表示<rt>ひょうじ</rt></ruby>する<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+G", "Ctrl+H", "Ctrl+J", "Ctrl+K"], answer: "Ctrl+H" },
+            { q: "<ruby>新<rt>あたら</rt></ruby>しいタブを<ruby>開<rt>ひら</rt></ruby>く<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+R", "Ctrl+E", "Ctrl+G", "Ctrl+T"], answer: "Ctrl+T" },
+            { q: "デスクトップ<ruby>画面<rt>がめん</rt></ruby>を<ruby>表示<rt>ひょうじ</rt></ruby>するキーは？", choices: ["Windows+I", "Windows+S", "Windows+D", "Windows+A"], answer: "Windows+D" },
+            { q: "<ruby>設定画面<rt>せっていがめん</rt></ruby>を<ruby>表示<rt>ひょうじ</rt></ruby>するキーは？", choices: ["Windows+I", "Windows+J", "Windows+U", "Windows+K"], answer: "Windows+I" },
             { q: "PCをロックするキーは？", choices: ["Windows+L", "Windows+O", "Windows+P", "Windows+R"], answer: "Windows+L" },
-            { q: "前、次のページを表示するキーは？", choices: ["Windows+← →", "Alt+← →", "Ctrl+← →", "Shift+← →"], answer: "Alt+← →" },
-            { q: "印刷する時に使うキーは？", choices: ["Ctrl+U", "Ctrl+H", "Ctrl+G", "Ctrl+P"], answer: "Ctrl+P" },
-            { q: "ページをブックマークするキーは？", choices: ["Ctrl+D", "Ctrl+E", "Ctrl+F", "Ctrl+B"], answer: "Ctrl+D" },
-            { q: "ページを閉じる時に使うキーは？？", choices: ["Ctrl+W", "Ctrl+U", "Ctrl+Q", "Ctrl+D"], answer: "Ctrl+W" },
-            { q: "ページを新規作成する時に使うキーは？", choices: ["Ctrl+N", "Ctrl+A", "Ctrl+M", "Ctrl+B"], answer: "Ctrl+N" },
-            { q: "開いているアプリを終了するキーは？", choices: ["Alt+F4", "Alt+F3", "Alt+F2", "Alt+F5"], answer: "Alt+F4" },
-            { q: "全てのウィンドウを最小化するキーは？", choices: ["Windows+M", "Windows+N", "Windows+K", "Windows+J"], answer: "Windows+M" },
-            { q: "ウィンドウを半分に合わせるキーは？", choices: ["Windows+← →", "Ctrl+← →", "Shift+← →", "Tab+← →"], answer: "Windows+← →" },
-            { q: "ウィンドウを切り替える時に使うキーは？", choices: ["Alt+Tab", "Alt+CapsLock", "Alt+Space", "Alt+Fn"], answer: "Alt+Tab" },
-            { q: "常に大文字で入力するキーは？", choices: ["Shift+Tab", "Shift+CapsLock", "Shift+Ctrl", "Shift+Alt"], answer: "Shift+CapsLock" },
-            { q: "コピーしたリストを表示するキーは？", choices: ["Windows+F", "Windows+V", "Windows+A", "Windows+Z"], answer: "Windows+V" },
-            { q: "ヘルプ、サポートを開くキーは？", choices: ["F1", "F2", "F3", "F4"], answer: "F1" },
-            { q: "絵文字パネルを表示するキーは？", choices: ["Windows+.", "Windows+,", "Windows+:", "Windows+;"], answer: "Windows+." }
+            { q: "<ruby>前<rt>まえ</rt></ruby>、<ruby>次<rt>つぎ</rt></ruby>のページを<ruby>表示<rt>ひょうじ</rt></ruby>するキーは？", choices: ["Windows+← →", "Alt+← →", "Ctrl+← →", "Shift+← →"], answer: "Alt+← →" },
+            { q: "<ruby>印刷<rt>いんさつ</rt></ruby>する<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+U", "Ctrl+H", "Ctrl+G", "Ctrl+P"], answer: "Ctrl+P" },
+            { q: "ページをブックマーク（<ruby>記録<rt>きろく</rt></ruby>）するキーは？", choices: ["Ctrl+D", "Ctrl+E", "Ctrl+F", "Ctrl+B"], answer: "Ctrl+D" },
+            { q: "ページを<ruby>閉<rt>と</rt></ruby>じる<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？？", choices: ["Ctrl+W", "Ctrl+U", "Ctrl+Q", "Ctrl+D"], answer: "Ctrl+W" },
+            { q: "ページを<ruby>新規作成<rt>しんきさくせい</rt></ruby>する<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Ctrl+N", "Ctrl+A", "Ctrl+M", "Ctrl+B"], answer: "Ctrl+N" },
+            { q: "<ruby>開<rt>ひら</rt></ruby>いているアプリを<ruby>終了<rt>しゅうりょう</rt></ruby>するキーは？", choices: ["Alt+F4", "Alt+F3", "Alt+F2", "Alt+F5"], answer: "Alt+F4" },
+            { q: "<ruby>全<rt>すべ</rt></ruby>てのウィンドウを<ruby>最小化<rt>さいしょうか</rt></ruby>するキーは？", choices: ["Windows+M", "Windows+N", "Windows+K", "Windows+J"], answer: "Windows+M" },
+            { q: "ウィンドウを<ruby>半分<rt>はんぶん</rt></ruby>に<ruby>合<rt>あ</rt></ruby>わせるキーは？", choices: ["Windows+← →", "Ctrl+← →", "Shift+← →", "Tab+← →"], answer: "Windows+← →" },
+            { q: "ウィンドウを<ruby>切<rt>き</rt></ruby>り<ruby>替<rt>か</rt></ruby>かえる<ruby>時<rt>とき</rt></ruby>に<ruby>使<rt>つか</rt></ruby>うキーは？", choices: ["Alt+Tab", "Alt+CapsLock", "Alt+Space", "Alt+Fn"], answer: "Alt+Tab" },
+            { q: "<ruby>常<rt>つね</rt></ruby>に<ruby>大文字<rt>おおもじ</rt></ruby>で<ruby>入力<rt>にゅうりょく</rt></ruby>するキーは？", choices: ["Shift+Tab", "Shift+CapsLock", "Shift+Ctrl", "Shift+Alt"], answer: "Shift+CapsLock" },
+            { q: "コピー（<ruby>記憶<rt>きおく</rt></ruby>）したリストを<ruby>表示<rt>ひょうじ</rt></ruby>するキーは？", choices: ["Windows+F", "Windows+V", "Windows+A", "Windows+Z"], answer: "Windows+V" },
+            { q: "ヘルプ、サポートを<ruby>開<rt>ひら</rt></ruby>くキーは？", choices: ["F1", "F2", "F3", "F4"], answer: "F1" },
+            { q: "<ruby>絵文字<rt>えもじ</rt></ruby>パネルを<ruby>表示<rt>ひょうじ</rt></ruby>するキーは？", choices: ["Windows+.", "Windows+,", "Windows+:", "Windows+;"], answer: "Windows+." }
         ];
         const quiz_hard = [
-            { q: "全角カタカナに変換するキーは？", choices: ["F10", "F6", "F7", "F8"], answer: "F7" },
-            { q: "半角英数字に変換するキーは？", choices: ["F8", "F10", "F6", "F9"], answer: "F10" },
-            { q: "全角英数字に変換するキーは？", choices: ["F8", "F7", "F10", "F9"], answer: "F9" },
-            { q: "半角カタカナに変換するキーは？", choices: ["F8", "F10", "F7", "F9"], answer: "F8" },
-            { q: "ひらがなに変換するキーは？", choices: ["F8", "F6", "F7", "F5"], answer: "F6" },
-            { q: "ウィンドウを全画面表示するキーは？", choices: ["F11", "F10", "F12", "F2"], answer: "F11" },
-            { q: "ファイルの名前を変更するキーは？", choices: ["F2", "F3", "F12", "F4"], answer: "F2" },
+            { q: "<ruby>全角<rt>ぜんかく</rt></ruby>カタカナに<ruby>変換<rt>へんかん</rt></ruby>するキーは？", choices: ["F10", "F6", "F7", "F8"], answer: "F7" },
+            { q: "<ruby>半角英数字<rt>はんかくえいすうじ</rt></ruby>に<ruby>変換<rt>へんかん</rt></ruby>するキーは？", choices: ["F8", "F10", "F6", "F9"], answer: "F10" },
+            { q: "<ruby>全角英数字<rt>ぜんかくえいすうじ</rt></ruby>に<ruby>変換<rt>へんかん</rt></ruby>するキーは？", choices: ["F8", "F7", "F10", "F9"], answer: "F9" },
+            { q: "<ruby>半角<rt>はんかく</rt></ruby>カタカナに<ruby>変換<rt>へんかん</rt></ruby>するキーは？", choices: ["F8", "F10", "F7", "F9"], answer: "F8" },
+            { q: "ひらがなに<ruby>変換<rt>へんかん</rt></ruby>するキーは？", choices: ["F8", "F6", "F7", "F5"], answer: "F6" },
+            { q: "ウィンドウを<ruby>全画面表示<rt>ぜんがめんひょうじ</rt></ruby>するキーは？", choices: ["F11", "F10", "F12", "F2"], answer: "F11" },
+            { q: "ファイルの<ruby>名前<rt>なまえ</rt></ruby>を<ruby>変更<rt>へんこう</rt></ruby>するキーは？", choices: ["F2", "F3", "F12", "F4"], answer: "F2" },
         ];
 
         const quiz_practice = [
-            { q: "コピーのショートカットは？", choices: ["Ctrl+C", "Ctrl+V", "Ctrl+X", "Ctrl+Z"], answer: "Ctrl+C" },
-            { q: "貼り付けのショートカットは？", choices: ["Ctrl+A", "Ctrl+V", "Ctrl+S", "Ctrl+D"], answer: "Ctrl+V" },
-            { q: "元に戻すキーは？", choices: ["Ctrl+Y", "Ctrl+Z", "Ctrl+X", "Ctrl+F"], answer: "Ctrl+Z" },
-            { q: "保存するキーは？", choices: ["Ctrl+S", "Ctrl+P", "Ctrl+N", "Ctrl+W"], answer: "Ctrl+S" },
-            { q: "検索するキーは？", choices: ["Ctrl+H", "Ctrl+F", "Ctrl+G", "Ctrl+T"], answer: "Ctrl+F" }
-        ];
-        let usedPractice = [];
-        let currentQuiz = quiz_easy;
+            { type: "text", q: "スタートメニューを<ruby>表示<rt>ひょうじ</rt></ruby>するボタンは？", choices: ["Windows", "Ctrl", "Alt", "Enter"], answer: "Windows" },
+            { type: "text", q: "<ruby>確定<rt>かくてい</rt></ruby>や<ruby>改行<rt>かいぎょう</rt></ruby>する<ruby>時<rt>とき</rt></ruby>に<ruby>押<rt>お</rt></ruby>すボタンは？", choices: ["Enter", "Shift", "Tab", "Ctrl"], answer: "Enter" },
+            { type: "text", q: "<ruby>大文字<rt>おおもじ</rt></ruby>と<ruby>小文字<rt>こもじ</rt></ruby>を<ruby>切<rt>き</rt></ruby>り<ruby>替<rt>か</rt></ruby>えるキーは？", choices: ["Shift", "Ctrl", "CapsLock", "Alt"], answer: "Shift" },
+            { type: "text", q: "<ruby>空白<rt>くうはく</rt></ruby>を<ruby>入力<rt>にゅうりょく</rt></ruby>するキーは？", choices: ["Space", "Ctrl", "Enter", "BackSpace"], answer: "Space" },
+            { type: "text", q: "テキストの<ruby>左側<rt>ひだりがわ</rt></ruby>を<ruby>削除<rt>さくじょ</rt></ruby>するキーは？", choices: ["BackSpace", "Delete", "Insert", "Esc"], answer: "BackSpace" },
+            { type: "text", q: "テキストの<ruby>右側<rt>みぎがわ</rt></ruby>を<ruby>削除<rt>さくじょ</rt></ruby>するキーは？", choices: ["BackSpace", "Delete", "Insert", "Esc"], answer: "Delete" },
+            { type: "image", q: "エクスプローラーのアイコンは？", choices: ["../img/2/エクスプローラー.png", "../img/2/マイクロソフトエッジ.png", "../img/2/スタート.png", "../img/2/クローム.png"], answer: "../img/2/エクスプローラー.png" },
+            { type: "image", q: "スタートメニューのアイコンは？", choices: ["../img/2/スラック.png", "../img/2/マイクロソフトエッジ.png", "../img/2/スタート.png", "../img/2/クローム.png"], answer: "../img/2/スタート.png" },
+            { type: "image", q: "googleクロームのアイコンは？", choices: ["../img/2/スラック.png", "../img/2/マイクロソフトエッジ.png", "../img/2/スタート.png", "../img/2/クローム.png"], answer: "../img/2/クローム.png" },
+            { type: "image", q: "マイクロソフトエッジのアイコンは？", choices: ["../img/2/スラック.png", "../img/2/マイクロソフトエッジ.png", "../img/2/エクスプローラー.png", "../img/2/クローム.png"], answer: "../img/2/マイクロソフトエッジ.png" },
+            { type: "image", q: "slackのアイコンは？", choices: ["../img/2/スラック.png", "../img/2/マイクロソフトエッジ.png", "../img/2/エクスプローラー.png", "../img/2/クローム.png"], answer: "../img/2/スラック.png" },
+            { type: "image", q: "Wordのアイコンは？", choices: ["../img/2/ワード.png", "../img/2/エクセル.png", "../img/2/ドキュメント.png", "../img/2/スプレッドシート.png"], answer: "../img/2/ワード.png" },
+            { type: "image", q: "Excelのアイコンは？", choices: ["../img/2/ワード.png", "../img/2/エクセル.png", "../img/2/ドキュメント.png", "../img/2/スプレッドシート.png"], answer: "../img/2/エクセル.png" },
+            { type: "image", q: "googleドキュメントのアイコンは？", choices: ["../img/2/ワード.png", "../img/2/エクセル.png", "../img/2/ドキュメント.png", "../img/2/スプレッドシート.png"], answer: "../img/2/ドキュメント.png" },
+            { type: "image", q: "googleスプレッドシートのアイコンは？", choices: ["../img/2/ワード.png", "../img/2/エクセル.png", "../img/2/ドキュメント.png", "../img/2/スプレッドシート.png"], answer: "../img/2/スプレッドシート.png" },
+        ]
         let usedQuestions = [];
         let story = [];
         let quizIndex = 0; // クイズ順管理
         let isPracticeMode = false;
+        let practiceCorrect = 0;
+        let practiceTotal = 0;
 
         // シャッフル関数（Fisher-Yates）
         function shuffle(array) {
@@ -893,34 +1026,22 @@
         }
 
         let storyIndex = 0;
-        let isTyping = false; // 入力ロック用
 
         function setBG(type) {
             document.body.className = ""; // 一旦リセット
             document.body.classList.add(type);
         }
 
-        let typingTimer = null; // ←追加
-
-        function typeText(text, elementId) {
+        function showText(text, elementId) {
             const el = document.getElementById(elementId);
 
-            // 前のタイピングを強制停止
-            if (typingTimer) clearInterval(typingTimer);
+            el.innerHTML = text;
+            el.classList.remove("slideText"); // リセット
 
-            el.innerText = "";
-            let i = 0;
-            isTyping = true;
+            // 再発火させる
+            void el.offsetWidth;
 
-            typingTimer = setInterval(() => {
-                el.innerText += text[i];
-                i++;
-
-                if (i >= text.length) {
-                    clearInterval(typingTimer);
-                    isTyping = false;
-                }
-            }, 30);
+            el.classList.add("slideText");
         }
 
         function startStory() {
@@ -932,9 +1053,9 @@
 
 
             story = [
-                "主人公『さあ、魔王を倒しに行くぞ！』",
-                "主人公の冒険が始まる...！",
-                "草原にやってきた！",
+                "<ruby>主人公<rt>しゅじんこう</rt></ruby>『さあ、<ruby>魔王<rt>まおう</rt></ruby>を<ruby>倒<rt>たお</rt></ruby>しに<ruby>行<rt>い</rt></ruby>くぞ！』",
+                "<ruby>主人公<rt>しゅじんこう</rt></ruby>の<ruby>冒険<rt>ぼうけん</rt></ruby>が<ruby>始<rt>はじ</rt></ruby>まる...！",
+                "<ruby>草原<rt>そうげん</rt></ruby>にやってきた！",
                 "スライムがあらわれた！",
                 "スライム『ぷるぷる。。。』"
             ];
@@ -946,7 +1067,7 @@
             const img = document.getElementById("heroImg");
 
             if (isDefeatScene) {
-                typeText(story[storyIndex], "storyText");
+                showText(story[storyIndex], "storyText");
                 return;
             }
             // ===== 草原ステージ =====
@@ -1029,7 +1150,7 @@
                 img.classList.add("fadeOutEnemy");
 
                 setTimeout(() => {
-                    img.style.opacity = 0;
+                    img.style.opacity = 1;
                 }, 1000);
             }
 
@@ -1038,11 +1159,10 @@
                 img.src = "../img/2/訓練場とカカシ.png";
             }
 
-            typeText(story[storyIndex], "storyText");
+            showText(story[storyIndex], "storyText");
         }
 
         function nextStory() {
-            if (isTyping) return;
 
             // 背景切り替え
             if (stage === 0 && storyIndex === 1) {
@@ -1073,7 +1193,7 @@
 
                 isBattleLocked = false;
 
-                loadQuiz();
+                showQuestionIntro(loadQuiz);
                 return;
             }
 
@@ -1146,8 +1266,8 @@
             if (stage === 1) {
                 setBG("field");
                 story = [
-                    "スライムを倒した！",
-                    "先へ進もう！"
+                    "スライムを<ruby>倒<rt>たお</rt></ruby>した！",
+                    "<ruby>先<rt>さき</rt></ruby>へ<ruby>進<rt>すす</rt></ruby>もう！"
                 ];
                 document.getElementById("heroImg").src = "../img/2/草原.png";
             }
@@ -1155,7 +1275,7 @@
             else if (stage === 2) {
                 setBG("forest");
                 story = [
-                    "森にやってきた！",
+                    "<ruby>森<rt>もり</rt></ruby>にやってきた！",
                     "ゴブリンがあらわれた！",
                     "ゴブリン『グギャァ！』"
                 ];
@@ -1165,40 +1285,40 @@
             else if (stage === 3) {
                 setBG("forest");
                 story = [
-                    "ゴブリンを倒した！",
-                    "魔王の城はもうすぐだ...",
-                    "先へ進もう！"];
+                    "ゴブリンを<ruby>倒<rt>たお</rt></ruby>した！",
+                    "<ruby>魔王<rt>まおう</rt></ruby>の<ruby>城<rt>しろ</rt></ruby>はもうすぐだ...",
+                    "<ruby>先<rt>さき</rt></ruby>へ<ruby>進<rt>すす</rt></ruby>もう！"];
                 document.getElementById("heroImg").src = "../img/2/森.png";
             }
 
             else if (stage === 4) {
                 setBG("castle");
                 story = [
-                    "魔王の城の前へやってきた！",
+                    "<ruby>魔王<rt>まおう</rt></ruby>の<ruby>城<rt>しろ</rt></ruby>の<ruby>前<rt>まえ</rt></ruby>へやってきた！",
                     "ガーディアンがあらわれた！",
-                    "ガーディアン『侵入者排除...』"];
+                    "ガーディアン『<ruby>侵入者排除<rt>しんにゅうしゃはいじょ</rt></ruby>...』"];
                 document.getElementById("heroImg").src = "../img/2/魔王の城の前.png";
             }
             else if (stage === 5) {
                 setBG("castle");
                 story = [
-                    "ガーディアンを倒した！",
-                    "主人公『強敵だったな...』",
-                    "ポーションを見つけた！",
-                    "HPが全回復した！",
-                    "よし、魔王はこの城の中だ！"];
+                    "ガーディアンを<ruby>倒<rt>たお</rt></ruby>した！",
+                    "<ruby>主人公<rt>しゅじんこう</rt></ruby>『<ruby>強敵<rt>きょうてき</rt></ruby>だったな...』",
+                    "ポーションを<ruby>見<rt>み</rt></ruby>つけた！",
+                    "HPが<ruby>全回復<rt>ぜんかいふく</rt></ruby>した！",
+                    "よし、<ruby>魔王<rt>まおう</rt></ruby>はこの<ruby>城<rt>しろ</rt></ruby>の<ruby>中<rt>なか</rt></ruby>だ！"];
                 document.getElementById("heroImg").src = "../img/2/魔王の城の前.png";
             }
 
             else if (stage === 6) {
                 setBG("king");
                 story = [
-                    "ついに魔王の間へ来たぞ...",
-                    "魔王『よくぞここまで辿り着いたな...』",
-                    "主人公『魔王！お前を倒す為に来たぞ！』",
-                    "魔王『フン。我を倒すなどと笑わせるな羽虫が』",
-                    "魔王『いいだろう。お前を試してやろう！』",
-                    "最後の戦いがいま、始まる———"];
+                    "ついに<ruby>魔王<rt>まおう</rt></ruby>の<ruby>間<rt>ま</rt></ruby>へ<ruby>来<rt>き</rt></ruby>たぞ...",
+                    "<ruby>魔王<rt>まおう</rt></ruby>『よくぞここまで<ruby>辿<rt>たど</rt></ruby>り<ruby>着<rt>つ</rt></ruby>いたな...』",
+                    "<ruby>主人公<rt>しゅじんこう</rt></ruby>『<ruby>魔王<rt>まおう</rt></ruby>！お<ruby>前<rt>まえ</rt></ruby>を<ruby>倒<rt>たお</rt></ruby>す<ruby>為<rt>ため</rt></ruby>に<ruby>来<rt>き</rt></ruby>たぞ！』",
+                    "<ruby>魔王<rt>まおう</rt></ruby>『フン。<ruby>我<rt>われ</rt></ruby>を<ruby>倒<rt>たお</rt></ruby>すなどと<ruby>笑<rt>わら</rt></ruby>わせるな<ruby>羽虫<rt>はむし</rt></ruby>が』",
+                    "<ruby>魔王<rt>まおう</rt></ruby>『いいだろう。お<ruby>前<rt>まえ</rt></ruby>を<ruby>試<rt>ため</rt></ruby>してやろう！』",
+                    "<ruby>最後<rt>さいご</rt></ruby>の<ruby>戦<rt>たたか</rt></ruby>いがいま、<ruby>始<rt>はじ</rt></ruby>まる———"];
                 document.getElementById("heroImg").src = "../img/2/魔王の間.png";
             }
 
@@ -1242,11 +1362,11 @@
                 bgImg.src = "../img/2/訓練場ぼかし.png";
                 enemy.src = "../img/2/訓練場とカカシ.png";
 
-                enemyHP = Infinity;
-                enemyMax = Infinity;
+                enemyHP = 9999;
+                enemyMax = 9999;
 
                 updateHP();
-                loadQuiz();
+                showQuestionIntro(loadQuiz);
                 return; // ←これ超重要！！！！！
             }
 
@@ -1291,10 +1411,13 @@
             }
 
             updateHP();
-            loadQuiz();
+            showQuestionIntro(loadQuiz);
         }
 
         function loadQuiz() {
+            if (isPracticeMode) {
+                document.getElementById("backBtn").style.display = "inline-block";
+            }
             let used;
 
             if (currentQuiz === quiz_easy) used = usedEasy;
@@ -1303,6 +1426,13 @@
             else if (currentQuiz === quiz_practice) used = usedPractice;
 
             if (used.length >= currentQuiz.length) {
+
+                if (isPracticeMode) {
+                    showPracticeResult();
+                    used.length = 0;
+                    return;
+                }
+
                 used.length = 0;
             }
 
@@ -1311,8 +1441,7 @@
             const q = availableQuiz[Math.floor(Math.random() * availableQuiz.length)];
             used.push(q);
 
-            document.getElementById("question").innerText = q.q;
-
+            document.getElementById("question").innerHTML = `<div class="questionText">${q.q}</div>`;
             const div = document.getElementById("choices");
             div.innerHTML = "";
 
@@ -1321,11 +1450,25 @@
 
             shuffledChoices.forEach(c => {
                 const b = document.createElement("button");
-                b.innerText = c;
+                b.dataset.value = c;
+                // ▼ ここで分岐
+                if (q.type === "image") {
+                    b.classList.add("choice-btn");
+
+                    const img = document.createElement("img");
+                    img.src = c;
+                    img.className = "choice-img";
+
+                    b.appendChild(img);
+                } else {
+                    b.innerText = c;
+                }
+
                 b.onclick = function () {
                     this.onclick = null;
                     checkAnswer(c, q.answer);
                 };
+
                 div.appendChild(b);
             });
         }
@@ -1405,11 +1548,16 @@
             const buttons = document.querySelectorAll("#choices button");
 
             // 全ボタン無効化
-            buttons.forEach(b => b.disabled = true);
+            buttons.forEach(b => {
+                if (b.dataset.value === ans) {
+                    b.classList.add("correct");
+                    b.classList.add("correctFlash");
+                }
+            });
             console.log("HP:", enemyHP);
 
             // 押したボタン取得
-            const clickedBtn = Array.from(buttons).find(b => b.innerText === sel);
+            const clickedBtn = Array.from(buttons).find(b => b.dataset.value === sel);
 
             if (sel === ans) {
                 clickedBtn.classList.add("correct");
@@ -1458,14 +1606,19 @@
             }
 
             if (isPracticeMode) {
+                practiceTotal++;
+
                 if (sel === ans) {
+                    practiceCorrect++;
                     log("正解！", "#00ffcc", "○");
                 } else {
-                    log("不正解！", "red", "×");
+                    log("残念！", "red", "×");
                 }
 
+                updatePracticeScore();
+
                 setTimeout(() => {
-                    loadQuiz(); // 次の問題
+                    showQuestionIntro(loadQuiz);
                     isBattleLocked = false;
                 }, 1500);
 
@@ -1488,6 +1641,8 @@
                     (enemyHP / enemyMax * 100) + "%";
             }
         }
+
+
 
         function playBattleStart(nextAction) {
             document.body.classList.add("battleStartEffect");
@@ -1562,7 +1717,7 @@
 
         function checkBattle() {
             if (isPracticeMode) {
-                loadQuiz();
+                showQuestionIntro(loadQuiz);
                 return;
             }
 
@@ -1588,7 +1743,7 @@
             }
 
             // 通常時だけ次の問題
-            loadQuiz();
+            showQuestionIntro(loadQuiz);
         }
 
         let isDefeatScene = false;
@@ -1608,7 +1763,7 @@
             setTimeout(() => img.classList.remove("shake"), 300);
 
             story = [
-                "主人公『うわあああぁぁあぁあ！！』"
+                "<ruby>主人公<rt>しゅじんこう</rt></ruby>『うわあああぁぁあぁあ！！』"
             ];
 
             storyIndex = 0;
@@ -1636,9 +1791,9 @@
             document.getElementById("battle").classList.add("hidden");
 
             story = [
-                "魔王『ぐおおおおお！』",
-                "何だと...魔王の姿が！",
-                "魔王『これが我の真の姿だ！』"
+                "<span class='impact'><ruby>魔王<rt>まおう</rt></ruby>『ぐおおおぉぉ！』</span>",
+                "<ruby>何<rt>なん</rt></ruby>だと...<ruby>魔王<rt>まおう</rt></ruby>の<ruby>姿<rt>すがた</rt></ruby>が！",
+                "<ruby>魔王<rt>まおう</rt></ruby>『これが<ruby>我<rt>われ</rt></ruby>の<ruby>真<rt>しん</rt></ruby>の<ruby>姿<rt>すがた</rt></ruby>だ！』"
             ];
 
             storyIndex = 0;
@@ -1655,9 +1810,9 @@
             document.getElementById("battleLog").style.position = "static";
             setBG("king3");
             story = [
-                "魔王『そんなバカな・・・！』",
-                "主人公『やった、魔王を倒したぞ...！』",
-                "これで世界に平和が訪れた！"
+                "<ruby>魔王<rt>まおう</rt></ruby>『そんなバカな・・・！』",
+                "<ruby>主人公<rt>しゅじんこう</rt></ruby>『やった、<ruby>魔王<rt>まおう</rt></ruby>を<ruby>倒<rt>たお</rt></ruby>したぞ...！』",
+                "これで<ruby>世界<rt>せかい</rt></ruby>に<ruby>平和<rt>へいわ</rt></ruby>が<ruby>訪<rt>おとず</rt></ruby>れた！"
             ];
 
             storyIndex = 0;
@@ -1688,9 +1843,9 @@
             document.body.classList.add("slowFlash");
 
             story = [
-                "魔王『ここまでやるとはな...』",
-                "魔王『これならどうだ！』",
-                "なんとクイズが難しくなってしまった！"
+                "<ruby>魔王<rt>まおう</rt></ruby>『ここまでやるとはな...』",
+                "<ruby>魔王<rt>まおう</rt></ruby>『これならどうだ！』",
+                "なんとクイズが<ruby>難<rt>むずか</rt></ruby>しくなってしまった！"
             ];
 
             storyIndex = 0;
@@ -1701,6 +1856,12 @@
             isPracticeMode = true;
             currentQuiz = quiz_practice;
             usedPractice = [];
+            practiceCorrect = 0;
+            practiceTotal = 0;
+
+            const scoreEl = document.getElementById("practiceScore");
+            scoreEl.classList.remove("hidden");
+            updatePracticeScore();
             // HP・敵情報を非表示
             document.querySelector(".hpRow").style.display = "none";
             document.querySelector(".hpRow2").style.display = "none";
@@ -1711,17 +1872,85 @@
             setBG("house");
 
             story = [
-                "主人公『冒険に出る前に特訓していくか...』",
-                "ここではキーボードの基本やパソコンの基礎を学べるぞ！",
-                "満足するまでクイズをやってみよう！"
+                "<ruby>主人公<rt>しゅじんこう</rt></ruby>『<ruby>冒険<rt>ぼうけん</rt></ruby>に<ruby>出<rt>で</rt></ruby>る<ruby>前<rt>まえ</rt></ruby>に<ruby>特訓<rt>とっくん</rt></ruby>していくか...』",
+                "ここではキーボードの<ruby>基本<rt>きほん</rt></ruby>やパソコンの<ruby>基礎<rt>きそ</rt></ruby>を<ruby>学<rt>まな</rt></ruby>べるぞ！",
+                "<ruby>満足<rt>まんぞく</rt></ruby>するまでクイズをやってみよう！"
             ];
 
             storyIndex = 0;
             showStory();
         }
 
+        function updatePracticeScore() {
+            const scoreEl = document.getElementById("practiceScore");
+            scoreEl.innerText = `正解数：${practiceCorrect} / ${practiceTotal}`;
+        }
+
         function backToTitle() {
             location.reload();
+        }
+
+        function showQuestionIntro(callback) {
+            const qEl = document.getElementById("question");
+            const choicesEl = document.getElementById("choices");
+
+            if (isPracticeMode) {
+                document.getElementById("backBtn").style.display = "none";
+            }
+
+            // 選択肢を一旦消す
+            choicesEl.innerHTML = "";
+
+            // 中央に「問題」表示
+            qEl.innerHTML = "<div class='questionTitle'><ruby>問題<rt>もんだい</rt></ruby></div>";
+
+            // ちょい待ってから本番へ
+            setTimeout(() => {
+                callback();
+            }, 1000); // ←時間は好きに調整OK（0.5〜1秒くらいが良い）
+        }
+
+        function showPracticeResult() {
+            const qEl = document.getElementById("question");
+            const choicesEl = document.getElementById("choices");
+            document.getElementById("practiceScore").classList.add("hidden");
+            document.getElementById("backBtn").style.display = "none";
+
+            // 選択肢消す
+            choicesEl.innerHTML = "";
+
+            // メッセージ分岐
+            let message = "";
+            if (practiceCorrect === practiceTotal) {
+                message = "全問正解おめでとう！";
+            } else {
+                message = "全問完了！次は満点を目指そう！";
+            }
+
+            // 表示
+            qEl.innerHTML = `
+        <div class="questionTitle">
+            ${message}<br>
+            <span style="font-size:20px;">
+                正解数：${practiceCorrect} / ${practiceTotal}
+            </span>
+            <br><br>
+            <div class="resultButtons">
+    <button onclick="restartPractice()">もう一度挑戦</button>
+    <button onclick="backToTitle()">タイトルへ</button>
+</div>
+        </div>
+    `;
+        }
+
+        function restartPractice() {
+            document.getElementById("backBtn").style.display = "inline-block";
+            document.getElementById("practiceScore").classList.remove("hidden");
+            practiceCorrect = 0;
+            practiceTotal = 0;
+            updatePracticeScore();
+
+            showQuestionIntro(loadQuiz);
         }
     </script>
 </body>
