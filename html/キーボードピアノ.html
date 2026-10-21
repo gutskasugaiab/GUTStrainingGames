@@ -6,6 +6,15 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>タイプ・ドレミ♪ - たのしいタイピングピアノ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for web audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas-confetti for stage clear effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts for cute rounded text -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         body {
     font-family: 'M PLUS Rounded 1c', sans-serif;
@@ -188,20 +197,25 @@
     display: none;
 }
 
+/* リズムゲーム: おとあてゲームと同じように、ヘッダーと曲えらびの段を入れかえる */
+#rhythm-panel {
+    display: none;
+}
+
+#stage.rhythm-mode #rhythm-panel {
+    display: flex;
+}
+
+#stage.rhythm-mode>header,
+#stage.rhythm-mode #top-row {
+    display: none;
+}
+
 
 /* タッチ: 鍵盤とボタンは、ゆびでなぞっても拡大・スクロールしない */
 .piano-key,
 .octave-btn {
     touch-action: none;
-}
-
-/* たてむきスマホの「よこむきにしてね」 */
-#rotate-prompt {
-    display: none;
-}
-
-body.portrait-prompt #rotate-prompt {
-    display: flex;
 }
 
 /* 小さい画面（スマホ）: 鍵盤をひろく。キーボード用の説明や モニターはかくす */
@@ -215,74 +229,446 @@ body.portrait-prompt #rotate-prompt {
     grid-template-columns: 1fr;
 }
 
-/* よこむきスマホ(せまい高さ)では スタート画面を小さく */
-@media (max-height: 520px) {
-    #start-overlay {
-        padding: 8px;
+/* 曲えらびボタン: ほんのり光って目立たせる */
+@keyframes song-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 5px 0 #b45309, 0 0 0 rgba(251, 146, 60, 0);
     }
 
-    #start-overlay>div {
-        padding: 12px 20px;
-        gap: 8px;
+    50% {
+        box-shadow: 0 5px 0 #b45309, 0 0 22px rgba(251, 146, 60, 0.95);
+    }
+}
+
+.song-select-btn {
+    animation: song-glow 1.8s infinite ease-in-out;
+}
+
+
+/* ================= タイトル画面 ================= */
+/* 16:9 の絵を まんなかに おき、まわりは同じ絵を ぼかして うめる。
+   文字やボタンの大きさは cqw（絵の はば の 1%）で、絵と いっしょに 拡大縮小する */
+#start-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #fbf1dc;
+}
+
+#start-overlay.hidden {
+    display: none;
+}
+
+#start-overlay::before {
+    content: "";
+    position: absolute;
+    inset: -5%;
+    background: url("../img/9/タイプdeドレミ.jpg") center / cover no-repeat;
+    filter: blur(22px) saturate(1.15);
+}
+
+.title-frame {
+    position: relative;
+    width: min(100vw, calc(100dvh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    background: url("../img/9/タイプdeドレミ.jpg") center / 100% 100% no-repeat;
+    container-type: inline-size;
+}
+
+.title-logo {
+    position: absolute;
+    left: 3.6cqw;
+    top: 2.6cqw;
+}
+
+.title-logo h1 {
+    margin: 0;
+    font-size: 5.6cqw;
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-shadow:
+        -0.35cqw 0 #fff, 0.35cqw 0 #fff, 0 -0.35cqw #fff, 0 0.35cqw #fff,
+        -0.28cqw -0.28cqw #fff, 0.28cqw -0.28cqw #fff, -0.28cqw 0.28cqw #fff, 0.28cqw 0.28cqw #fff,
+        0 0.7cqw 0.9cqw rgba(120, 53, 15, 0.35);
+    animation: title-pop 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.title-logo .title-de {
+    font-size: 0.72em;
+}
+
+.title-sub {
+    display: inline-block;
+    margin: 0.7cqw 0 0 0.6cqw;
+    padding: 0.35cqw 1.4cqw;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.78);
+    color: #b45309;
+    font-weight: 800;
+    font-size: max(1.5cqw, 11px);
+    box-shadow: 0 0.3cqw 1cqw rgba(120, 53, 15, 0.2);
+    animation: title-fade 0.8s 0.5s both;
+}
+
+.title-menu {
+    position: absolute;
+    left: 50%;
+    bottom: 3cqw;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.4cqw;
+    padding: 1cqw 1.8cqw;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.64);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 0.6cqw 2cqw rgba(120, 53, 15, 0.3);
+    white-space: nowrap;
+    animation: title-fade 0.8s 0.7s both;
+}
+
+.title-btn {
+    font-family: inherit;
+    font-weight: 900;
+    color: #fff;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s, filter 0.15s;
+}
+
+.title-btn:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.08);
+    animation: none;
+}
+
+.title-btn:active {
+    transform: translateY(1px);
+}
+
+.title-btn-main {
+    font-size: max(2.6cqw, 15px);
+    padding: max(1cqw, 9px) max(3.2cqw, 22px);
+    background: linear-gradient(90deg, #ec4899, #fb7185, #fbbf24);
+    box-shadow: 0 0.5cqw 0 #be185d;
+    animation: title-bounce 1.6s infinite ease-in-out;
+}
+
+.title-btn-sub {
+    font-size: max(1.7cqw, 12px);
+    padding: max(0.8cqw, 7px) max(2cqw, 14px);
+}
+
+.title-violet {
+    background: linear-gradient(90deg, #8b5cf6, #6366f1);
+    box-shadow: 0 0.4cqw 0 #4338ca;
+}
+
+.title-teal {
+    background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+    box-shadow: 0 0.4cqw 0 #0f766e;
+}
+
+@keyframes title-pop {
+    0% {
+        opacity: 0;
+        transform: scale(0.6) translateY(-2cqw);
     }
 
-    #start-overlay .text-6xl {
-        font-size: 2rem;
-        line-height: 1;
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes title-fade {
+    0% {
+        opacity: 0;
     }
 
-    #start-overlay p {
-        font-size: 0.9rem;
-        line-height: 1.3;
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes title-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
     }
 
-    #start-overlay button {
-        padding-top: 8px;
-        padding-bottom: 8px;
-        font-size: 1.1rem;
+    50% {
+        transform: translateY(-0.5cqw);
+    }
+}
+
+
+/* けんばんの えもじを かくす（場所は そのまま） */
+.key-emoji.emoji-off {
+    visibility: hidden;
+}
+
+
+/* タイトル画面: データを しょきか（みぎうえの ちいさな ボタン） */
+.title-reset {
+    position: absolute;
+    right: 1.6cqw;
+    top: 1.6cqw;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: max(1.1cqw, 10px);
+    padding: 0.4cqw 1.1cqw;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    color: #be123c;
+    cursor: pointer;
+    box-shadow: 0 0.2cqw 0.8cqw rgba(120, 53, 15, 0.2);
+    animation: title-fade 0.8s 0.9s both;
+}
+
+.title-reset:hover {
+    background: #fff;
+}
+
+.title-reset-box {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(30, 20, 10, 0.45);
+    align-items: center;
+    justify-content: center;
+}
+
+.title-reset-box.open {
+    display: flex;
+}
+
+.title-reset-card {
+    background: #fff;
+    border: 0.4cqw solid #fda4af;
+    border-radius: 2cqw;
+    padding: 2cqw 3cqw;
+    text-align: center;
+    box-shadow: 0 1cqw 3cqw rgba(0, 0, 0, 0.3);
+}
+
+.title-reset-card p {
+    margin: 0 0 1.6cqw;
+    font-size: max(2cqw, 14px);
+    font-weight: 900;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.title-reset-actions {
+    display: flex;
+    gap: 1.4cqw;
+    justify-content: center;
+}
+
+.title-reset-actions button {
+    font-family: inherit;
+    font-weight: 900;
+    font-size: max(1.7cqw, 12px);
+    padding: max(0.7cqw, 6px) max(2.2cqw, 14px);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.title-reset-no {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.title-reset-yes {
+    background: #f43f5e;
+    color: #fff;
+}
+
+
+/* ほしを ゲット: うえの ごほうびボタンで ほしが はねる */
+.star-hop {
+    position: absolute;
+    z-index: 60;
+    pointer-events: none;
+    font-size: 28px;
+    line-height: 1;
+    opacity: 0;
+    animation: star-hop 1.1s cubic-bezier(0.3, 0.7, 0.4, 1) forwards;
+}
+
+@keyframes star-hop {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.4) rotate(0deg);
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    45% {
+        opacity: 1;
+        transform: translate(calc(var(--dx) * 0.6), calc(var(--h) * -1)) scale(1.3) rotate(180deg);
+    }
+
+    70% {
+        opacity: 1;
+        transform: translate(var(--dx), calc(var(--h) * -0.15)) scale(1) rotate(300deg);
+    }
+
+    85% {
+        opacity: 1;
+        transform: translate(var(--dx), calc(var(--h) * -0.5)) scale(1.05) rotate(340deg);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(var(--dx), 0) scale(0.8) rotate(360deg);
+    }
+}
+
+.star-plus {
+    position: absolute;
+    z-index: 60;
+    pointer-events: none;
+    transform: translateX(-50%);
+    padding: 2px 14px;
+    border-radius: 999px;
+    background: #fff;
+    border: 3px solid #fbbf24;
+    color: #d97706;
+    font-weight: 900;
+    font-size: 22px;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(180, 83, 9, 0.3);
+    animation: star-plus 1.4s ease-out forwards;
+}
+
+@keyframes star-plus {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -6px) scale(0.5);
+    }
+
+    15% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1.2);
+    }
+
+    30% {
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 6px) scale(1);
+    }
+}
+
+.star-get-btn {
+    animation: star-btn-jump 0.8s ease-out;
+}
+
+@keyframes star-btn-jump {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    20% {
+        transform: translateY(-12px) scale(1.12) rotate(-3deg);
+    }
+
+    40% {
+        transform: translateY(0) scale(0.97);
+    }
+
+    60% {
+        transform: translateY(-6px) scale(1.06) rotate(2deg);
+    }
+
+    80% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+.star-get-num {
+    display: inline-block;
+    animation: star-num-pop 0.8s ease-out;
+}
+
+@keyframes star-num-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    30% {
+        transform: scale(1.7);
+        color: #f59e0b;
+    }
+
+    100% {
+        transform: scale(1);
     }
 }
     </style>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tone.js for web audio -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- Canvas-confetti for stage clear effects -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <!-- Google Fonts for cute rounded text -->
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap"
-        rel="stylesheet">
 </head>
 
 <body class="text-slate-800">
 
     <!-- Floating background decorations -->
-    <div class="fixed top-6 left-6 text-4xl opacity-30 animate-bounce-gentle pointer-events-none">🎵</div>
-    <div class="fixed top-12 right-10 text-5xl opacity-30 animate-bounce-gentle pointer-events-none"
+    <div class="fixed top-6 left-6 text-4xl opacity-30 animate-bounce-gentle pointer-events-none bg-deco">🎵</div>
+    <div class="fixed top-12 right-10 text-5xl opacity-30 animate-bounce-gentle pointer-events-none bg-deco"
         style="animation-delay: 0.7s;">⭐</div>
-    <div class="fixed bottom-10 left-12 text-5xl opacity-30 animate-bounce-gentle pointer-events-none"
+    <div class="fixed bottom-10 left-12 text-5xl opacity-30 animate-bounce-gentle pointer-events-none bg-deco"
         style="animation-delay: 1.2s;">✨</div>
-    <div class="fixed bottom-8 right-8 text-4xl opacity-30 animate-bounce-gentle pointer-events-none"
+    <div class="fixed bottom-8 right-8 text-4xl opacity-30 animate-bounce-gentle pointer-events-none bg-deco"
         style="animation-delay: 0.4s;">🎶</div>
 
-    <!-- Audio Start Overlay -->
-    <div id="start-overlay"
-        class="fixed inset-0 z-50 bg-amber-100/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
-        <div
-            class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border-4 border-amber-300 flex flex-col items-center gap-6">
-            <div class="text-6xl animate-bounce">♪🎹♬</div>
-            <h1 class="text-3xl sm:text-4xl font-black text-pink-500 tracking-wider">タイプdeドレミ♪</h1>
-            <p class="text-slate-600 font-bold text-lg leading-relaxed">
-                キーボードをたのしくたたいて<br>ピアノをえんそうしよう！
-            </p>
-            <button id="start-btn"
-                class="w-full py-4 bg-gradient-to-r from-pink-500 via-rose-400 to-amber-400 hover:from-pink-600 hover:to-amber-500 text-white font-black text-2xl rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200">
-                あそぶ！（スタート）
-            </button>
-            <button id="quiz-start-btn"
-                class="w-full py-3 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white font-black text-xl rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-200">
-                🎼 おとあてゲーム
-            </button>
+    <!-- Title screen (= Audio Start Overlay) -->
+    <div id="start-overlay">
+        <div id="title-frame" class="title-frame">
+            <div class="title-logo">
+                <h1 aria-label="タイプdeドレミ"><span style="color:#ec4899">タ</span><span style="color:#f97316">イ</span><span
+                        style="color:#eab308">プ</span><span class="title-de" style="color:#22c55e">de</span><span
+                        style="color:#0ea5e9">ド</span><span style="color:#8b5cf6">レ</span><span
+                        style="color:#ec4899">ミ</span><span style="color:#f97316">♪</span></h1>
+                <p class="title-sub">おととなかよし！タイピングピアノ</p>
+            </div>
+            <button id="title-reset-btn" class="title-reset">🗑 データを しょきか</button>
+            <div id="title-reset-box" class="title-reset-box">
+                <div class="title-reset-card">
+                    <p>ほしも シールも<br>ぜんぶ きえるよ。<br>もとには もどせないよ。<br>しょきかする？</p>
+                    <div class="title-reset-actions">
+                        <button id="title-reset-no" class="title-reset-no">やめる</button>
+                        <button id="title-reset-yes" class="title-reset-yes">しょきかする</button>
+                    </div>
+                </div>
+            </div>
+            <div class="title-menu">
+                <button id="quiz-start-btn" class="title-btn title-btn-sub title-violet">🎼 おとあてゲーム</button>
+                <button id="start-btn" class="title-btn title-btn-main">🎹 あそぶ！</button>
+                <button id="rhythm-start-btn" class="title-btn title-btn-sub title-teal">🥁 リズムゲーム</button>
+            </div>
         </div>
     </div>
 
@@ -293,7 +679,7 @@ body.portrait-prompt #rotate-prompt {
         <header
             class="w-full flex items-center justify-between gap-3 bg-white/80 backdrop-blur-sm px-5 py-2 rounded-3xl border-4 border-pink-200 shadow-md shrink-0">
             <div class="flex items-center gap-3">
-                <span class="text-4xl">🎹</span>
+                <span id="header-logo" class="text-4xl">🎹</span>
                 <div>
                     <h1
                         class="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500">
@@ -305,19 +691,27 @@ body.portrait-prompt #rotate-prompt {
 
             <!-- Status Displays (Score, Combo, Octave) -->
             <div class="flex items-center gap-4 justify-center">
+                <button onclick="startRhythm()"
+                    class="px-3 py-1.5 rounded-2xl bg-teal-500 hover:bg-teal-600 text-white font-black text-sm shadow-[0_3px_0_#0f766e] active:translate-y-0.5 active:shadow-none transition">
+                    🥁 リズムゲーム
+                </button>
                 <button onclick="startQuiz('staff')"
                     class="px-3 py-1.5 rounded-2xl bg-violet-500 hover:bg-violet-600 text-white font-black text-sm shadow-[0_3px_0_#5b21b6] active:translate-y-0.5 active:shadow-none transition">
                     🎼 おとあてゲーム
                 </button>
-                <!-- Octave Indicator -->
-                <div class="bg-indigo-50 px-3 py-1.5 rounded-2xl border-2 border-indigo-200 flex items-center gap-2">
-                    <span class="text-xs font-bold text-indigo-400">おくたーぶ:</span>
-                    <span id="octave-badge" class="font-black text-lg text-indigo-600">ふつう<span class="key-letter">
-                            (B)</span></span>
-                </div>
+                <!-- Star wallet (opens the reward room) : ごほうび（目立つボタン） -->
+                <button onclick="openRewardMenu()"
+                    class="px-4 py-2 rounded-3xl bg-gradient-to-r from-amber-300 to-orange-400 hover:brightness-110 shadow-[0_4px_0_#b45309] active:translate-y-1 active:shadow-none border-4 border-amber-100 transition flex items-center gap-2 whitespace-nowrap">
+                    <span class="text-2xl">🎁</span>
+                    <span class="font-black text-lg text-white drop-shadow">ごほうび</span>
+                    <span class="bg-white/95 rounded-full px-3 py-0.5 flex items-center gap-1">
+                        <span class="text-base">⭐</span>
+                        <span id="wallet-text" class="font-black text-2xl text-amber-600">0</span>
+                    </span>
+                </button>
                 <!-- Score Indicator -->
                 <div class="bg-amber-50 px-3 py-1.5 rounded-2xl border-2 border-amber-200 flex items-center gap-1.5">
-                    <span class="text-base">⭐</span>
+                    <span class="text-base">🎯</span>
                     <span id="score-text" class="font-black text-xl text-amber-600">0</span>
                 </div>
                 <!-- Combo Indicator -->
@@ -347,24 +741,47 @@ body.portrait-prompt #rotate-prompt {
             </section>
 
 
-            <div id="top-row" class="grid grid-cols-[1fr_360px] grid-rows-[148px] gap-3 shrink-0">
+            <!-- Rhythm panel (リズムゲーム) : shown instead of header + song row -->
+            <section id="rhythm-panel" class="shrink-0 h-[250px] gap-3">
+                <div class="flex-1 min-w-0 bg-white/95 rounded-3xl border-4 border-teal-300 shadow-md overflow-hidden">
+                    <canvas id="rhythm-canvas" class="block w-full h-full"></canvas>
+                </div>
+                <div
+                    class="w-[400px] shrink-0 bg-white/90 rounded-3xl border-4 border-amber-200 shadow-md p-3 flex flex-col gap-2">
+                    <div id="rhythm-songs" class="flex gap-1.5 flex-wrap"></div>
+                    <div class="flex gap-2">
+                        <div
+                            class="bg-amber-50 px-3 py-1 rounded-2xl border-2 border-amber-200 font-black text-xl text-amber-600">
+                            🎯 <span id="rhythm-score">0</span></div>
+                        <div
+                            class="bg-rose-50 px-3 py-1 rounded-2xl border-2 border-rose-200 font-black text-xl text-rose-500">
+                            🔥 <span id="rhythm-combo">0</span></div>
+                        <button id="rhythm-easy-btn" onclick="toggleRhythmEasy()"></button>
+                    </div>
+                    <div id="rhythm-message"
+                        class="flex-1 flex items-center text-lg font-black text-slate-800 leading-snug"></div>
+                    <div id="rhythm-actions" class="flex gap-2 flex-wrap"></div>
+                </div>
+            </section>
+
+            <div id="top-row" class="grid grid-cols-[1fr_360px] grid-rows-[160px] gap-3 shrink-0">
 
                 <!-- Song Selector & Song Play Mode Banner -->
                 <section
-                    class="bg-white/90 rounded-3xl p-3 border-4 border-amber-200 shadow-md flex flex-col gap-2 min-w-0 min-h-0">
+                    class="bg-gradient-to-r from-amber-50 to-pink-50 rounded-3xl p-2 border-4 border-pink-300 shadow-lg flex flex-col gap-1.5 min-w-0 min-h-0">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
                             <span class="text-2xl">🎼</span>
-                            <span class="font-extrabold text-slate-700 text-base">きょくをえらんでれんしゅう：</span>
+                            <span class="font-black text-pink-500 text-xl">きょくをえらんでれんしゅう：</span>
                         </div>
-                        <div id="song-buttons" class="flex gap-2 flex-wrap p-1 max-w-full">
+                        <div id="song-buttons" class="flex gap-2 flex-wrap p-0 max-w-full">
                             <!-- Populated by JS -->
                         </div>
                     </div>
 
                     <!-- Current Song Progress / Prompt Bar -->
                     <div id="song-prompt-box"
-                        class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-2.5 flex flex-row items-center justify-between gap-3">
+                        class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-2 flex flex-row items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
                             <span class="text-2xl" id="song-icon">🎵</span>
                             <div>
@@ -401,41 +818,9 @@ body.portrait-prompt #rotate-prompt {
             <section id="piano-container"
                 class="relative flex-1 min-h-0 bg-white/95 rounded-3xl p-4 border-4 border-pink-300 shadow-2xl flex flex-col gap-3">
 
-                <!-- Octave Control Keys Row (V, B, N) -->
+                <!-- Controls row: もじをかくす / おとをあげる / もとにもどす / おとをさげる / おとをえらぶ -->
                 <div
                     class="flex items-center justify-center gap-6 bg-slate-100/80 p-2 rounded-2xl shrink-0 border-2 border-slate-200">
-                    <div class="text-xs font-black text-slate-500">オクターブきりかえ:</div>
-
-                    <!-- N Key (Down) -->
-                    <button id="key-n" data-key="n" onclick="changeOctave(-1)"
-                        class="octave-btn flex-1 max-w-[130px] bg-sky-400 hover:bg-sky-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#0284c7] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-sky-300">
-                        <div class="text-left">
-                            <div class="text-[10px] font-bold text-sky-100">さげる (-1)</div>
-                            <div class="text-sm font-black key-letter">N キー</div>
-                        </div>
-                        <span class="text-xl">👇</span>
-                    </button>
-
-                    <!-- B Key (Reset/Standard) -->
-                    <button id="key-b" data-key="b" onclick="resetOctave()"
-                        class="octave-btn flex-1 max-w-[140px] bg-emerald-400 hover:bg-emerald-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#059669] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-emerald-300">
-                        <div class="text-left">
-                            <div class="text-[10px] font-bold text-emerald-100">もとにをもどす</div>
-                            <div class="text-sm font-black key-letter">B キー</div>
-                        </div>
-                        <span class="text-xl">🏠</span>
-                    </button>
-
-                    <!-- V Key (Up) -->
-                    <button id="key-v" data-key="v" onclick="changeOctave(1)"
-                        class="octave-btn flex-1 max-w-[130px] bg-pink-400 hover:bg-pink-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#db2777] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-pink-300">
-                        <div class="text-left">
-                            <div class="text-[10px] font-bold text-pink-100">あげる (+1)</div>
-                            <div class="text-sm font-black key-letter">V キー</div>
-                        </div>
-                        <span class="text-xl">👆</span>
-                    </button>
-
                     <!-- Toggle: show / hide keyboard letters -->
                     <button id="letters-toggle-btn" onclick="toggleKeyLetters()"
                         class="flex-1 max-w-[170px] bg-slate-500 hover:bg-slate-600 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#334155] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-slate-400">
@@ -444,6 +829,36 @@ body.portrait-prompt #rotate-prompt {
                             <div id="letters-btn-label" class="text-xs font-black">もじをかくす</div>
                         </div>
                         <span id="letters-btn-icon" class="text-xl">🙈</span>
+                    </button>
+
+                    <!-- V Key (Up) -->
+                    <button id="key-v" data-key="v" onclick="changeOctave(1)"
+                        class="octave-btn flex-1 max-w-[130px] bg-pink-400 hover:bg-pink-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#db2777] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-pink-300">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-pink-100">おとをあげる</div>
+                            <div class="text-sm font-black key-letter">V キー</div>
+                        </div>
+                        <span class="text-xl">👆</span>
+                    </button>
+
+                    <!-- B Key (Reset/Standard) -->
+                    <button id="key-b" data-key="b" onclick="resetOctave()"
+                        class="octave-btn flex-1 max-w-[140px] bg-emerald-400 hover:bg-emerald-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#059669] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-emerald-300">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-emerald-100">もとにもどす</div>
+                            <div class="text-sm font-black key-letter">B キー</div>
+                        </div>
+                        <span class="text-xl">🏠</span>
+                    </button>
+
+                    <!-- N Key (Down) -->
+                    <button id="key-n" data-key="n" onclick="changeOctave(-1)"
+                        class="octave-btn flex-1 max-w-[130px] bg-sky-400 hover:bg-sky-500 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#0284c7] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-sky-300">
+                        <div class="text-left">
+                            <div class="text-[10px] font-bold text-sky-100">おとをさげる</div>
+                            <div class="text-sm font-black key-letter">N キー</div>
+                        </div>
+                        <span class="text-xl">👇</span>
                     </button>
 
                     <!-- Instrument (sound) selector -->
@@ -489,6 +904,23 @@ body.portrait-prompt #rotate-prompt {
             </div>
         </div>
 
+        <!-- Rhythm song selection screen -->
+        <div id="rhythm-menu"
+            class="hidden absolute inset-0 z-40 bg-teal-100/90 backdrop-blur-md items-center justify-center"
+            onclick="if (event.target === this) closeRhythmMenu()">
+            <div class="bg-white rounded-3xl p-6 w-[1120px] border-4 border-teal-300 shadow-2xl flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-3xl font-black text-teal-500 flex items-center gap-2"><span>🥁</span> きょくをえらんでね！
+                    </h2>
+                    <button onclick="closeRhythmMenu()"
+                        class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-600 font-black text-sm transition">
+                        ✕ とじる（Esc）
+                    </button>
+                </div>
+                <div id="rhythm-menu-grid" class="grid grid-cols-4 gap-4"></div>
+            </div>
+        </div>
+
         <!-- Instrument selection screen -->
         <div id="inst-menu"
             class="hidden absolute inset-0 z-40 bg-violet-100/90 backdrop-blur-md items-center justify-center"
@@ -506,23 +938,58 @@ body.portrait-prompt #rotate-prompt {
             </div>
         </div>
 
-    </div><!-- /#stage -->
+        <!-- Reward room (ごほうびのへや) -->
+        <div id="reward-menu"
+            class="hidden absolute inset-0 z-40 bg-amber-100/90 backdrop-blur-md items-center justify-center"
+            onclick="if (event.target === this) closeRewardMenu()">
+            <div class="bg-white rounded-3xl p-5 w-[1120px] border-4 border-amber-300 shadow-2xl flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-3xl font-black text-amber-500 flex items-center gap-2"><span>🎁</span> ごほうびのへや</h2>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-1 font-black text-2xl text-amber-600">
+                            ⭐ <span id="reward-wallet">0</span></div>
+                        <button onclick="closeRewardMenu()"
+                            class="px-4 py-2 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-600 font-black text-sm transition">
+                            ✕ とじる（Esc）
+                        </button>
+                    </div>
+                </div>
+                <div id="reward-tabs" class="flex gap-2"></div>
+                <div id="reward-body" class="min-h-[330px]"></div>
+                <div class="text-right">
+                    <button onclick="resetSave()"
+                        class="px-4 py-1.5 rounded-xl border-2 border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100 font-black text-sm transition">
+                        🗑 ぜんぶ しょきか（さいしょから）</button>
+                </div>
+            </div>
+        </div>
 
-    <!-- スマホを よこむきに してもらう（たてのままでも あそべる） -->
-    <div id="rotate-prompt" style="z-index:60"
-        class="fixed inset-0 bg-amber-100/95 backdrop-blur-md flex-col items-center justify-center gap-5 p-6 text-center">
-        <div class="text-7xl animate-bounce">📱↻</div>
-        <p class="text-2xl font-black text-pink-500 leading-relaxed">スマホを<br>よこむきに してね！</p>
-        <button onclick="forceRotate = true; fitStage();"
-            class="px-6 py-3 rounded-2xl bg-white border-4 border-amber-300 text-slate-600 font-black text-base shadow-md">
-            たてのまま あそぶ
-        </button>
-    </div>
+        <!-- Confirm dialog -->
+        <div id="confirm-box" style="z-index:60"
+            class="hidden absolute inset-0 bg-slate-900/40 items-center justify-center">
+            <div
+                class="bg-white rounded-3xl border-4 border-amber-300 shadow-2xl p-6 w-[460px] flex flex-col items-center gap-5">
+                <div id="confirm-text" class="text-2xl font-black text-slate-700 text-center leading-relaxed"></div>
+                <div class="flex gap-4 w-full">
+                    <button id="confirm-no"
+                        class="flex-1 py-3 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-600 font-black text-lg transition">やめる</button>
+                    <button id="confirm-yes"
+                        class="flex-1 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-amber-400 text-white font-black text-lg shadow-md transition">はい！</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" style="z-index:70"
+            class="hidden absolute left-1/2 bottom-28 -translate-x-1/2 bg-slate-800/90 text-white font-black text-xl px-6 py-3 rounded-2xl shadow-xl whitespace-nowrap">
+        </div>
+
+    </div><!-- /#stage -->
 
     <script>
         // 1280x720 のステージを、画面に合わせて16:9のまま拡大縮小
-        // スマホ：よこむきならそのまま、たてむきなら「よこむきにしてね」→ たてのままなら ステージを90°まわす
-        let forceRotate = false;
+        // スマホ：よこむきならそのまま、たてむきなら ステージを90°まわして、すぐ タイトル画面から はじめる
         function isTouchDevice() {
             return window.matchMedia("(pointer: coarse)").matches;
         }
@@ -533,11 +1000,16 @@ body.portrait-prompt #rotate-prompt {
             const h = window.innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
             const touch = isTouchDevice();
             const portrait = h > w;
-            const rotate = touch && portrait && forceRotate;
+            const rotate = touch && portrait;
             const s = rotate ? Math.min(h / 1280, w / 720) : Math.min(w / 1280, h / 720);
             stage.style.transform = rotate ? `rotate(90deg) scale(${s})` : `scale(${s})`;
             stage.classList.toggle("compact", s < 0.62); // 小さい画面では、いらない部分をへらす
-            document.body.classList.toggle("portrait-prompt", touch && portrait && !forceRotate);
+            // タイトル画面も、たてのままなら 90°まわす
+            const frame = document.getElementById("title-frame");
+            if (frame) {
+                frame.style.width = rotate ? Math.min(h, (w * 16) / 9) + "px" : "";
+                frame.style.transform = rotate ? "rotate(90deg)" : "";
+            }
         }
         window.addEventListener("resize", fitStage);
         window.addEventListener("orientationchange", () => setTimeout(fitStage, 200));
@@ -622,11 +1094,11 @@ body.portrait-prompt #rotate-prompt {
 
 // --- Black keys (sharps) --- 白鍵 PIANO_KEYS[after] と [after+1] の間に置く
 const BLACK_KEYS = [
-  { key: "e", noteName: "C#", jpName: "ド♯", after: 0 },
-  { key: "r", noteName: "D#", jpName: "レ♯", after: 1 },
-  { key: "y", noteName: "F#", jpName: "ファ♯", after: 3 },
-  { key: "u", noteName: "G#", jpName: "ソ♯", after: 4 },
-  { key: "i", noteName: "A#", jpName: "ラ♯", after: 5 },
+  { key: "e", noteName: "C#", jpName: "ド♯レ♭", after: 0 },
+  { key: "r", noteName: "D#", jpName: "レ♯ミ♭", after: 1 },
+  { key: "y", noteName: "F#", jpName: "フ♯ソ♭", after: 3 },
+  { key: "u", noteName: "G#", jpName: "ソ♯ラ♭", after: 4 },
+  { key: "i", noteName: "A#", jpName: "ラ♯シ♭", after: 5 },
 ].map((k) => ({
   ...k,
   emoji: "🖤",
@@ -646,133 +1118,30 @@ const SONGS = [
   },
   {
     id: "twinkle",
-    title: "きらきら星",
+    title: "きらきらぼし",
     icon: "⭐",
-    notes: [
-      "s",
-      "s",
-      "h",
-      "h",
-      "j",
-      "j",
-      "h",
-      "g",
-      "g",
-      "f",
-      "f",
-      "d",
-      "d",
-      "s",
-      "h",
-      "h",
-      "g",
-      "g",
-      "f",
-      "f",
-      "d",
-      "h",
-      "h",
-      "g",
-      "g",
-      "f",
-      "f",
-      "d",
-      "s",
-      "s",
-      "h",
-      "h",
-      "j",
-      "j",
-      "h",
-      "g",
-      "g",
-      "f",
-      "f",
-      "d",
-      "d",
-      "s",
-    ],
+    notes: (
+      "s s h h j j h g g f f d d s h h g g f f d " +
+      "h h g g f f d s s h h j j h g g f f d d s"
+    ).split(" "),
   },
   {
     id: "tulip",
     title: "チューリップ",
     icon: "🌷",
-    notes: [
-      "s",
-      "d",
-      "f",
-      "s",
-      "d",
-      "f",
-      "h",
-      "f",
-      "d",
-      "s",
-      "d",
-      "f",
-      "d",
-      "s",
-      "d",
-      "f",
-      "s",
-      "d",
-      "f",
-      "h",
-      "f",
-      "d",
-      "s",
-      "d",
-      "f",
-      "s",
-      "h",
-      "h",
-      "f",
-      "h",
-      "j",
-      "j",
-      "h",
-      "f",
-      "f",
-      "d",
-      "d",
-      "s",
-    ],
+    notes: (
+      "s d f s d f h f d s d f d " +
+      "s d f s d f h f d s d f s " +
+      "h h f h j j h f f d d s"
+    ).split(" "),
   },
   {
     id: "frog",
-    title: "かえるの合唱",
+    title: "かえるのがっしょう",
     icon: "🐸",
-    notes: [
-      "s",
-      "d",
-      "f",
-      "g",
-      "f",
-      "d",
-      "s",
-      "f",
-      "g",
-      "h",
-      "j",
-      "h",
-      "g",
-      "f",
-      "s",
-      "s",
-      "s",
-      "s",
-      "s",
-      "s",
-      "d",
-      "d",
-      "f",
-      "f",
-      "g",
-      "g",
-      "f",
-      "d",
-      "s",
-    ],
+    notes: (
+      "s d f g f d s f g h j h g f " + "s s s s s s d d f f g g f d s"
+    ).split(" "),
   },
   {
     id: "mary",
@@ -793,13 +1162,13 @@ const SONGS = [
   },
   {
     id: "ode",
-    title: "歓喜の歌",
+    title: "よろこびのうた",
     icon: "🎻",
     notes: (
-      "f f g h h g f d s s d f f d d " +
-      "f f g h h g f d s s d f d s s " +
-      "d d f s d f g f s d f g f d s d s " +
-      "f f g h h g f d s s d f d s s"
+      "j j i l l i j h g g h j j h h " +
+      "j j i l l i j h g g h j h g g " +
+      "h h j g h j i j g h j i j h g h s " +
+      "j j i l l i j h g g h j h g g"
     ).split(" "),
   },
   {
@@ -807,10 +1176,55 @@ const SONGS = [
     title: "ジングルベル",
     icon: "🔔",
     notes: (
-      "f f f f f f f h s d f " +
-      "g g g g g f f f f d d f d h " +
-      "f f f f f f f h s d f " +
-      "g g g g g f f f h h g d s"
+      "s s j h g s s s j h g d d d i j h f l " +
+      "l l i h j s s j h g s s s j h g d d d i j h l l l l " +
+      "l l i h g j j j j j j j l g h j i i i i i j j j j " +
+      "j h h g h l j j j j j j j l g h j i i i i i j j j " +
+      "l l i h g"
+    ).split(" "),
+  },
+  {
+    id: "birthday",
+    title: "ハッピーバースデー",
+    icon: "🎂",
+    notes: (
+      "s s d s g f " +
+      "s s d s h g " +
+      "s s l j g f d " +
+      "i i j g h g"
+    ).split(" "),
+  },
+  {
+    id: "honeybee",
+    title: "ぶんぶんぶん",
+    icon: "🐝",
+    notes: (
+      "h g f d f g d s " +
+      "f g h f d f g d " +
+      "f g h f d f g d " +
+      "h g f d f g d s"
+    ).split(" "),
+  },
+  {
+    id: "bear",
+    title: "もりのくまさん",
+    icon: "🐻",
+    notes: (
+      "h y h f f r f s " +
+      "f d s d h j h f " +
+      "h j k l h f s j " +
+      "j k j h g f d s"
+    ).split(" "),
+  },
+  {
+    id: "toy",
+    title: "おもちゃのチャチャチャ",
+    icon: "🤖",
+    notes: (
+      "s s s f j j j d d d g h h h h h u j j j u h k l " +
+      "h h g f f f g h h h h s g f d d d d d j j u h " +
+      "j j j k l l l k k k k j h h u j j j u h k l " +
+      "s s s f j j j d d d g h h h h h u j j j u h k l"
     ).split(" "),
   },
 ];
@@ -821,9 +1235,13 @@ const SONG_LEVELS = {
   frog: 1,
   butterfly: 2,
   twinkle: 2,
-  tulip: 2,
+  tulip: 1,
   ode: 2,
   jingle: 3,
+  birthday: 3,
+  honeybee: 2,
+  bear: 3,
+  toy: 3,
 };
 const LEVEL_LABELS = {
   1: "★☆☆ かんたん",
@@ -839,8 +1257,26 @@ const SONG_ORDER = [
   "tulip",
   "ode",
   "jingle",
+  "birthday",
+  "honeybee",
+  "bear",
+  "toy",
 ];
 SONGS.sort((a, b) => SONG_ORDER.indexOf(a.id) - SONG_ORDER.indexOf(b.id));
+
+// 曲の入力ミスを見つける：キーにない音・ねだん／むずかしさ／ならびの ぬけ
+SONGS.forEach((s) => {
+  s.notes.forEach((n, i) => {
+    if (!ALL_KEYS.some((k) => k.key === n))
+      console.warn(
+        `曲「${s.title}」の ${i + 1}番目の音が おかしい: "${n}"（スペースのぬけ？）`,
+      );
+  });
+  if (s.id !== "free" && !SONG_LEVELS[s.id])
+    console.warn(`曲「${s.title}」が SONG_LEVELS に ありません`);
+  if (SONG_ORDER.indexOf(s.id) < 0)
+    console.warn(`曲「${s.title}」が SONG_ORDER に ありません`);
+});
 
 // --- Global State ---
 let synth = null;
@@ -848,12 +1284,16 @@ let octaveOffset = 0; // -1, 0, 1
 let activeKeys = new Set();
 let score = 0;
 let combo = 0;
+const MAX_SCORE = 9999; // ポイントの上限
+const MAX_COMBO = 99; // コンボの上限
 let currentSong = SONGS[0];
 let songNoteIndex = 0;
 let isAudioStarted = false;
 let isSongMenuOpen = false;
 let isInstMenuOpen = false;
 let quizActive = false; // おとあてゲーム中か
+let rhythmActive = false; // リズムゲーム中か
+let isRhythmMenuOpen = false;
 
 // --- DOM Elements ---
 const startOverlay = document.getElementById("start-overlay");
@@ -903,7 +1343,7 @@ function createPianoKeys() {
           </div>
 
           <!-- Cute Emoji Icon -->
-          <div class="text-5xl my-1 animate-bounce-gentle pointer-events-none">${item.emoji}</div>
+          <div class="key-emoji text-5xl my-1 animate-bounce-gentle pointer-events-none">${item.emoji}</div>
 
           <!-- Bottom Pitch Label (Do Re Mi) -->
           <div class="text-center">
@@ -958,8 +1398,8 @@ function createSongButtons() {
   songButtonsContainer.innerHTML = "";
   const btn = document.createElement("button");
   btn.className =
-    "px-4 py-1.5 rounded-2xl font-black text-sm whitespace-nowrap border-2 bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-500 shadow-[0_3px_0_#b45309] active:translate-y-0.5 active:shadow-none transition flex items-center gap-2";
-  btn.innerHTML = `<span>${currentSong.icon}</span> ${currentSong.title} <span class="text-xs bg-white/70 px-2 py-0.5 rounded-full">🎼 きょくをえらぶ</span>`;
+    "song-select-btn px-6 py-2.5 rounded-3xl font-black text-xl whitespace-nowrap border-4 border-amber-200 bg-gradient-to-r from-amber-400 to-orange-500 hover:brightness-110 text-white active:translate-y-1 transition flex items-center gap-3";
+  btn.innerHTML = `<span class="text-3xl">${currentSong.icon}</span><span class="drop-shadow">${currentSong.title}</span><span class="text-sm bg-white text-orange-600 px-3 py-1 rounded-full">▼ きょくをえらぶ</span>`;
   btn.onclick = openSongMenu;
   songButtonsContainer.appendChild(btn);
 }
@@ -969,22 +1409,30 @@ function createSongMenu() {
   songMenuGrid.innerHTML = "";
   SONGS.forEach((song) => {
     const isCurrent = song.id === currentSong.id;
+    const locked = !isSongUnlocked(song.id);
     const level =
       song.id === "free"
         ? "🌈 すきにひこう"
         : LEVEL_LABELS[SONG_LEVELS[song.id]];
     const card = document.createElement("button");
-    card.className = `song-card flex flex-col items-center justify-center gap-1 h-[150px] rounded-2xl border-4 transition duration-150 hover:-translate-y-1 hover:shadow-lg ${
-      isCurrent
+    const style = locked
+      ? "bg-slate-100 border-slate-200 hover:border-amber-300"
+      : isCurrent
         ? "bg-amber-50 border-amber-400 ring-4 ring-amber-200"
-        : "bg-white border-slate-200 hover:border-pink-300 hover:bg-pink-50"
-    }`;
-    card.innerHTML = `
-      <span class="text-5xl">${song.icon}</span>
-      <span class="text-xl font-black text-slate-800">${song.title}</span>
-      <span class="text-sm font-bold text-amber-500">${level}</span>
-    `;
+        : "bg-white border-slate-200 hover:border-pink-300 hover:bg-pink-50";
+    card.className = `song-card flex flex-col items-center justify-center gap-1 h-[150px] rounded-2xl border-4 transition duration-150 hover:-translate-y-1 hover:shadow-lg ${style}`;
+    card.innerHTML = locked
+      ? `<span class="text-5xl grayscale opacity-60">${song.icon}</span>
+         <span class="text-xl font-black text-slate-500">${song.title}</span>
+         <span class="text-sm font-black text-amber-600 bg-amber-100 px-3 py-0.5 rounded-full">🔒 ⭐${SONG_PRICES[song.id]} でひらく</span>`
+      : `<span class="text-5xl">${song.icon}</span>
+         <span class="text-xl font-black text-slate-800">${song.title}</span>
+         <span class="text-sm font-bold text-amber-500">${level}</span>`;
     card.onclick = () => {
+      if (locked) {
+        buySong(song, true);
+        return;
+      }
       selectSong(song);
       closeSongMenu();
     };
@@ -1051,7 +1499,10 @@ function handleKeyPress(keyChar) {
   keyChar = keyChar.toLowerCase();
 
   // おとあてゲーム中は、オクターブは かえない
-  if (quizActive && (keyChar === "v" || keyChar === "b" || keyChar === "n"))
+  if (
+    (quizActive || rhythmActive) &&
+    (keyChar === "v" || keyChar === "b" || keyChar === "n")
+  )
     return;
 
   // Octave Keys Handling
@@ -1079,6 +1530,7 @@ function handleKeyPress(keyChar) {
     playNoteSound(keyChar, true);
     triggerVisualEffects(keyChar, keyData);
     if (quizActive) quizHandleKey(keyChar);
+    else if (rhythmActive) rhythmHandleKey(keyChar);
     else checkSongProgress(keyChar);
     updatePressedMonitor();
   }
@@ -1111,7 +1563,7 @@ function triggerVisualEffects(keyChar, keyData) {
   const rect = keyEl.getBoundingClientRect();
   const particle = document.createElement("div");
   particle.className = "note-particle";
-  const symbols = ["🎵", "🎶", "⭐", "✨", "💖", "🌟"];
+  const symbols = currentParticles();
   particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
 
   // Position particle above key
@@ -1147,7 +1599,7 @@ function updatePressedMonitor() {
       chip.className = `flex items-center gap-1.5 bg-gradient-to-r ${item.color} px-2.5 py-1 rounded-2xl shadow-lg border-2 ${item.borderColor} text-white`;
       chip.innerHTML = `
             <span class="key-letter text-2xl font-black">${item.key.toUpperCase()}</span>
-            <span class="text-base">${item.emoji}</span>
+            <span class="text-base">${keyEmojiOf(item)}</span>
             ${compact ? "" : `<span class="text-sm font-bold">${item.jpName}</span>`}
           `;
     } else {
@@ -1176,6 +1628,7 @@ function updateOctaveDisplay() {
     0: 'ふつう<span class="key-letter"> (B)</span>',
     1: 'たかい<span class="key-letter"> (V)</span>',
   };
+  if (!octaveBadge) return; // ヘッダーの表示は なくなったので、あるときだけ更新
   octaveBadge.innerHTML = labels[octaveOffset];
 
   // Add feedback pulse
@@ -1193,6 +1646,8 @@ function toggleKeyLetters() {
   if (label)
     label.innerText = keyLettersVisible ? "もじをかくす" : "もじをだす";
   if (icon) icon.innerText = keyLettersVisible ? "🙈" : "👀";
+  save.lettersVisible = keyLettersVisible;
+  persist();
   // ボタンにフォーカスが残ると、スペースキーが二重に効くのではずす
   if (document.activeElement && document.activeElement.blur)
     document.activeElement.blur();
@@ -1200,8 +1655,14 @@ function toggleKeyLetters() {
 
 // --- Song Practice Mode Logic ---
 function selectSong(song) {
+  if (!isSongUnlocked(song.id)) return; // まだ ひらいてない曲
+  songMistakes = 0;
   currentSong = song;
   songNoteIndex = 0;
+  if (song.id === "free") {
+    combo = 0;
+    updateScoreDisplay();
+  }
   createSongButtons();
   updateSongDisplay();
 }
@@ -1223,13 +1684,14 @@ function updateSongDisplay() {
     noteSequenceDisplay.innerHTML = `<span class="text-2xl font-black text-rose-500">✨ STAGE CLEAR! ✨</span>`;
     clearGuideHighlights();
     triggerCompletionConfetti();
+    onSongComplete();
     return;
   }
 
   const targetKey = currentSong.notes[songNoteIndex];
-  const targetData = PIANO_KEYS.find((p) => p.key === targetKey);
+  const targetData = ALL_KEYS.find((p) => p.key === targetKey);
 
-  songNextNoteText.innerHTML = `つぎの音: <span class="text-pink-600 font-black text-xl bg-pink-100 px-2 py-0.5 rounded-xl border border-pink-300">${targetData.jpName}<span class="key-letter"> (${targetData.key.toUpperCase()})</span></span> をおしてね！`;
+  songNextNoteText.innerHTML = `つぎのおと: <span class="text-pink-600 font-black text-xl bg-pink-100 px-2 py-0.5 rounded-xl border border-pink-300">${targetData.jpName}<span class="key-letter"> (${targetData.key.toUpperCase()})</span></span> をおしてね！`;
 
   // Render Sequence Preview Chips
   noteSequenceDisplay.innerHTML = "";
@@ -1239,7 +1701,7 @@ function updateSongDisplay() {
   );
 
   visibleRange.forEach((nk, idx) => {
-    const itemData = PIANO_KEYS.find((p) => p.key === nk);
+    const itemData = ALL_KEYS.find((p) => p.key === nk);
     const chip = document.createElement("div");
     if (idx === 0) {
       chip.className =
@@ -1274,12 +1736,20 @@ function clearGuideHighlights() {
 function checkSongProgress(keyChar) {
   // 黒鍵は曲の練習中はミス扱いにしない（音だけ鳴らす）
   const isBlack = BLACK_KEYS.some((b) => b.key === keyChar);
-  if (isBlack && currentSong.id !== "free") return;
+  // （曲の中で黒鍵が出てくるときは、そのキーを おしたら すすむ）
+  if (
+    isBlack &&
+    currentSong.id !== "free" &&
+    keyChar !== currentSong.notes[songNoteIndex]
+  )
+    return;
 
   if (currentSong.id === "free" || songNoteIndex >= currentSong.notes.length) {
     // Just add score in free play
-    score += 10;
-    combo += 1;
+    freeNoteCount++;
+    if (freeNoteCount % 20 === 0) addStars(1, "えんそう");
+    score = Math.min(MAX_SCORE, score + 10);
+    combo = 0; // 自由演奏では コンボは つねに 0
     updateScoreDisplay();
     return;
   }
@@ -1287,13 +1757,14 @@ function checkSongProgress(keyChar) {
   const expectedKey = currentSong.notes[songNoteIndex];
   if (keyChar === expectedKey) {
     // Correct note struck!
-    score += 100 + combo * 10;
-    combo += 1;
+    score = Math.min(MAX_SCORE, score + 100 + combo * 10);
+    combo = Math.min(MAX_COMBO, combo + 1);
     songNoteIndex += 1;
     updateScoreDisplay();
     updateSongDisplay();
   } else {
     // Wrong note struck
+    songMistakes++;
     combo = 0;
     updateScoreDisplay();
   }
@@ -1485,6 +1956,8 @@ function setInstrument(id) {
   }
   Object.keys(heldNotes).forEach(releaseHeld);
   currentInstrument = id;
+  save.instrument = id;
+  persist();
   getInstrument(id); // ピアノは ここで よみこみが はじまる
   updateInstrumentButton();
   closeInstMenu();
@@ -1555,6 +2028,31 @@ const quizMessageEl = document.getElementById("quiz-message");
 const quizActionsEl = document.getElementById("quiz-actions");
 
 const INK = "#1e293b";
+
+// ♯ ありの もんだい用：ひくい おとから じゅんに 13こ（白鍵8 + 黒鍵5）
+const QUIZ_ALL = [
+  PIANO_KEYS[0],
+  BLACK_KEYS[0],
+  PIANO_KEYS[1],
+  BLACK_KEYS[1],
+  PIANO_KEYS[2],
+  PIANO_KEYS[3],
+  BLACK_KEYS[2],
+  PIANO_KEYS[4],
+  BLACK_KEYS[3],
+  PIANO_KEYS[5],
+  BLACK_KEYS[4],
+  PIANO_KEYS[6],
+  PIANO_KEYS[7],
+];
+let quizSharps = true; // ♯（くろいけんばん）も もんだいに いれるか
+const quizList = () => (quizSharps ? QUIZ_ALL : PIANO_KEYS);
+// 五線の上での ばしょ（ド=0 … ド5=7）。♯ は もとの おんと おなじ たかさ
+const staffIdx = (k) => (k.black ? k.after : PIANO_KEYS.indexOf(k));
+function toggleQuizSharps() {
+  quizSharps = !quizSharps;
+  setQuizMode(quizMode);
+}
 // 五線の線は y=50,70,90,110,130（下から ミ ソ シ レ ファ）。ド(i=0)は下の加線 y=150
 const noteY = (i) => 150 - 10 * i;
 
@@ -1569,28 +2067,34 @@ function staffSVG(notes, extra = "") {
     <path d="M 50 152 C 58 112, 70 72, 66 42 C 64 24, 76 14, 82 24 C 90 38, 66 72, 48 94 C 26 118, 34 142, 56 140 C 76 138, 78 114, 60 106 C 46 100, 36 114, 44 124"/>
     <path d="M 50 152 C 48 174, 26 176, 28 162"/></g>
     <circle cx="28" cy="161" r="4.5" fill="${INK}"/>`;
-  notes.forEach(({ i, x, label, color }) => {
+  notes.forEach(({ i, x, label, color, sharp, fs }) => {
     const y = noteY(i);
     const c = color || INK;
     if (i === 0)
       s += `<line x1="${x - 24}" x2="${x + 24}" y1="${y}" y2="${y}" stroke="${INK}" stroke-width="2"/>`;
     s += `<ellipse cx="${x}" cy="${y}" rx="13" ry="9.5" fill="${c}" transform="rotate(-20 ${x} ${y})"/>`;
+    if (sharp)
+      s += `<text x="${x - 31}" y="${y + 10}" text-anchor="middle" font-size="30" font-weight="900" fill="${c}">♯</text>`;
     s +=
       i < 6
         ? `<line x1="${x + 12}" x2="${x + 12}" y1="${y}" y2="${y - 52}" stroke="${c}" stroke-width="3"/>`
         : `<line x1="${x - 12}" x2="${x - 12}" y1="${y}" y2="${y + 52}" stroke="${c}" stroke-width="3"/>`;
     if (label)
-      s += `<text x="${x}" y="198" text-anchor="middle" font-size="28" font-weight="900" fill="${c}">${label}</text>`;
+      s += `<text x="${x}" y="198" text-anchor="middle" font-size="${fs || 28}" font-weight="900" fill="${c}">${label}</text>`;
   });
   return s + extra + "</svg>";
 }
 
 function renderScale(active = -1) {
+  const list = quizList();
+  const wide = list.length > 8; // ♯ ありのときは せまく ならべる
   quizStaffEl.innerHTML = staffSVG(
-    PIANO_KEYS.map((k, i) => ({
-      i,
-      x: 150 + 70 * i,
+    list.map((k, i) => ({
+      i: staffIdx(k),
+      x: wide ? 100 + 46 * i : 150 + 70 * i,
       label: k.jpName,
+      fs: wide ? 18 : 28,
+      sharp: !!k.black,
       color: i === active ? "#ec4899" : null,
     })),
   );
@@ -1598,7 +2102,7 @@ function renderScale(active = -1) {
 
 // state: "ask"（もんだい）/ "hint"（ヒント）/ "ok"（せいかい）
 function renderQuestion(state) {
-  const k = PIANO_KEYS[quizQ];
+  const k = quizList()[quizQ];
   if (quizMode === "ear" && state === "ask") {
     quizStaffEl.innerHTML = staffSVG(
       [],
@@ -1608,9 +2112,10 @@ function renderQuestion(state) {
   }
   quizStaffEl.innerHTML = staffSVG([
     {
-      i: quizQ,
+      i: staffIdx(k),
       x: 380,
       label: state === "ask" ? "" : k.jpName,
+      sharp: !!k.black,
       color: state === "ok" ? "#16a34a" : null,
     },
   ]);
@@ -1656,6 +2161,13 @@ function renderQuizActions() {
   };
   const main =
     "bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-500";
+  add(
+    `♯ ${quizSharps ? "あり" : "なし"}`,
+    toggleQuizSharps,
+    quizSharps
+      ? "bg-violet-500 text-white border-violet-600"
+      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+  );
   if (quizMode === "scale") add("▶ おんかいをきく", playScale, main);
   else if (quizDone) add("🔁 もういちど", () => setQuizMode(quizMode), main);
   else if (quizMode === "ear") add("🔊 もういちどきく", replayQuizNote, main);
@@ -1672,6 +2184,7 @@ function clearQuizTimers() {
 }
 
 function startQuiz(mode = "staff") {
+  if (rhythmActive) exitRhythm();
   quizActive = true;
   octaveOffset = 0;
   updateOctaveDisplay();
@@ -1718,7 +2231,7 @@ function nextQuestion() {
   if (quizRound >= QUIZ_TOTAL) return showQuizResult();
   let q;
   do {
-    q = Math.floor(Math.random() * PIANO_KEYS.length);
+    q = Math.floor(Math.random() * quizList().length);
   } while (q === quizQ);
   quizQ = q;
   quizMiss = 0;
@@ -1735,19 +2248,20 @@ function nextQuestion() {
 }
 
 function replayQuizNote() {
-  if (quizQ >= 0) playNoteSound(PIANO_KEYS[quizQ].key);
+  if (quizQ >= 0) playNoteSound(quizList()[quizQ].key);
 }
 
 function quizHandleKey(keyChar) {
-  const i = PIANO_KEYS.findIndex((k) => k.key === keyChar);
-  if (i < 0) return; // くろいけんばんは おとだけ
+  const list = quizList();
+  const i = list.findIndex((k) => k.key === keyChar);
+  if (i < 0) return; // ♯ なしのときの くろいけんばんは おとだけ
   if (quizMode === "scale") {
     renderScale(i);
-    setQuizMessage(`${PIANO_KEYS[i].jpName} の おと！`);
+    setQuizMessage(`${list[i].jpName} の おと！`);
     return;
   }
   if (quizLocked || quizDone) return;
-  const answer = PIANO_KEYS[quizQ];
+  const answer = list[quizQ];
   if (i === quizQ) {
     quizLocked = true;
     if (quizMiss === 0) quizCorrect++;
@@ -1764,7 +2278,7 @@ function quizHandleKey(keyChar) {
       highlightGuideTargetKey(answer.key);
       setQuizMessage(`ヒント：ひかっている キーをおしてね（${answer.jpName}）`);
     } else {
-      setQuizMessage(`それは「${PIANO_KEYS[i].jpName}」だね。もういちど！`);
+      setQuizMessage(`それは「${list[i].jpName}」だね。もういちど！`);
     }
   }
 }
@@ -1776,6 +2290,8 @@ function showQuizResult() {
   quizStaffEl.innerHTML = `<div class="text-center"><div class="text-6xl">${stars}</div>
     <div class="text-4xl font-black text-pink-500 mt-2">${QUIZ_TOTAL}もんちゅう ${quizCorrect}もん せいかい！</div></div>`;
   setQuizMessage("よくがんばったね！");
+  const quizBonus = quizCorrect >= 9 ? 5 : quizCorrect >= 6 ? 2 : 0;
+  addStars(quizCorrect + quizBonus, "クイズ");
   updateQuizProgress();
   renderQuizActions();
   if (quizCorrect >= 8) triggerCompletionConfetti();
@@ -1784,7 +2300,9 @@ function showQuizResult() {
 // おんかいを ドから じゅんばんに きかせる
 function playScale() {
   clearQuizTimers();
-  PIANO_KEYS.forEach((k, i) => {
+  const list = quizList();
+  const step = list.length > 8 ? 380 : 500;
+  list.forEach((k, i) => {
     quizTimers.push(
       setTimeout(() => {
         playNoteSound(k.key);
@@ -1795,26 +2313,41 @@ function playScale() {
           el.classList.add("key-active");
           setTimeout(() => el.classList.remove("key-active"), 250);
         }
-      }, i * 500),
+      }, i * step),
     );
   });
   quizTimers.push(
     setTimeout(
       () => {
         renderScale();
-        setQuizMessage("ドレミファソラシド！");
+        setQuizMessage(
+          quizSharps
+            ? "♯ も いれて ぜんぶ ならんだよ！"
+            : "ドレミファソラシド！",
+        );
       },
-      PIANO_KEYS.length * 500 + 200,
+      list.length * step + 200,
     ),
   );
 }
 
 // --- Event Listeners Setup ---
 window.addEventListener("keydown", (e) => {
-  if (isSongMenuOpen || isInstMenuOpen) {
+  if (
+    isSongMenuOpen ||
+    isInstMenuOpen ||
+    isRewardMenuOpen ||
+    isRhythmMenuOpen
+  ) {
     if (e.key === "Escape") {
-      closeSongMenu();
-      closeInstMenu();
+      if (isConfirmOpen()) {
+        closeConfirm();
+      } else {
+        closeSongMenu();
+        closeInstMenu();
+        closeRewardMenu();
+        closeRhythmMenu();
+      }
     }
     return;
   }
@@ -1842,6 +2375,17 @@ async function startAudio() {
 startBtn.addEventListener("click", async () => {
   await startAudio();
   if (quizActive) exitQuiz();
+  if (rhythmActive) exitRhythm();
+});
+// タイトル画面の「データを しょきか」
+document.getElementById("title-reset-btn").addEventListener("click", () => {
+  document.getElementById("title-reset-box").classList.add("open");
+});
+document.getElementById("title-reset-no").addEventListener("click", () => {
+  document.getElementById("title-reset-box").classList.remove("open");
+});
+document.getElementById("title-reset-yes").addEventListener("click", () => {
+  wipeSaveAndReload();
 });
 document
   .getElementById("quiz-start-btn")
@@ -1850,18 +2394,1398 @@ document
     startQuiz("staff");
   });
 
+// ================= リズムゲーム（五線譜をながれる おんぷを、けんばんで たたく） =================
+// メロディは「おんぷ名:ながさ(はく)」。R は きゅうふ、# は シャープ、C5 は ひとつ たかいド。| は くぎり
+const RHYTHM_SONGS = [
+  {
+    id: "mary",
+    title: "メリーさんのひつじ",
+    icon: "🐑",
+    bpm: 100,
+    level: 1,
+    bar: 4, // 4/4拍子
+    notes:
+      "E:1.5 D:0.5 C:1 D:1 | E:1 E:1 E:1 R:1 | D:1 D:1 D:1 R:1 | E:1 G:1 G:1 R:1 | " +
+      "E:1.5 D:0.5 C:1 D:1 | E:1 E:1 E:1 R:1 | D:1 D:1 E:1.5 D:0.5 | C:4",
+  },
+  {
+    id: "frog",
+    title: "かえるのがっしょう",
+    icon: "🐸",
+    bpm: 100,
+    level: 1,
+    bar: 4, // 4/4拍子
+    notes:
+      "C:1 D:1 E:1 F:1 | E:1 D:1 C:2 | E:1 F:1 G:1 A:1 | G:1 F:1 E:2 | " +
+      "C:1 R:1 C:1 R:1 | C:1 R:1 C:1 R:1 | " +
+      "C:0.5 C:0.5 D:0.5 D:0.5 E:0.5 E:0.5 F:0.5 F:0.5 | E:1 D:1 C:2",
+  },
+  {
+    id: "tulip",
+    title: "チューリップ",
+    icon: "🌷",
+    bpm: 100,
+    level: 1,
+    bar: 4, // 4/4拍子
+    notes:
+      "C:1 D:1 E:2 | C:1 D:1 E:2 | G:1 E:1 D:1 C:1 | D:1 E:1 D:2 | " +
+      "C:1 D:1 E:2 | C:1 D:1 E:2 | G:1 E:1 D:1 C:1 | D:1 E:1 C:2 | " +
+      "G:1 G:1 E:1 G:1 | A:1 A:1 G:2 | E:1 E:1 D:1 D:1 | C:3 R:1",
+  },
+  {
+    id: "bear",
+    title: "もりのくまさん",
+    icon: "🐻",
+    bpm: 100,
+    level: 3,
+    bar: 2, // 2/4拍子
+    notes:
+      "R:0.5 G:0.5 F#:0.5 G:0.5 | E:2 | R:0.5 E:0.5 D#:0.5 E:0.5 | C:2 | " +
+      "R:0.5 E:0.5 D:0.5 C:0.5 | D:2 | R:0.5 G:0.5 A:0.5 G:0.5 | E:2 | " +
+      "R:0.5 G:0.5 A:0.5 B:0.5 | C5:1 G:1 | E:1 C:1 | A:2 | " +
+      "R:0.5 A:0.5 B:0.5 A:0.5 | G:1 F:1 | E:1 D:1 | C:2",
+  },
+  {
+    id: "twinkle",
+    title: "きらきらぼし",
+    icon: "⭐",
+    bpm: 100,
+    level: 2,
+    bar: 4, // 4/4拍子
+    notes:
+      "C:1 C:1 G:1 G:1 | A:1 A:1 G:2 | F:1 F:1 E:1 E:1 | D:1 D:1 C:2 | " +
+      "G:1 G:1 F:1 F:1 | E:1 E:1 D:2 | G:1 G:1 F:1 F:1 | E:1 E:1 D:2 | " +
+      "C:1 C:1 G:1 G:1 | A:1 A:1 G:2 | F:1 F:1 E:1 E:1 | D:1 D:1 C:2",
+  },
+  {
+    id: "butterfly",
+    title: "ちょうちょう",
+    icon: "🦋",
+    bpm: 100,
+    level: 1,
+    bar: 4, // 4/4拍子
+    notes:
+      "G:1 E:1 E:2 | F:1 D:1 D:2 | C:1 D:1 E:1 F:1 | G:1 G:1 G:2 | " +
+      "G:1 E:1 E:1 E:1 | F:1 D:1 D:1 D:1 | C:1 E:1 G:1 G:1 | E:1 E:1 E:2 | " +
+      "D:1 D:1 D:1 D:1 | D:1 E:1 F:2 | E:1 E:1 E:1 E:1 | E:1 F:1 G:2 | " +
+      "G:1 E:1 E:1 E:1 | F:1 D:1 D:1 D:1 | C:1 E:1 G:1 G:1 | E:1 E:1 E:2",
+  },
+  {
+    id: "birthday",
+    title: "ハッピーバースデー",
+    icon: "🎂",
+    bpm: 100,
+    level: 2,
+    bar: 2, // 2/4拍子（楽譜は ハ長調。鍵盤に おさまるよう 5ど さげて ヘ長調に うつしてあります）
+    notes:
+      "C:0.75 C:0.25 D:1 | C:1 F:1 | E:2 | " +
+      "C:0.75 C:0.25 D:1 | C:1 G:1 | F:2 | " +
+      "C:0.75 C:0.25 C5:1 | A:1 F:1 | E:1 D:1 | " +
+      "A#:0.75 A#:0.25 A:1 | F:1 G:1 | F:2",
+  },
+  {
+    id: "jingle",
+    title: "ジングルベル",
+    icon: "🔔",
+    bpm: 100,
+    level: 3,
+    bar: 4, // 4/4拍子（楽譜は ヘ長調。さいしょの R:3.5 は 弱起（ソ）の ぶんの かぞえ）
+    // 楽譜に ある 高い「ラ」（レ5）は けんばんに ないので、高い「ド」に かえてあります
+    notes:
+      "R:3.5 C:0.5 | " +
+      "C:0.5 A:0.5 G:0.5 F:0.5 C:1 R:0.5 C:0.5 | C:0.5 A:0.5 G:0.5 F:0.5 D:1 R:0.5 D:0.5 | " +
+      "D:0.5 A#:0.5 A:0.5 G:0.5 E:1 R:0.5 C5:0.5 | C5:0.5 C5:0.5 A#:0.5 G:0.5 A:1 R:0.5 C:0.5 | " +
+      "C:0.5 A:0.5 G:0.5 F:0.5 C:1 R:0.5 C:0.5 | C:0.5 A:0.5 G:0.5 F:0.5 D:1 R:0.5 D:0.5 | " +
+      "D:0.5 A#:0.5 A:0.5 G:0.5 C5:0.5 C5:0.5 C5:0.5 C5:0.5 | C5:0.5 C5:0.5 A#:0.5 G:0.5 F:1 R:1 | " +
+      "A:0.5 A:0.5 A:1 A:0.5 A:0.5 A:1 | A:0.5 C5:0.5 F:0.75 G:0.25 A:1 R:1 | " +
+      "A#:0.5 A#:0.5 A#:0.75 A#:0.25 A#:0.5 A:0.5 A:0.5 A:0.25 A:0.25 | A:0.5 G:0.5 G:0.5 F:0.5 G:0.5 C5:1.5 | " +
+      "A:0.5 A:0.5 A:1 A:0.5 A:0.5 A:1 | A:0.5 C5:0.5 F:0.75 G:0.25 A:1 R:1 | " +
+      "A#:0.5 A#:0.5 A#:0.75 A#:0.25 A#:0.5 A:0.5 A:0.5 A:0.5 | C5:0.5 C5:0.5 A#:0.5 G:0.5 F:1 R:1",
+  },
+  {
+    id: "ode",
+    title: "よろこびのうた",
+    icon: "🎻",
+    bpm: 100,
+    level: 2,
+    bar: 4, // 4/4拍子（楽譜は ト長調。鍵盤に おさまるよう 全音さげて ヘ長調に うつしてあります）
+    notes:
+      "A:1 A:1 A#:1 C5:1 | C5:1 A#:1 A:1 G:1 | F:1 F:1 G:1 A:1 | A:1.5 G:0.5 G:2 | " +
+      "A:1 A:1 A#:1 C5:1 | C5:1 A#:1 A:1 G:1 | F:1 F:1 G:1 A:1 | G:1.5 F:0.5 F:2 | " +
+      "G:1 G:1 A:1 F:1 | G:1 A:0.5 A#:0.5 A:1 F:1 | G:1 A:0.5 A#:0.5 A:1 G:1 | F:1 G:1 C:1 A:2 | " +
+      "A:1 A#:1 C5:1 | C5:1 A#:1 A:1 G:1 | F:1 F:1 G:1 A:1 | G:1.5 F:0.5 F:2",
+  },
+  {
+    id: "toy",
+    title: "おもちゃのチャチャチャ",
+    icon: "🤖",
+    bpm: 100,
+    level: 3,
+    bar: 4, // 4/4拍子（G# は 楽譜の ラ♭）
+    notes:
+      "C:0.5 C:0.5 C:0.5 E:0.5 A:0.5 A:0.5 A:0.5 R:0.5 | D:0.5 D:0.5 D:0.5 F:0.5 G:0.5 G:0.5 G:0.5 R:0.5 | " +
+      "R:0.5 G:0.5 G:0.5 G#:0.5 A:0.5 A:0.5 A:0.5 G#:0.5 | G:1 B:1 C5:1 R:1 | " +
+      "R:0.5 G:0.5 G:0.5 F:0.5 E:0.5 E:0.5 E:0.5 F:0.5 | G:0.5 G:0.5 G:0.5 G:0.5 C:1 R:1 | " +
+      "R:0.5 F:1 E:0.5 D:0.5 D:0.5 D:0.5 D:0.5 | D:0.5 A:0.5 A:0.5 G#:0.5 G:1 R:1 | " +
+      "A:0.5 A:0.5 A:0.5 B:0.5 C5:0.5 C5:0.5 C5:1 | B:0.5 B:0.5 B:0.5 B:0.5 A:1 R:1 | " +
+      "R:0.5 G:0.5 G:0.5 G#:0.5 A:0.5 A:0.5 A:0.5 G#:0.5 | G:1 B:1 C5:1 R:1 | " +
+      "C:0.5 C:0.5 C:0.5 E:0.5 A:0.5 A:0.5 A:0.5 R:0.5 | D:0.5 D:0.5 D:0.5 F:0.5 G:0.5 G:0.5 G:0.5 R:0.5 | " +
+      "R:0.5 G:0.5 G:0.5 G#:0.5 A:0.5 A:0.5 A:0.5 G#:0.5 | G:1 B:1 C5:1 R:1",
+  },
+  {
+    id: "honeybee",
+    title: "ぶんぶんぶん",
+    icon: "🐝",
+    bpm: 100,
+    level: 2,
+    bar: 4, // 4/4拍子
+    notes:
+      "G:1 F:1 E:1 R:1 | D:0.5 E:0.5 F:0.5 D:0.5 C:1 R:1 | " +
+      "E:0.5 F:0.5 G:0.5 E:0.5 D:0.5 E:0.5 F:0.5 D:0.5 | " +
+      "E:0.5 F:0.5 G:0.5 E:0.5 D:0.5 E:0.5 F:0.5 D:0.5 | " +
+      "G:1 F:1 E:1 R:1 | D:0.5 E:0.5 F:0.5 D:0.5 C:1 R:1",
+  },
+];
+// むずかしさの じゅんに ならべる（おなじなら かいた じゅん）
+RHYTHM_SONGS.sort((a, b) => a.level - b.level);
+const RHYTHM_LEAD = 2; // さいしょの じゅんび（びょう）
+const RHYTHM_TRAVEL = 1.8; // おんぷが ながれてくる じかん（びょう）
+const RHYTHM_PERFECT = 0.08;
+const RHYTHM_GOOD = 0.18;
+const RHYTHM_HEX = {
+  s: "#f43f5e",
+  d: "#f59e0b",
+  f: "#eab308",
+  g: "#22c55e",
+  h: "#06b6d4",
+  j: "#6366f1",
+  k: "#8b5cf6",
+  l: "#d946ef",
+};
+const rhythmCanvas = document.getElementById("rhythm-canvas");
+const rhythmMsgEl = document.getElementById("rhythm-message");
+const rhythmActionsEl = document.getElementById("rhythm-actions");
+let rhythmSong = null; // まだ きょくを えらんでいない
+let rhythmEasy = false; // かんたんモード（ゆっくり）
+let rhythmNotes = [];
+let rhythmPlaying = false;
+let rhythmT0 = 0;
+let rhythmEnd = 0;
+let rhythmRaf = 0;
+let rhythmTick = null;
+let rhythmGuide = "";
+let rhythmStat = { score: 0, combo: 0, perfect: 0, good: 0, miss: 0 };
+let rhythmFb = { txt: "", t: -9999, c: "#ec4899" };
+let rhythmListening = false; // おてほんを きいている さいちゅう
+let rhythmTimers = [];
+const rhythmDemoKeys = new Set(); // おてほんで おしている けんばん
+
+// かんたんモード: テンポ・ながれる はやさ・はんてい を ぜんぶ 0.7ばいの ゆっくりに する
+const rhythmTempo = () => (rhythmEasy ? 0.7 : 1);
+const rhythmTravel = () => RHYTHM_TRAVEL / rhythmTempo();
+const rhythmWin = (w) => w / rhythmTempo();
+
+function rhythmSpb() {
+  return 60 / ((rhythmSong ? rhythmSong.bpm : 100) * rhythmTempo());
+}
+
+function updateRhythmEasyBtn() {
+  const b = document.getElementById("rhythm-easy-btn");
+  if (!b) return;
+  b.textContent = rhythmEasy ? "🐢 かんたん" : "🐇 ふつう";
+  b.className = `ml-auto px-3 py-1 rounded-2xl font-black text-sm border-2 transition ${
+    rhythmEasy
+      ? "bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200"
+      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+  }`;
+}
+
+function toggleRhythmEasy() {
+  rhythmEasy = !rhythmEasy;
+  save.rhythmEasy = rhythmEasy;
+  persist();
+  updateRhythmEasyBtn();
+  if (rhythmActive) rhythmReset(); // ゆっくりに あわせて ならべなおす
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+}
+
+function rhythmBuild() {
+  const out = [];
+  let beat = 0;
+  for (const tk of rhythmSong.notes.split(/\s+/)) {
+    if (!tk || tk === "|") continue;
+    const [name, lenStr] = tk.split(":");
+    const len = parseFloat(lenStr) || 1;
+    if (name !== "R") {
+      const kd = ALL_KEYS.find((k) => k.noteName === name);
+      if (kd) {
+        const pos =
+          "CDEFGAB".indexOf(name[0]) + (name.endsWith("5") ? 7 : 0) - 2; // E4 = 0
+        out.push({
+          t: RHYTHM_LEAD + beat * rhythmSpb(),
+          key: kd.key,
+          pos,
+          len,
+          sharp: name.includes("#"),
+          jp: kd.jpName.replace("♯", ""),
+          done: false,
+        });
+      }
+    }
+    beat += len;
+  }
+  rhythmEnd = RHYTHM_LEAD + beat * rhythmSpb() + 1;
+  return out;
+}
+
+function rhythmFit() {
+  const cv = rhythmCanvas;
+  const w = cv.clientWidth,
+    h = cv.clientHeight;
+  if (!w || !h) return;
+  const r = cv.getBoundingClientRect();
+  const sc = Math.hypot(r.width, r.height) / Math.hypot(w, h) || 1; // ステージの拡大縮小・かいてん ぶん
+  const k = (window.devicePixelRatio || 1) * sc;
+  cv.width = Math.round(w * k);
+  cv.height = Math.round(h * k);
+  cv.getContext("2d").setTransform(k, 0, 0, k, 0, 0);
+}
+window.addEventListener("resize", () => {
+  if (rhythmActive) {
+    rhythmFit();
+    if (!rhythmPlaying && !rhythmListening) drawRhythm(-RHYTHM_LEAD);
+  }
+});
+
+function rhythmNote(ctx, x, y, n, sp) {
+  const rx = sp * 0.78,
+    ry = sp * 0.56,
+    up = n.pos < 4,
+    d = up ? 1 : -1;
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  if (n.pos <= -2) {
+    ctx.beginPath();
+    ctx.moveTo(x - rx - 6, y);
+    ctx.lineTo(x + rx + 6, y);
+    ctx.stroke();
+  }
+  if (n.sharp) {
+    ctx.fillStyle = INK;
+    ctx.font = "900 22px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("♯", x - rx - 11, y + 8);
+  }
+  ctx.fillStyle = RHYTHM_HEX[n.key] || "#334155";
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, -0.3, 0, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.font = '800 13px "M PLUS Rounded 1c", sans-serif';
+  ctx.textAlign = "center";
+  ctx.fillText(n.jp, x, y + 5);
+  if (n.len >= 4) return;
+  const sx = up ? x + rx - 1 : x - rx + 1,
+    ey = up ? y - sp * 3.3 : y + sp * 3.3;
+  ctx.beginPath();
+  ctx.moveTo(sx, y);
+  ctx.lineTo(sx, ey);
+  ctx.stroke();
+  if (n.len < 1) {
+    ctx.beginPath();
+    ctx.moveTo(sx, ey);
+    ctx.quadraticCurveTo(
+      sx + sp * 0.9,
+      ey + d * sp * 1.2,
+      sx + sp * 0.5,
+      ey + d * sp * 2,
+    );
+    ctx.stroke();
+  }
+}
+
+function drawRhythm(now) {
+  const cv = rhythmCanvas,
+    ctx = cv.getContext("2d");
+  const W = cv.clientWidth,
+    H = cv.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+  const sp = 19,
+    cy = H * 0.5,
+    hx = Math.max(90, W * 0.2),
+    span = W - hx;
+  const py = (p) => cy + ((4 - p) * sp) / 2;
+  const spb = rhythmSpb();
+  ctx.strokeStyle = "#94a3b8";
+  ctx.lineWidth = 1.4;
+  for (let p = 0; p <= 8; p += 2) {
+    ctx.beginPath();
+    ctx.moveTo(0, py(p));
+    ctx.lineTo(W, py(p));
+    ctx.stroke();
+  }
+  const bar = (rhythmSong && rhythmSong.bar) || 2;
+  for (let b = 0; b * bar * spb < rhythmEnd; b++) {
+    // しょうせつせん
+    const x =
+      hx + ((RHYTHM_LEAD + b * bar * spb - now) / rhythmTravel()) * span;
+    if (x < 0 || x > W) continue;
+    ctx.beginPath();
+    ctx.moveTo(x, py(8));
+    ctx.lineTo(x, py(0));
+    ctx.stroke();
+  }
+  ctx.fillStyle = "rgba(236,72,153,.12)";
+  ctx.fillRect(hx - 22, py(8) - 30, 44, py(0) - py(8) + 60);
+  ctx.strokeStyle = "#ec4899";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(hx, py(8) - 30);
+  ctx.lineTo(hx, py(0) + 30);
+  ctx.stroke();
+  for (const n of rhythmNotes) {
+    if (n.done) continue;
+    const x = hx + ((n.t - now) / rhythmTravel()) * span;
+    if (x < -30 || x > W + 30) continue;
+    rhythmNote(ctx, x, py(n.pos), n, sp);
+  }
+  const age = performance.now() - rhythmFb.t;
+  if (age < 600) {
+    ctx.globalAlpha = 1 - age / 600;
+    ctx.fillStyle = rhythmFb.c;
+    ctx.textAlign = "center";
+    ctx.font = '900 24px "M PLUS Rounded 1c", sans-serif';
+    ctx.fillText(rhythmFb.txt, hx, py(8) - 40 - age * 0.03);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function rhythmSetMsg(t) {
+  rhythmMsgEl.innerHTML = t;
+}
+function rhythmUpdateHud() {
+  document.getElementById("rhythm-score").textContent = rhythmStat.score;
+  document.getElementById("rhythm-combo").textContent = rhythmStat.combo;
+}
+function rhythmActions(items) {
+  rhythmActionsEl.innerHTML = "";
+  for (const [label, fn, cls] of items) {
+    const b = document.createElement("button");
+    b.className = `px-3 py-1.5 rounded-xl font-black text-sm border-2 transition ${cls}`;
+    b.textContent = label;
+    b.onclick = (e) => {
+      e.currentTarget.blur();
+      fn();
+    };
+    rhythmActionsEl.appendChild(b);
+  }
+}
+const RH_MAIN =
+  "bg-amber-400 hover:bg-amber-500 text-slate-900 border-amber-500";
+const RH_SUB = "bg-white text-slate-600 border-slate-200 hover:bg-slate-50";
+const RH_LISTEN = "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200";
+
+function rhythmStopAudio() {
+  cancelAnimationFrame(rhythmRaf);
+  rhythmListening = false;
+  rhythmTimers.forEach(clearTimeout);
+  rhythmTimers = [];
+  rhythmDemoKeys.forEach((k) => handleKeyRelease(k));
+  rhythmDemoKeys.clear();
+  if (rhythmTick) {
+    rhythmTick.dispose();
+    rhythmTick = null;
+  }
+  rhythmGuide = "";
+}
+
+// 「きょくをえらぶ」ボタン（おしたら きょくえらび画面がひらく）
+function rhythmRenderSongs() {
+  const box = document.getElementById("rhythm-songs");
+  box.innerHTML = "";
+  const b = document.createElement("button");
+  b.className =
+    "w-full px-4 py-2 rounded-2xl font-black text-lg border-4 border-teal-200 bg-gradient-to-r from-teal-400 to-sky-500 hover:brightness-110 text-white shadow-[0_4px_0_#0f766e] active:translate-y-1 active:shadow-none transition flex items-center justify-between gap-2 whitespace-nowrap";
+  b.innerHTML = rhythmSong
+    ? `<span class="flex items-center gap-2 min-w-0"><span class="text-2xl">${rhythmSong.icon}</span><span class="truncate">${rhythmSong.title}</span></span><span class="text-xs bg-white text-teal-600 px-2 py-0.5 rounded-full">▼ えらびなおす</span>`
+    : `<span class="flex items-center gap-2"><span class="text-2xl">🎼</span>きょくをえらぶ</span><span class="text-xs bg-white text-teal-600 px-2 py-0.5 rounded-full">▼</span>`;
+  b.onclick = openRhythmMenu;
+  box.appendChild(b);
+}
+
+function openRhythmMenu() {
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+  if (rhythmPlaying || rhythmListening) rhythmReset();
+  const grid = document.getElementById("rhythm-menu-grid");
+  grid.innerHTML = "";
+  RHYTHM_SONGS.forEach((s) => {
+    const card = document.createElement("button");
+    const locked = !isSongUnlocked(s.id); // じゆうえんそうで ロックちゅうの 曲は、ここでも ロック
+    const style = locked
+      ? "bg-slate-100 border-slate-200 hover:border-amber-300"
+      : s === rhythmSong
+        ? "bg-teal-50 border-teal-400 ring-4 ring-teal-200"
+        : "bg-white border-slate-200 hover:border-pink-300 hover:bg-pink-50";
+    card.className = `flex flex-col items-center justify-center gap-1 h-[150px] rounded-2xl border-4 transition duration-150 hover:-translate-y-1 hover:shadow-lg ${style}`;
+    card.innerHTML = locked
+      ? `<span class="text-5xl grayscale opacity-60">${s.icon}</span>
+      <span class="text-xl font-black text-slate-500">${s.title}</span>
+      <span class="text-sm font-black text-amber-600 bg-amber-100 px-3 py-0.5 rounded-full">🔒 ⭐${SONG_PRICES[s.id]} でひらく</span>`
+      : `<span class="text-5xl">${s.icon}</span>
+      <span class="text-xl font-black text-slate-800">${s.title}</span>
+      <span class="text-sm font-bold text-amber-500">${LEVEL_LABELS[s.level]}</span>`;
+    card.onclick = () => {
+      if (locked) {
+        buySong({ id: s.id, title: s.title }, "rhythm");
+        return;
+      }
+      rhythmSong = s;
+      closeRhythmMenu();
+      rhythmReset();
+    };
+    grid.appendChild(card);
+  });
+  const m = document.getElementById("rhythm-menu");
+  m.classList.remove("hidden");
+  m.classList.add("flex");
+  isRhythmMenuOpen = true;
+}
+
+function closeRhythmMenu() {
+  const m = document.getElementById("rhythm-menu");
+  m.classList.add("hidden");
+  m.classList.remove("flex");
+  isRhythmMenuOpen = false;
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+}
+
+function rhythmReset() {
+  rhythmStopAudio();
+  rhythmPlaying = false;
+  clearGuideHighlights();
+  rhythmNotes = rhythmSong ? rhythmBuild() : [];
+  rhythmStat = { score: 0, combo: 0, perfect: 0, good: 0, miss: 0 };
+  rhythmUpdateHud();
+  rhythmRenderSongs();
+  if (rhythmSong) {
+    rhythmSetMsg(
+      "ピンクのせんに おんぷが かさなったら、<br>そのおんの けんばんを たたこう！",
+    );
+    rhythmActions([
+      ["▶ スタート", rhythmBegin, RH_MAIN],
+      ["🎧 おてほん", rhythmListen, RH_LISTEN],
+      ["🎹 もどる", exitRhythm, RH_SUB],
+    ]);
+  } else {
+    rhythmSetMsg(
+      "「きょくをえらぶ」を おして、<br>あそぶ きょくを えらんでね！",
+    );
+    rhythmActions([["🎹 えんそうモードへ", exitRhythm, RH_SUB]]);
+  }
+  rhythmFit();
+  drawRhythm(-RHYTHM_LEAD);
+}
+
+function startRhythm() {
+  if (quizActive) exitQuiz();
+  rhythmActive = true;
+  octaveOffset = 0;
+  updateOctaveDisplay();
+  clearGuideHighlights();
+  if (isSongMenuOpen) closeSongMenu();
+  stageEl.classList.add("rhythm-mode");
+  rhythmReset();
+}
+
+function exitRhythm() {
+  closeRhythmMenu();
+  rhythmStopAudio();
+  rhythmPlaying = false;
+  rhythmActive = false;
+  stageEl.classList.remove("rhythm-mode");
+  clearGuideHighlights();
+  if (currentSong.id !== "free" && songNoteIndex < currentSong.notes.length) {
+    highlightGuideTargetKey(currentSong.notes[songNoteIndex]);
+  }
+}
+
+function rhythmBegin() {
+  if (!rhythmSong) return openRhythmMenu();
+  rhythmReset();
+  rhythmPlaying = true;
+  rhythmT0 = Tone.now() + 0.3;
+  const spb = rhythmSpb();
+  rhythmTick = new Tone.MembraneSynth({ volume: -22 }).toDestination(); // ちいさな メトロノーム
+  for (let i = 0; RHYTHM_LEAD + i * spb < rhythmEnd - 1; i++) {
+    rhythmTick.triggerAttackRelease(
+      i % 2 ? "G2" : "C2",
+      "32n",
+      rhythmT0 + RHYTHM_LEAD + i * spb,
+    );
+  }
+  rhythmSetMsg("いまだ！ おんぷに あわせて たたいてね♪");
+  rhythmActions([["⏹ やめる", rhythmReset, RH_SUB]]);
+  rhythmLoop();
+}
+
+// ---- おてほんを きく：じどうで えんそうして、おんぷと けんばんが ひかる ----
+function rhythmListen() {
+  if (!rhythmSong) return openRhythmMenu();
+  rhythmReset();
+  rhythmListening = true;
+  rhythmT0 = Tone.now() + 0.3;
+  rhythmSetMsg("🎧 おてほんを きいてみよう！<br>ひかる けんばんを みていてね");
+  rhythmActions([["⏹ とめる", rhythmReset, RH_SUB]]);
+  rhythmListenLoop();
+}
+
+function rhythmListenLoop() {
+  if (!rhythmListening) return;
+  const now = Tone.now() - rhythmT0;
+  for (const n of rhythmNotes) {
+    if (!n.done && now >= n.t) {
+      n.done = true;
+      if (activeKeys.has(n.key)) handleKeyRelease(n.key);
+      handleKeyPress(n.key); // おとと ひかりは じぶんで ひいたときと おなじ
+      rhythmDemoKeys.add(n.key);
+      rhythmTimers.push(
+        setTimeout(
+          () => {
+            handleKeyRelease(n.key);
+            rhythmDemoKeys.delete(n.key);
+          },
+          Math.max(120, n.len * rhythmSpb() * 900),
+        ),
+      );
+    }
+  }
+  const next = rhythmNotes.find((n) => !n.done);
+  const gk = next && next.t - now < 1 ? next.key : "";
+  if (gk !== rhythmGuide) {
+    rhythmGuide = gk;
+    gk ? highlightGuideTargetKey(gk) : clearGuideHighlights();
+  }
+  drawRhythm(now);
+  if (now > rhythmEnd - 0.5) return rhythmListenFinish();
+  rhythmRaf = requestAnimationFrame(rhythmListenLoop);
+}
+
+function rhythmListenFinish() {
+  rhythmStopAudio();
+  clearGuideHighlights();
+  rhythmSetMsg("おしまい！<br>こんどは じぶんで ひいてみよう♪");
+  rhythmActions([
+    ["▶ スタート", rhythmBegin, RH_MAIN],
+    ["🎧 もういちど", rhythmListen, RH_LISTEN],
+    ["🎹 もどる", exitRhythm, RH_SUB],
+  ]);
+}
+
+function rhythmSay(txt, c) {
+  rhythmFb = { txt, t: performance.now(), c };
+}
+
+function rhythmLoop() {
+  if (!rhythmPlaying) return;
+  const now = Tone.now() - rhythmT0;
+  for (const n of rhythmNotes) {
+    if (!n.done && now - n.t > rhythmWin(RHYTHM_GOOD)) {
+      n.done = true;
+      rhythmStat.miss++;
+      rhythmStat.combo = 0;
+      rhythmSay("おしい！", "#94a3b8");
+      rhythmUpdateHud();
+    }
+  }
+  const next = rhythmNotes.find((n) => !n.done);
+  const g = next && next.t - now < 1 ? next.key : "";
+  if (g !== rhythmGuide) {
+    rhythmGuide = g;
+    g ? highlightGuideTargetKey(g) : clearGuideHighlights();
+  }
+  drawRhythm(now);
+  if (now > rhythmEnd) return rhythmFinish();
+  rhythmRaf = requestAnimationFrame(rhythmLoop);
+}
+
+function rhythmHandleKey(keyChar) {
+  if (!rhythmPlaying) return;
+  const now = Tone.now() - rhythmT0;
+  const n = rhythmNotes.find(
+    (x) =>
+      !x.done &&
+      x.key === keyChar &&
+      Math.abs(x.t - now) < rhythmWin(RHYTHM_GOOD),
+  );
+  if (!n) return; // まちがえても ペナルティなし。おとは ふつうに なる
+  n.done = true;
+  const perfect = Math.abs(n.t - now) < rhythmWin(RHYTHM_PERFECT);
+  if (perfect) {
+    rhythmStat.perfect++;
+    rhythmStat.score += 100;
+    rhythmSay("すごい！", "#f59e0b");
+  } else {
+    rhythmStat.good++;
+    rhythmStat.score += 50;
+    rhythmSay("いいね！", "#06b6d4");
+  }
+  rhythmStat.combo++;
+  rhythmUpdateHud();
+}
+
+function rhythmFinish() {
+  rhythmPlaying = false;
+  rhythmStopAudio();
+  clearGuideHighlights();
+  const { perfect, good, miss } = rhythmStat;
+  const total = perfect + good + miss;
+  const acc = total ? (perfect + good * 0.5) / total : 0;
+  const level = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
+  const reward = (rhythmEasy ? [0, 3, 5, 10] : [0, 5, 10, 20])[level]; // かんたんは ごほうび はんぶん
+  rhythmSetMsg(
+    `<div><div class="text-3xl">${"⭐".repeat(level)}</div>
+     <div class="text-base">すごい ${perfect} ／ いいね ${good} ／ おしい ${miss}</div></div>`,
+  );
+  rhythmActions([
+    ["🔁 もういちど", rhythmBegin, RH_MAIN],
+    ["🎧 おてほん", rhythmListen, RH_LISTEN],
+    ["🎹 もどる", exitRhythm, RH_SUB],
+  ]);
+  addStars(reward, "リズムゲーム");
+  if (level >= 2) triggerCompletionConfetti();
+}
+
+document
+  .getElementById("rhythm-start-btn")
+  .addEventListener("click", async () => {
+    await startAudio();
+    startRhythm();
+  });
+
+// ================= ほしの ごほうび（ほぞん・きょくのかいほう・シール・きせかえ） =================
+const SAVE_KEY = "typeDoremi.save.v1";
+const FREE_SONGS = ["free", "mary", "frog", "butterfly"]; // はじめから あそべる
+const SONG_PRICES = {
+  twinkle: 20,
+  tulip: 30,
+  ode: 50,
+  jingle: 100,
+  birthday: 60,
+  honeybee: 20,
+  bear: 80,
+  toy: 100,
+};
+const STICKER_PRICE = 10;
+const STICKERS = [
+  ["🐱", "ねこ"],
+  ["🐶", "いぬ"],
+  ["🐰", "うさぎ"],
+  ["🐻", "くま"],
+  ["🐵", "さる"],
+  ["🐨", "コアラ"],
+  ["🐭", "ねずみ"],
+  ["🐹", "ハムスター"],
+  ["🐣", "ヒヨコ"],
+  ["🐼", "パンダ"],
+  ["🦊", "きつね"],
+  ["🦁", "ライオン"],
+  ["🐸", "かえる"],
+  ["🐧", "ペンギン"],
+  ["🦄", "ユニコーン"],
+  ["🐢", "かめ"],
+  ["🐙", "たこ"],
+  ["🦋", "ちょうちょ"],
+  ["🌈", "にじ"],
+  ["🚀", "ロケット"],
+  ["🍓", "いちご"],
+  ["🍎", "リンゴ"],
+  ["🎂", "ケーキ"],
+  ["🌻", "ひまわり"],
+  ["⛄", "ゆきだるま"],
+  ["🎈", "ふうせん"],
+  ["🚗", "くるま"],
+  ["✈\uFE0F", "ひこうき"],
+  ["🚃", "でんしゃ"],
+  ["🛥\uFE0F", "ふね"],
+];
+const THEMES = {
+  default: {
+    name: "ふつう",
+    icon: "🎹",
+    price: 0,
+    bg: "linear-gradient(135deg, #fef2f2 0%, #fff7ed 30%, #f0fdf4 70%, #f0f9ff 100%)",
+    deco: ["🎵", "⭐", "✨", "🎶"],
+    particles: ["🎵", "🎶", "⭐", "✨", "💖", "🌟"],
+  },
+  classic: {
+    name: "クラシック",
+    icon: "🎼",
+    price: 40,
+    bg: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+    keys: [0, 1, 2, 3, 4, 5, 6, 7].map(() => ["#ffffff", "#e2e8f0"]),
+    border: "#cbd5e1",
+    accent: "#94a3b8",
+    keyShadow: "#94a3b8",
+    keyText: "#334155",
+    blackKeys: ["#3f3f46", "#000000", "#18181b"],
+    emojiHidden: true, // えらぶと けんばんの えもじを かくす（あとから だせる）
+    deco: ["🎼", "♪", "♫", "🎹"],
+    particles: ["♪", "♫", "🎵", "🎶", "♩"],
+  },
+  sakura: {
+    name: "さくら",
+    icon: "🌸",
+    price: 30,
+    bg: "linear-gradient(135deg, #fff1f2 0%, #fce7f3 50%, #ffe4e6 100%)",
+    keys: [
+      ["#f472b6", "#ec4899"],
+      ["#fb7185", "#f43f5e"],
+      ["#e879f9", "#d946ef"],
+      ["#f9a8d4", "#f472b6"],
+      ["#fb7185", "#e11d48"],
+      ["#f472b6", "#db2777"],
+      ["#e879f9", "#c026d3"],
+      ["#fda4af", "#fb7185"],
+    ],
+    border: "#fbcfe8",
+    accent: "#f9a8d4",
+    deco: ["🌸", "🌷", "🎀", "✨"],
+    particles: ["🌸", "🎵", "🌷", "✨", "🎶", "💮"],
+  },
+  umi: {
+    name: "うみ",
+    icon: "🌊",
+    price: 30,
+    bg: "linear-gradient(160deg, #e0f2fe 0%, #cffafe 50%, #dbeafe 100%)",
+    keys: [
+      ["#38bdf8", "#0ea5e9"],
+      ["#22d3ee", "#06b6d4"],
+      ["#2dd4bf", "#14b8a6"],
+      ["#60a5fa", "#3b82f6"],
+      ["#38bdf8", "#0284c7"],
+      ["#22d3ee", "#0891b2"],
+      ["#2dd4bf", "#0d9488"],
+      ["#7dd3fc", "#38bdf8"],
+    ],
+    border: "#bae6fd",
+    accent: "#38bdf8",
+    deco: ["💧", "🐠", "🐚", "🐬"],
+    particles: ["💧", "🐠", "🎵", "🐟", "🎶", "🐚"],
+  },
+  uchu: {
+    name: "うちゅう",
+    icon: "🚀",
+    price: 50,
+    bg: "linear-gradient(160deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)",
+    keys: [
+      ["#818cf8", "#6366f1"],
+      ["#a78bfa", "#8b5cf6"],
+      ["#c084fc", "#a855f7"],
+      ["#60a5fa", "#3b82f6"],
+      ["#818cf8", "#4f46e5"],
+      ["#a78bfa", "#7c3aed"],
+      ["#c084fc", "#9333ea"],
+      ["#93c5fd", "#60a5fa"],
+    ],
+    border: "#c7d2fe",
+    accent: "#818cf8",
+    footer: "#c7d2fe",
+    deco: ["🪐", "⭐", "🌙", "🚀"],
+    particles: ["⭐", "🌟", "🪐", "🚀", "✨", "🌙"],
+  },
+  okashi: {
+    name: "おかし",
+    icon: "🍭",
+    price: 40,
+    bg: "linear-gradient(135deg, #fef9c3 0%, #fce7f3 50%, #e0f2fe 100%)",
+    keys: [
+      ["#f472b6", "#ec4899"],
+      ["#fb923c", "#f97316"],
+      ["#fbbf24", "#f59e0b"],
+      ["#a3e635", "#84cc16"],
+      ["#2dd4bf", "#14b8a6"],
+      ["#38bdf8", "#0ea5e9"],
+      ["#a78bfa", "#8b5cf6"],
+      ["#fb7185", "#f43f5e"],
+    ],
+    border: "#fde68a",
+    accent: "#fbbf24",
+    deco: ["🍭", "🍬", "🍪", "🧁"],
+    particles: ["🍭", "🍬", "🍓", "🎵", "🍪", "🎶"],
+  },
+};
+
+function defaultSave() {
+  return {
+    stars: 0,
+    songs: [...FREE_SONGS],
+    stickers: [],
+    favSticker: null,
+    themes: ["default"],
+    theme: "default",
+    instrument: "classic",
+    lettersVisible: null,
+    keyEmoji: {}, // けんばんごとの えもじ（"" は かくす）
+    keyEmojiHidden: false, // えもじを ぜんぶ かくす
+    rhythmEasy: false,
+  };
+}
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
+      const s = { ...defaultSave(), ...JSON.parse(raw) };
+      s.songs = [...new Set([...FREE_SONGS, ...(s.songs || [])])];
+      if (!Array.isArray(s.themes) || !s.themes.includes("default"))
+        s.themes = ["default", ...(s.themes || [])];
+      if (!THEMES[s.theme]) s.theme = "default";
+      if (!s.keyEmoji || typeof s.keyEmoji !== "object") s.keyEmoji = {};
+      return s;
+    }
+  } catch (e) {
+    console.log("load error:", e);
+  }
+  return defaultSave();
+}
+let save = loadSave();
+function persist() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+  } catch (e) {
+    console.log("save error:", e);
+  }
+}
+
+let songMistakes = 0;
+let freeNoteCount = 0;
+let isRewardMenuOpen = false;
+let rewardTab = "songs";
+let lastDrawnSticker = null;
+let stickerMessage = "";
+
+const isSongUnlocked = (id) =>
+  FREE_SONGS.includes(id) || save.songs.includes(id);
+const currentParticles = () => (THEMES[save.theme] || THEMES.default).particles;
+
+// ---- ほし ----
+function updateWallet() {
+  const w = document.getElementById("wallet-text");
+  if (w) w.textContent = save.stars;
+  const r = document.getElementById("reward-wallet");
+  if (r) r.textContent = save.stars;
+}
+function addStars(n, reason) {
+  if (n <= 0) return;
+  save.stars += n;
+  persist();
+  updateWallet();
+  starGetEffect(n);
+}
+// ほしを ゲットしたとき: けんばんに かぶらないよう、うえの「ごほうび」ボタンで ほしが はねる
+function starGetEffect(n) {
+  const stage = document.getElementById("stage");
+  const num = document.getElementById("wallet-text");
+  if (!stage || !num) return;
+  const btn = num.closest("button");
+  const sr = stage.getBoundingClientRect();
+  const scale = sr.width / stage.offsetWidth || 1;
+  const visible = btn && btn.offsetParent !== null;
+
+  // 発生場所（ステージ内の座標）: ボタンが見えていればその中心、クイズ/リズム中は上のまんなか
+  let cx, cy;
+  if (visible) {
+    const br = btn.getBoundingClientRect();
+    cx = (br.left + br.width / 2 - sr.left) / scale;
+    cy = (br.top + br.height / 2 - sr.top) / scale;
+    btn.classList.remove("star-get-btn");
+    void btn.offsetWidth;
+    btn.classList.add("star-get-btn");
+    num.classList.remove("star-get-num");
+    void num.offsetWidth;
+    num.classList.add("star-get-num");
+    setTimeout(() => btn.classList.remove("star-get-btn"), 1000);
+  } else {
+    cx = stage.offsetWidth / 2;
+    cy = 44;
+  }
+
+  // ほしが ぴょんぴょん とびだす（さいだい 8こ）
+  const count = Math.min(8, 3 + Math.ceil(n / 3));
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement("div");
+    s.className = "star-hop";
+    s.textContent = i % 3 === 0 ? "🌟" : "⭐";
+    s.style.left = `${cx - 14}px`;
+    s.style.top = `${cy - 14}px`;
+    s.style.setProperty(
+      "--dx",
+      `${(i - (count - 1) / 2) * 34 + (Math.random() * 16 - 8)}px`,
+    );
+    s.style.setProperty("--h", `${40 + Math.random() * 30}px`);
+    s.style.animationDelay = `${i * 0.05}s`;
+    stage.appendChild(s);
+    setTimeout(() => s.remove(), 1400);
+  }
+
+  // 「+n」バッジ（ボタンの すぐした。けんばんまでは とどかない）
+  const badge = document.createElement("div");
+  badge.className = "star-plus";
+  badge.textContent = `⭐ +${n}`;
+  badge.style.left = `${cx}px`;
+  badge.style.top = `${cy + (visible ? 38 : 30)}px`;
+  stage.appendChild(badge);
+  setTimeout(() => badge.remove(), 1500);
+}
+function spendStars(n) {
+  if (save.stars < n) {
+    showToast(`ほしが たりないよ（あと ⭐${n - save.stars}）`);
+    return false;
+  }
+  save.stars -= n;
+  persist();
+  updateWallet();
+  return true;
+}
+function onSongComplete() {
+  const bonus = songMistakes === 0 ? 5 : 0;
+  addStars(10 + bonus, bonus ? "ノーミスクリア！" : "クリア！");
+}
+
+// ---- ふきだし・かくにん ----
+let toastTimer = null;
+function showToast(text) {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add("hidden"), 2400);
+}
+function isConfirmOpen() {
+  return !document.getElementById("confirm-box").classList.contains("hidden");
+}
+function closeConfirm() {
+  const box = document.getElementById("confirm-box");
+  box.classList.add("hidden");
+  box.classList.remove("flex");
+}
+function askConfirm(message, onYes) {
+  const box = document.getElementById("confirm-box");
+  document.getElementById("confirm-text").innerHTML = message;
+  box.classList.remove("hidden");
+  box.classList.add("flex");
+  document.getElementById("confirm-yes").onclick = () => {
+    closeConfirm();
+    onYes();
+  };
+  document.getElementById("confirm-no").onclick = closeConfirm;
+}
+
+// ---- きょくの かいほう ----
+function buySong(song, fromSongMenu) {
+  const price = SONG_PRICES[song.id];
+  askConfirm(`⭐${price} で<br>「${song.title}」を ひらく？`, () => {
+    if (!spendStars(price)) return;
+    save.songs.push(song.id);
+    persist();
+    showToast(`🎉「${song.title}」が ひらいたよ！`);
+    triggerCompletionConfetti();
+    if (fromSongMenu === "rhythm") {
+      createSongMenu();
+      openRhythmMenu(); // リズムの 曲えらびを つくりなおす
+    } else if (fromSongMenu) createSongMenu();
+    else renderReward();
+  });
+}
+
+// ---- シール ----
+function drawSticker() {
+  const unowned = STICKERS.filter(([emoji]) => !save.stickers.includes(emoji));
+  if (unowned.length === 0) return;
+  if (!spendStars(STICKER_PRICE)) return;
+  const [emoji, name] = unowned[Math.floor(Math.random() * unowned.length)];
+  save.stickers.push(emoji);
+  persist();
+  lastDrawnSticker = emoji;
+  stickerMessage = `🎉 ${emoji} ${name} の シールを ゲット！`;
+  triggerCompletionConfetti();
+  renderReward();
+}
+function applyFavSticker() {
+  const el = document.getElementById("header-logo");
+  if (el) el.textContent = save.favSticker || "🎹";
+}
+
+// ---- きせかえ ----
+function applyTheme(id) {
+  const t = THEMES[id] || THEMES.default;
+  document.body.dataset.theme = id;
+  let css = `body{background:${t.bg} !important;}`;
+  if (t.keys) {
+    t.keys.forEach(([a, b], i) => {
+      css += `#piano-keys-row .piano-key:nth-child(${i + 1}){background-image:linear-gradient(to bottom,${a},${b}) !important;border-color:${t.border} !important;}`;
+    });
+    css += `#piano-keys-row .piano-key.guide-target{border-color:#ec4899 !important;}`;
+  }
+  if (t.keyShadow)
+    css += `#piano-keys-row .piano-key:not(.black-key):not(.key-active):not(.guide-target){box-shadow:0 6px 0 ${t.keyShadow} !important;}`;
+  if (t.keyText)
+    css += `#piano-keys-row .piano-key:not(.black-key) *{color:${t.keyText} !important;}#piano-keys-row .piano-key:not(.black-key) .key-badge{background:rgba(15,23,42,.1) !important;}`;
+  if (t.blackKeys)
+    css += `#piano-keys-row .black-key{background-image:linear-gradient(to bottom,${t.blackKeys[0]},${t.blackKeys[1]}) !important;border-color:${t.blackKeys[2]} !important;}`;
+  if (t.accent) css += `#piano-container{border-color:${t.accent} !important;}`;
+  if (t.footer) css += `#stage>footer{color:${t.footer} !important;}`;
+  let style = document.getElementById("theme-style");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "theme-style";
+    document.head.appendChild(style);
+  }
+  style.textContent = css;
+  document.querySelectorAll(".bg-deco").forEach((el, i) => {
+    el.textContent = t.deco[i % t.deco.length];
+  });
+}
+function setTheme(id) {
+  // クラシックは えもじを かくす。ほかに かえるときは もとに もどす
+  const prev = THEMES[save.theme] || {};
+  if (THEMES[id].emojiHidden) save.keyEmojiHidden = true;
+  else if (prev.emojiHidden) save.keyEmojiHidden = false;
+  applyKeyEmoji();
+  save.theme = id;
+  persist();
+  applyTheme(id);
+  renderReward();
+}
+function buyTheme(id) {
+  const t = THEMES[id];
+  askConfirm(`⭐${t.price} で<br>「${t.name}」の きせかえを ひらく？`, () => {
+    if (!spendStars(t.price)) return;
+    save.themes.push(id);
+    showToast(`🎉「${t.name}」が ひらいたよ！`);
+    triggerCompletionConfetti();
+    setTheme(id);
+  });
+}
+
+// ---- けんばんの えもじ ----
+const keyEmojiOf = (item) => {
+  if (item.black) return item.emoji;
+  if (save.keyEmojiHidden) return "";
+  const c = save.keyEmoji[item.key];
+  return c === undefined ? item.emoji : c;
+};
+function applyKeyEmoji() {
+  PIANO_KEYS.forEach((item) => {
+    const el = document.querySelector(`#key-${item.key} .key-emoji`);
+    if (!el) return;
+    const c = save.keyEmojiHidden ? "" : save.keyEmoji[item.key];
+    el.textContent = c ? c : item.emoji;
+    el.classList.toggle("emoji-off", c === "");
+  });
+  // 「ぜんぶ かくす」のときも かくす
+  document.querySelectorAll("#piano-keys-row .key-emoji").forEach((el) => {
+    if (save.keyEmojiHidden) el.classList.add("emoji-off");
+  });
+}
+let rewardKeySel = "s";
+function setKeyEmoji(key, val) {
+  if (val === undefined) delete save.keyEmoji[key];
+  else save.keyEmoji[key] = val;
+  if (val) save.keyEmojiHidden = false; // えもじを えらんだら ひょうじ ON
+  persist();
+  applyKeyEmoji();
+  renderReward();
+}
+function renderRewardKeys(body) {
+  const sel = PIANO_KEYS.find((k) => k.key === rewardKeySel) || PIANO_KEYS[0];
+  const slots = document.createElement("div");
+  slots.className = "grid grid-cols-8 gap-3";
+  PIANO_KEYS.forEach((item) => {
+    const shown = keyEmojiOf(item);
+    const b = document.createElement("button");
+    b.className = `h-[92px] rounded-2xl border-4 flex flex-col items-center justify-center transition hover:-translate-y-0.5 ${
+      item.key === sel.key
+        ? "bg-amber-50 border-amber-400 ring-4 ring-amber-200"
+        : "bg-white border-slate-200 hover:border-pink-300"
+    }`;
+    b.innerHTML = `<span class="text-4xl ${shown ? "" : "opacity-30"}">${shown || "🚫"}</span>
+      <span class="text-sm font-black text-slate-500">${item.jpName}</span>`;
+    b.onclick = () => {
+      rewardKeySel = item.key;
+      renderReward();
+    };
+    slots.appendChild(b);
+  });
+  body.appendChild(slots);
+
+  const label = document.createElement("div");
+  label.className = "font-black text-slate-600 my-2";
+  label.textContent = `「${sel.jpName}」の けんばんの えもじを えらんでね（シールを あつめると ふえるよ）`;
+  body.appendChild(label);
+
+  const pal = document.createElement("div");
+  pal.className = "grid grid-cols-12 gap-2";
+  const cur = save.keyEmoji[sel.key];
+  const cell = (html, active, fn) => {
+    const c = document.createElement("button");
+    c.className = `h-[52px] rounded-xl border-2 flex items-center justify-center text-3xl transition hover:-translate-y-0.5 ${
+      active
+        ? "bg-amber-50 border-amber-400 ring-2 ring-amber-200"
+        : "bg-white border-slate-200 hover:border-pink-300"
+    }`;
+    c.innerHTML = html;
+    c.onclick = fn;
+    pal.appendChild(c);
+  };
+  cell(
+    '<span class="text-sm font-black text-slate-500">🚫 なし</span>',
+    cur === "",
+    () => setKeyEmoji(sel.key, ""),
+  );
+  cell(`<span class="text-2xl">${sel.emoji}</span>`, cur === undefined, () =>
+    setKeyEmoji(sel.key, undefined),
+  );
+  save.stickers.forEach((e) =>
+    cell(e, cur === e, () => setKeyEmoji(sel.key, e)),
+  );
+  body.appendChild(pal);
+
+  const bar = document.createElement("div");
+  bar.className = "flex gap-3 mt-3";
+  const btn = (label, fn) => {
+    const b = document.createElement("button");
+    b.className =
+      "px-4 py-1.5 rounded-xl font-black text-sm border-2 bg-white text-slate-600 border-slate-200 hover:bg-slate-50 transition";
+    b.textContent = label;
+    b.onclick = fn;
+    bar.appendChild(b);
+  };
+  btn(
+    save.keyEmojiHidden
+      ? "👀 えもじを ぜんぶ だす"
+      : "🙈 えもじを ぜんぶ かくす",
+    () => {
+      save.keyEmojiHidden = !save.keyEmojiHidden;
+      persist();
+      applyKeyEmoji();
+      renderReward();
+    },
+  );
+  btn("↩ ぜんぶ もとに もどす", () => {
+    save.keyEmoji = {};
+    save.keyEmojiHidden = false;
+    persist();
+    applyKeyEmoji();
+    renderReward();
+  });
+  body.appendChild(bar);
+}
+
+// ---- ごほうびのへや ----
+function openRewardMenu(tab) {
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+  if (tab) rewardTab = tab;
+  renderReward();
+  const m = document.getElementById("reward-menu");
+  m.classList.remove("hidden");
+  m.classList.add("flex");
+  isRewardMenuOpen = true;
+}
+function closeRewardMenu() {
+  const m = document.getElementById("reward-menu");
+  m.classList.add("hidden");
+  m.classList.remove("flex");
+  isRewardMenuOpen = false;
+  if (document.activeElement && document.activeElement.blur)
+    document.activeElement.blur();
+}
+function renderReward() {
+  updateWallet();
+  const tabs = document.getElementById("reward-tabs");
+  tabs.innerHTML = "";
+  [
+    ["songs", "🎼 きょく"],
+    ["stickers", "🌟 シール"],
+    ["themes", "🎨 きせかえ"],
+    ["keys", "🎹 けんばん"],
+  ].forEach(([id, label]) => {
+    const b = document.createElement("button");
+    b.className = `flex-1 py-2 rounded-2xl font-black text-lg border-2 transition ${
+      id === rewardTab
+        ? "bg-amber-400 text-slate-900 border-amber-500"
+        : "bg-white text-slate-600 border-slate-200 hover:bg-amber-50"
+    }`;
+    b.textContent = label;
+    b.onclick = () => {
+      rewardTab = id;
+      renderReward();
+    };
+    tabs.appendChild(b);
+  });
+  const body = document.getElementById("reward-body");
+  body.innerHTML = "";
+  if (rewardTab === "songs") renderRewardSongs(body);
+  else if (rewardTab === "stickers") renderRewardStickers(body);
+  else if (rewardTab === "keys") renderRewardKeys(body);
+  else renderRewardThemes(body);
+}
+function renderRewardSongs(body) {
+  const grid = document.createElement("div");
+  grid.className = "grid grid-cols-4 gap-4";
+  SONGS.filter((s) => s.id !== "free").forEach((song) => {
+    const owned = isSongUnlocked(song.id);
+    const card = document.createElement("button");
+    card.className = `flex flex-col items-center justify-center gap-1 h-[150px] rounded-2xl border-4 transition hover:-translate-y-1 hover:shadow-lg ${
+      owned
+        ? "bg-emerald-50 border-emerald-300"
+        : "bg-slate-50 border-slate-200 hover:border-amber-300"
+    }`;
+    card.innerHTML = `<span class="text-5xl ${owned ? "" : "grayscale opacity-60"}">${song.icon}</span>
+      <span class="text-xl font-black ${owned ? "text-slate-800" : "text-slate-500"}">${song.title}</span>
+      ${
+        owned
+          ? `<span class="text-sm font-black text-emerald-600">✓ ひらいてるよ（おすと えんそう）</span>`
+          : `<span class="text-sm font-black text-amber-600 bg-amber-100 px-3 py-0.5 rounded-full">⭐${SONG_PRICES[song.id]} で ひらく</span>`
+      }`;
+    card.onclick = owned
+      ? () => {
+          selectSong(song);
+          closeRewardMenu();
+        }
+      : () => buySong(song, false);
+    grid.appendChild(card);
+  });
+  body.appendChild(grid);
+}
+function renderRewardStickers(body) {
+  const done = save.stickers.length >= STICKERS.length;
+  const top = document.createElement("div");
+  top.className = "flex items-center gap-4 mb-3";
+  top.innerHTML = `<button id="draw-btn" ${done ? "disabled" : ""}
+      class="px-5 py-2 rounded-2xl font-black text-lg text-white shadow-md transition ${
+        done
+          ? "bg-slate-300"
+          : "bg-gradient-to-r from-pink-500 to-amber-400 hover:-translate-y-0.5"
+      }">${done ? "🎉 ぜんぶ あつめたよ！" : `🎁 シールを ひく（⭐${STICKER_PRICE}）`}</button>
+    <div class="font-black text-slate-500">あつめた: ${save.stickers.length} / ${STICKERS.length}</div>
+    <div class="font-black text-pink-500 text-lg">${stickerMessage}</div>
+    <div class="ml-auto text-xs font-bold text-slate-400">シールを おすと ロゴに できるよ</div>`;
+  body.appendChild(top);
+  top.querySelector("#draw-btn").onclick = drawSticker;
+
+  const grid = document.createElement("div");
+  grid.className = "grid grid-cols-10 gap-2";
+  STICKERS.forEach(([emoji, name]) => {
+    const owned = save.stickers.includes(emoji);
+    const fav = save.favSticker === emoji;
+    const cell = document.createElement("button");
+    cell.className = `h-[96px] rounded-2xl border-4 flex flex-col items-center justify-center ${
+      owned
+        ? fav
+          ? "bg-amber-50 border-amber-400 ring-4 ring-amber-200"
+          : "bg-white border-pink-200 hover:border-pink-400"
+        : "bg-slate-100 border-slate-200"
+    } ${emoji === lastDrawnSticker ? "animate-bounce" : ""}`;
+    cell.innerHTML = owned
+      ? `<span class="text-5xl">${emoji}</span><span class="text-[11px] font-bold text-slate-500">${fav ? "💛 ロゴ" : name}</span>`
+      : `<span class="text-4xl text-slate-300 font-black">？</span><span class="text-[11px] font-bold text-slate-300">まだ</span>`;
+    if (owned) {
+      cell.onclick = () => {
+        save.favSticker = fav ? null : emoji;
+        persist();
+        applyFavSticker();
+        renderReward();
+      };
+    }
+    grid.appendChild(cell);
+  });
+  body.appendChild(grid);
+  lastDrawnSticker = null;
+}
+function renderRewardThemes(body) {
+  const grid = document.createElement("div");
+  grid.className = "grid grid-cols-6 gap-3";
+  Object.entries(THEMES).forEach(([id, t]) => {
+    const owned = save.themes.includes(id);
+    const using = save.theme === id;
+    const card = document.createElement("button");
+    card.className = `flex flex-col items-center justify-center gap-1 h-[210px] p-3 rounded-2xl border-4 transition hover:-translate-y-1 hover:shadow-lg ${
+      using
+        ? "bg-amber-50 border-amber-400 ring-4 ring-amber-200"
+        : owned
+          ? "bg-white border-slate-200 hover:border-pink-300"
+          : "bg-slate-50 border-slate-200"
+    }`;
+    card.innerHTML = `<div class="w-full h-20 rounded-xl border-2 border-white shadow-inner" style="background:${t.bg}"></div>
+      <span class="text-4xl">${t.icon}</span>
+      <span class="text-lg font-black text-slate-800">${t.name}</span>
+      ${
+        using
+          ? `<span class="text-sm font-black text-amber-600">✓ つかってるよ</span>`
+          : owned
+            ? `<span class="text-sm font-black text-pink-500">えらぶ</span>`
+            : `<span class="text-sm font-black text-amber-600 bg-amber-100 px-3 py-0.5 rounded-full">⭐${t.price} で ひらく</span>`
+      }`;
+    card.onclick = using
+      ? null
+      : owned
+        ? () => setTheme(id)
+        : () => buyTheme(id);
+    grid.appendChild(card);
+  });
+  body.appendChild(grid);
+}
+// ほぞんデータを ぜんぶ けして、さいしょから（タイトルがめんへ）
+function wipeSaveAndReload() {
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch (e) {}
+  location.reload();
+}
+function resetSave() {
+  askConfirm(
+    "ほしも シールも<br>ぜんぶ きえるよ。<br>さいしょから やりなおす？",
+    () => {
+      wipeSaveAndReload();
+    },
+  );
+}
+
+// ほぞんした データを もどす
+function initRewards() {
+  applyTheme(save.theme);
+  applyKeyEmoji();
+  rhythmEasy = !!save.rhythmEasy;
+  updateRhythmEasyBtn();
+  applyFavSticker();
+  updateWallet();
+  if (INSTRUMENTS[save.instrument]) {
+    currentInstrument = save.instrument;
+    updateInstrumentButton();
+  }
+}
+
 // --- App Initializer ---
 window.onload = () => {
   createPianoKeys();
+  initRewards();
   createSongButtons();
   selectSong(SONGS.find((s) => s.id === "free")); // はじめは じゆうえんそう
-  // スマホ（キーボードなし）は、キーの文字を さいしょから かくす
-  if (
-    typeof isTouchDevice === "function" &&
-    isTouchDevice() &&
-    keyLettersVisible
-  )
+  // キーの文字: ほぞんした せっていを もどす。スマホ（キーボードなし）は さいしょから かくす
+  const pref = save.lettersVisible;
+  const hide =
+    pref === false ||
+    (pref === null && typeof isTouchDevice === "function" && isTouchDevice());
+  if (hide && keyLettersVisible) {
     toggleKeyLetters();
+    save.lettersVisible = pref;
+  }
 };
 
     </script>
