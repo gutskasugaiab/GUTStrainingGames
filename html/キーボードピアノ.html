@@ -742,12 +742,12 @@
 
 
             <!-- Rhythm panel (リズムゲーム) : shown instead of header + song row -->
-            <section id="rhythm-panel" class="shrink-0 h-[250px] gap-3">
+            <section id="rhythm-panel" class="shrink-0 h-[262px] gap-3">
                 <div class="flex-1 min-w-0 bg-white/95 rounded-3xl border-4 border-teal-300 shadow-md overflow-hidden">
                     <canvas id="rhythm-canvas" class="block w-full h-full"></canvas>
                 </div>
                 <div
-                    class="w-[400px] shrink-0 bg-white/90 rounded-3xl border-4 border-amber-200 shadow-md p-3 flex flex-col gap-2">
+                    class="w-[400px] shrink-0 bg-white/90 rounded-3xl border-4 border-amber-200 shadow-md p-2.5 flex flex-col gap-1.5">
                     <div id="rhythm-songs" class="flex gap-1.5 flex-wrap"></div>
                     <div class="flex gap-2">
                         <div
@@ -825,8 +825,8 @@
                     <button id="letters-toggle-btn" onclick="toggleKeyLetters()"
                         class="flex-1 max-w-[170px] bg-slate-500 hover:bg-slate-600 text-white p-2.5 rounded-2xl shadow-[0_4px_0_#334155] active:translate-y-1 active:shadow-none transition flex items-center justify-between px-3 border-2 border-slate-400">
                         <div class="text-left">
-                            <div class="text-[10px] font-bold text-slate-200">スペースでもOK</div>
-                            <div id="letters-btn-label" class="text-xs font-black">もじをかくす</div>
+                            <div id="letters-btn-hint" class="text-[10px] font-bold text-slate-200">もじをかくす</div>
+                            <div id="letters-btn-label" class="text-xs font-black">C キー</div>
                         </div>
                         <span id="letters-btn-icon" class="text-xl">🙈</span>
                     </button>
@@ -1478,7 +1478,8 @@ function playNoteSound(keyChar, hold = false) {
   try {
     const { id, node } = activeInstrument();
     const info = INSTRUMENTS[id];
-    if (info.transpose && Tone.Frequency(noteStr).toFrequency() < 1000) {
+    if (info.transpose) {
+      // オルゴールは ぜんぶの おとを おなじだけ 高くする（高い ドも わすれずに）
       noteStr = Tone.Frequency(noteStr).transpose(info.transpose).toNote();
     }
     releaseHeld(keyChar);
@@ -1641,14 +1642,14 @@ let keyLettersVisible = true;
 function toggleKeyLetters() {
   keyLettersVisible = !keyLettersVisible;
   document.body.classList.toggle("hide-key-letters", !keyLettersVisible);
-  const label = document.getElementById("letters-btn-label");
+  const label = document.getElementById("letters-btn-hint");
   const icon = document.getElementById("letters-btn-icon");
   if (label)
-    label.innerText = keyLettersVisible ? "もじをかくす" : "もじをだす";
-  if (icon) icon.innerText = keyLettersVisible ? "🙈" : "👀";
+    label.textContent = keyLettersVisible ? "もじをかくす" : "もじをだす";
+  if (icon) icon.textContent = keyLettersVisible ? "🙈" : "👀";
   save.lettersVisible = keyLettersVisible;
   persist();
-  // ボタンにフォーカスが残ると、スペースキーが二重に効くのではずす
+  // ボタンにフォーカスが残ると、Enter／スペースで もういちど おされてしまうのではずす
   if (document.activeElement && document.activeElement.blur)
     document.activeElement.blur();
 }
@@ -2351,9 +2352,18 @@ window.addEventListener("keydown", (e) => {
     }
     return;
   }
-  // スペースキーで、キーボードの文字を いつでも かくす／だす
+  // スペースキー: リズムゲームで スタート（もういちど）が でているときは、それを おす
   if (e.code === "Space") {
     e.preventDefault();
+    if (e.repeat) return;
+    if (isAudioStarted && rhythmActive && rhythmMainAction) {
+      rhythmMainAction();
+    }
+    return;
+  }
+  // Cキー: キーボードの文字を いつでも かくす／だす
+  // （かな入力でも きくように e.code で みる。Ctrl+C などの コピーは じゃましない）
+  if (e.code === "KeyC" && !e.ctrlKey && !e.metaKey && !e.altKey) {
     if (!e.repeat) toggleKeyLetters();
     return;
   }
@@ -2574,7 +2584,14 @@ let rhythmEnd = 0;
 let rhythmRaf = 0;
 let rhythmTick = null;
 let rhythmGuide = "";
-let rhythmStat = { score: 0, combo: 0, perfect: 0, good: 0, miss: 0 };
+let rhythmStat = {
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  perfect: 0,
+  good: 0,
+  miss: 0,
+};
 let rhythmFb = { txt: "", t: -9999, c: "#ec4899" };
 let rhythmListening = false; // おてほんを きいている さいちゅう
 let rhythmTimers = [];
@@ -2592,7 +2609,7 @@ function rhythmSpb() {
 function updateRhythmEasyBtn() {
   const b = document.getElementById("rhythm-easy-btn");
   if (!b) return;
-  b.textContent = rhythmEasy ? "🐢 かんたん" : "🐇 ふつう";
+  b.textContent = rhythmEasy ? "🐢 かんたん" : "🐇 ふつうそくど";
   b.className = `ml-auto px-3 py-1 rounded-2xl font-black text-sm border-2 transition ${
     rhythmEasy
       ? "bg-emerald-100 text-emerald-700 border-emerald-300 hover:bg-emerald-200"
@@ -2769,12 +2786,41 @@ function rhythmUpdateHud() {
   document.getElementById("rhythm-score").textContent = rhythmStat.score;
   document.getElementById("rhythm-combo").textContent = rhythmStat.combo;
 }
+let rhythmMainAction = null; // いま ひょうじ中の おおきい ボタン（スタート／もういちど）の うごき。スペースキーで おせる
 function rhythmActions(items) {
   rhythmActionsEl.innerHTML = "";
+  const mainItem = items.find((it) => it[2] === RH_MAIN);
+  rhythmMainAction = mainItem ? mainItem[1] : null;
+  // スタート（おおきい）が あるときの ならび:
+  //   [ ▶ スタート ] [おてほん]            [ もどる ]
+  // おてほんは スタートの となりに ちいさく、もどるは みぎはしに（アイコンが うえ）
+  const hasMain = items.some((it) => it[2] === RH_MAIN);
+  const spread = hasMain && items.length >= 3;
+  // 3つ ならぶときは 1ぎょうに おさめる（もどるが したに おちない）
+  rhythmActionsEl.style.flexWrap = spread ? "nowrap" : "";
   for (const [label, fn, cls] of items) {
     const b = document.createElement("button");
-    b.className = `px-3 py-1.5 rounded-xl font-black text-sm border-2 transition ${cls}`;
-    b.textContent = label;
+    const base = "font-black border-2 transition";
+    if (cls === RH_MAIN) {
+      // スタート／もういちど は おおきく ひからせて 目立たせる
+      // ▶ や 🔁 は おおきく、もじ（スタート など）は ちいさめに
+      const [icon, ...rest] = label.split(" ");
+      b.className = `song-select-btn flex items-center gap-2 px-5 py-1 rounded-2xl hover:-translate-y-0.5 whitespace-nowrap ${base} ${cls}`;
+      b.innerHTML = `<span class="text-3xl leading-none">${icon}</span><span class="text-sm">${rest.join(" ")}</span>`;
+    } else if (spread && cls === RH_SUB) {
+      // もどる: アイコンを うえ、もじを したに ならべて みぎはしへ
+      const [icon, ...rest] = label.split(" ");
+      b.className = `ml-auto flex flex-col items-center justify-center px-3 rounded-xl text-xs leading-tight ${base} ${cls}`;
+      b.innerHTML = `<span class="text-3xl leading-none">${icon}</span><span>${rest.join(" ")}</span>`;
+    } else if (spread && cls === RH_LISTEN) {
+      // おてほん: ちいさな カプセルを スタートの うえがわに そろえる
+      //つかれたもーーーーーーーーーーん
+      b.className = `self-start px-3 py-1 rounded-full text-sm whitespace-nowrap ${base} ${cls}`;
+      b.textContent = label;
+    } else {
+      b.className = `px-3 py-1.5 rounded-xl text-sm ${base} ${cls}`;
+      b.textContent = label;
+    }
     b.onclick = (e) => {
       e.currentTarget.blur();
       fn();
@@ -2868,7 +2914,14 @@ function rhythmReset() {
   rhythmPlaying = false;
   clearGuideHighlights();
   rhythmNotes = rhythmSong ? rhythmBuild() : [];
-  rhythmStat = { score: 0, combo: 0, perfect: 0, good: 0, miss: 0 };
+  rhythmStat = {
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    perfect: 0,
+    good: 0,
+    miss: 0,
+  };
   rhythmUpdateHud();
   rhythmRenderSongs();
   if (rhythmSong) {
@@ -2906,6 +2959,7 @@ function exitRhythm() {
   rhythmStopAudio();
   rhythmPlaying = false;
   rhythmActive = false;
+  rhythmMainAction = null;
   stageEl.classList.remove("rhythm-mode");
   clearGuideHighlights();
   if (currentSong.id !== "free" && songNoteIndex < currentSong.notes.length) {
@@ -3034,6 +3088,7 @@ function rhythmHandleKey(keyChar) {
     rhythmSay("いいね！", "#06b6d4");
   }
   rhythmStat.combo++;
+  rhythmStat.maxCombo = Math.max(rhythmStat.maxCombo, rhythmStat.combo);
   rhythmUpdateHud();
 }
 
@@ -3041,13 +3096,18 @@ function rhythmFinish() {
   rhythmPlaying = false;
   rhythmStopAudio();
   clearGuideHighlights();
-  const { perfect, good, miss } = rhythmStat;
-  const total = perfect + good + miss;
-  const acc = total ? (perfect + good * 0.5) / total : 0;
-  const level = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
-  const reward = (rhythmEasy ? [0, 3, 5, 10] : [0, 5, 10, 20])[level]; // かんたんは ごほうび はんぶん
+  const { perfect, good, miss, maxCombo } = rhythmStat;
+  // ごほうび: 曲の最大点数（全部「すごい」）に対する割合で決まる
+  //   80%以上 15こ ／ 50%以上 10こ ／ 10%以上 5こ ／ それ未満 0こ
+  //   ＋ コンボボーナス（１番長く続いたコンボ ÷ 3、小数点切り捨て）
+  const maxScore = rhythmNotes.length * 100;
+  const pct = maxScore ? rhythmStat.score / maxScore : 0;
+  const level = pct >= 0.8 ? 3 : pct >= 0.5 ? 2 : pct >= 0.1 ? 1 : 0;
+  const comboBonus = Math.floor(maxCombo / 3);
+  let reward = [0, 5, 10, 15][level] + comboBonus;
+  if (rhythmEasy) reward = Math.ceil(reward / 2); // かんたんは ごほうび はんぶん
   rhythmSetMsg(
-    `<div><div class="text-3xl">${"⭐".repeat(level)}</div>
+    `<div><div class="text-2xl leading-8">${level ? "⭐".repeat(level) : "🎵"}<span class="text-sm ml-1">🔥 さいだい ${maxCombo} コンボ</span></div>
      <div class="text-base">すごい ${perfect} ／ いいね ${good} ／ おしい ${miss}</div></div>`,
   );
   rhythmActions([
@@ -3055,7 +3115,7 @@ function rhythmFinish() {
     ["🎧 おてほん", rhythmListen, RH_LISTEN],
     ["🎹 もどる", exitRhythm, RH_SUB],
   ]);
-  addStars(reward, "リズムゲーム");
+  if (reward > 0) addStars(reward, "リズムゲーム");
   if (level >= 2) triggerCompletionConfetti();
 }
 
@@ -3081,6 +3141,11 @@ const SONG_PRICES = {
 };
 const STICKER_PRICE = 10;
 const STICKERS = [
+  ["🎶", "おんぷ１"],
+  ["🎵", "おんぷ２"],
+  ["🎼", "がくふ"],
+  ["🎹", "けんばん"],
+  ["🌈", "にじ"],
   ["🐱", "ねこ"],
   ["🐶", "いぬ"],
   ["🐰", "うさぎ"],
@@ -3098,19 +3163,34 @@ const STICKERS = [
   ["🦄", "ユニコーン"],
   ["🐢", "かめ"],
   ["🐙", "たこ"],
+  ["🐟", "さかな"],
+  ["🐡", "ふぐ"],
   ["🦋", "ちょうちょ"],
-  ["🌈", "にじ"],
-  ["🚀", "ロケット"],
+  ["🐝", "はち"],
   ["🍓", "いちご"],
   ["🍎", "リンゴ"],
+  ["🍇", "ぶどう"],
+  ["🍌", "バナナ"],
+  ["🍊", "オレンジ"],
+  ["🍑", "もも"],
+  ["🍒", "さくらんぼ"],
+  ["🍪", "クッキー"],
+  ["🍩", "ドーナツ"],
+  ["🍫", "チョコレート"],
+  ["🍮", "プリン"],
+  ["🍦", "アイスクリーム"],
   ["🎂", "ケーキ"],
   ["🌻", "ひまわり"],
-  ["⛄", "ゆきだるま"],
-  ["🎈", "ふうせん"],
+  ["🌷", "チューリップ"],
+  ["🌸", "さくら"],
+  ["🚀", "ロケット"],
+  ["🤖", "ロボット"],
   ["🚗", "くるま"],
-  ["✈\uFE0F", "ひこうき"],
+  ["✈️", "ひこうき"],
+  ["🚁", "ヘリコプター"],
   ["🚃", "でんしゃ"],
-  ["🛥\uFE0F", "ふね"],
+  ["🚢", "ふね"],
+  ["🛸", "UFO"],
 ];
 const THEMES = {
   default: {
