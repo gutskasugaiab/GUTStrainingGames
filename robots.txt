@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gutskasugaiab.github.io/GUTStrainingGames/sitemap.xml
+Sitemap: https://games.guts1-0.com/sitemap.xml
