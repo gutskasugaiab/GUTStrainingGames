@@ -4,35 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/logo/keylogo_グリーン.png">
-    <title>カフェ・タイピスト｜接客タイピングゲーム</title>
-    <meta name="description" content="カフェの接客をテーマにした無料タイピングゲーム。お客様との会話を入力してミスを減らし、高ランクのクリアを目指そう。">
-    <link rel="canonical" href="https://games.guts1-0.com/html/game4.html">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="カフェ・タイピスト｜接客タイピングゲーム">
-    <meta property="og:description" content="カフェの接客をテーマにした無料タイピングゲーム。お客様との会話を入力してミスを減らし、高ランクのクリアを目指そう。">
-    <meta property="og:url" content="https://games.guts1-0.com/html/game4.html">
-    <meta property="og:site_name" content="GUTS:trainingGames">
-    <meta property="og:image" content="https://games.guts1-0.com/img/4/カフェ・タイピスト（サムネ）.jpg">
-    <meta property="og:locale" content="ja_JP">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="カフェ・タイピスト｜接客タイピングゲーム">
-    <meta name="twitter:description" content="カフェの接客をテーマにした無料タイピングゲーム。お客様との会話を入力してミスを減らし、高ランクのクリアを目指そう。">
-    <meta name="twitter:image" content="https://games.guts1-0.com/img/4/カフェ・タイピスト（サムネ）.jpg">
-    <link rel="stylesheet" href="../css/style.css">
+    <title>カフェ・タイピスト</title>
     <link rel="stylesheet" href="../css/game-style.css">
+    <link rel="stylesheet" href="../css/game-sp.css">
 </head>
 <body>
     
     <header>
-            <nav class="nav">
-                <ul>
-                    <li><a href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a></li>
-                    <li><a href="../index.html">ホーム</a></li>
-                    <li><a href="about.html">サイトのご利用について</a></li>
-                    <li><a href="info.html">お知らせ</a></li>
-                    <!-- <li><a href="contact.html">お問い合わせ</a></li> -->
-                </ul>
-            </nav>
+        <nav class="nav">
+            <a class="logo-link" href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a>
+            <ul id="siteMenu">
+                <li><a href="../index.html">ホーム</a></li>
+                <li><a href="about.html">サイトのご利用について</a></li>
+                <li><a href="info.html">お知らせ</a></li>
+                <!-- <li><a href="contact.html">お問い合わせ</a></li> -->
+            </ul>
+            <button
+            class="menu-button"
+            id="menuButton"
+            type="button"
+            aria-label="メニューを開く"
+            aria-expanded="false"
+            aria-controls="siteMenu"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
     </header>
 
     <!-- 広告バナー（ヘッダー下） -->
@@ -46,7 +45,6 @@
     
     <main class="container">
         <div class="content">
-            <h1 class="game-h1">カフェ・タイピスト｜接客タイピングゲーム</h1>
             <div class="accordion" id="accordion">
                 <h2>このゲームについて</h2>
             </div>
@@ -132,15 +130,52 @@
             <p><a href="terms.html">ご利用規約</a> | <a href="privacy.html">プライバシーポリシー</a></p>
             <p>&copy; 2026 GUTS1.0株式会社 All Rights Reserved.</p>
     </footer>
-    
-</body>
-<script>
-    const accordion = document.getElementById("accordion");
-    const gameDescription = document.getElementById("game-description");
+    <script>
+        
+        const menuButton = document.getElementById("menuButton");
+        const siteMenu = document.getElementById("siteMenu");
 
-    accordion.addEventListener("click", () => {
-        gameDescription.classList.toggle("active");
-        accordion.classList.toggle("active");
-    });
-</script>
+        if (menuButton && siteMenu) {
+            menuButton.addEventListener("click", () => {
+                const isOpen = siteMenu.classList.toggle("is-open");
+
+                menuButton.setAttribute("aria-expanded", isOpen);
+                menuButton.setAttribute(
+                    "aria-label",
+                    isOpen ? "メニューを閉じる" : "メニューを開く"
+                );
+            });
+        }
+
+    </script>    
+    <script>
+        const accordion = document.getElementById("accordion");
+        const gameDescription = document.getElementById("game-description");
+    
+        accordion.addEventListener("click", () => {
+            gameDescription.classList.toggle("active");
+            accordion.classList.toggle("active");
+        });
+    
+        function fitGame() {
+        const f = document.querySelector('iframe');
+        // スマホで幅が広がって見えても、端末の実幅を優先する
+        const w = Math.min(window.innerWidth, window.screen.width);
+    
+        if (w > 768) {
+            f.style.transform = '';
+            f.style.marginBottom = '';
+            return;
+        }
+        const s = Math.min(1, (w - 24) / 1050);
+        f.style.transformOrigin = 'top left';
+        f.style.transform = `scale(${s})`;
+        f.style.marginBottom = `-${825 * (1 - s)}px`;
+        }
+        window.addEventListener('resize', fitGame);
+        window.addEventListener('orientationchange', fitGame);
+        window.addEventListener('load', fitGame);
+        fitGame();
+    </script>
+</body>
 </html>

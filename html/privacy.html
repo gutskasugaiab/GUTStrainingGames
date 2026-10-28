@@ -4,40 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/logo/keylogo_グリーン.png">
-    <title>プライバシーポリシー｜GUTS:trainingGames</title>
-    <meta name="description" content="GUTS:trainingGamesにおける個人情報の取り扱いについて定めたプライバシーポリシーです。">
-    <link rel="canonical" href="https://games.guts1-0.com/html/privacy.html">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="プライバシーポリシー｜GUTS:trainingGames">
-    <meta property="og:description" content="GUTS:trainingGamesにおける個人情報の取り扱いについて定めたプライバシーポリシーです。">
-    <meta property="og:url" content="https://games.guts1-0.com/html/privacy.html">
-    <meta property="og:site_name" content="GUTS:trainingGames">
-    <meta property="og:image" content="https://games.guts1-0.com/img/logo/game_logo_白.png">
-    <meta property="og:locale" content="ja_JP">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="プライバシーポリシー｜GUTS:trainingGames">
-    <meta name="twitter:description" content="GUTS:trainingGamesにおける個人情報の取り扱いについて定めたプライバシーポリシーです。">
-    <meta name="twitter:image" content="https://games.guts1-0.com/img/logo/game_logo_白.png">
-    <link rel="stylesheet" href="../css/style.css">
+    <title>プライバシーポリシー</title>
     <link rel="stylesheet" href="../css/privacy-style.css">
+    <link rel="stylesheet" href="../css/privacy-sp.css">
 </head>
 <body>
 
     <header>
         <nav class="nav">
-            <ul>
-                <li><a href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a></li>
+            <a class="logo-link" href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a>
+            <ul id="siteMenu">
                 <li><a href="../index.html">ホーム</a></li>
                 <li><a href="about.html">サイトのご利用について</a></li>
                 <li><a href="info.html">お知らせ</a></li>
                 <!-- <li><a href="contact.html">お問い合わせ</a></li> -->
             </ul>
+            <button
+            class="menu-button"
+            id="menuButton"
+            type="button"
+            aria-label="メニューを開く"
+            aria-expanded="false"
+            aria-controls="siteMenu"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </nav>
     </header>
 
     <div class="content">
         <div class="privacy">
-            <h1>プライバシーポリシー</h1>
+            <h2>プライバシーポリシー</h2>
 
                 <p>・当サイトではアクセス解析や広告配信の過程で、Cookie、Webビーコンと呼ばれる技術を使って自動的にGUTS:trainingGamesのコンテンツの利用者（以下ユーザーとする）の情報を取得することがあります。
                 （※ユーザーの情報とは、IPアドレス、ドメイン名、ブラウザ・OS等の環境、クッキー情報、アクセス履歴などのことであり、この情報から第三者がユーザ個人を特定する事はできません）
@@ -50,5 +49,23 @@
                 広告配信においてCookie等の技術が使用される場合がありますが、個人を特定する情報は含まれません。</p>
         </div>
     </div>
+            <script>
+            
+            const menuButton = document.getElementById("menuButton");
+            const siteMenu = document.getElementById("siteMenu");
+
+            if (menuButton && siteMenu) {
+                menuButton.addEventListener("click", () => {
+                    const isOpen = siteMenu.classList.toggle("is-open");
+
+                    menuButton.setAttribute("aria-expanded", isOpen);
+                    menuButton.setAttribute(
+                        "aria-label",
+                        isOpen ? "メニューを閉じる" : "メニューを開く"
+                    );
+                });
+            }
+
+        </script>
 </body>
 </html>

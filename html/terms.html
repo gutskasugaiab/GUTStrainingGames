@@ -4,39 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/logo/keylogo_グリーン.png">
-    <title>ご利用規約｜GUTS:trainingGames</title>
-    <meta name="description" content="GUTS:trainingGamesのご利用にあたっての規約を掲載しています。ご利用前に必ずご確認ください。">
-    <link rel="canonical" href="https://games.guts1-0.com/html/terms.html">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="ご利用規約｜GUTS:trainingGames">
-    <meta property="og:description" content="GUTS:trainingGamesのご利用にあたっての規約を掲載しています。ご利用前に必ずご確認ください。">
-    <meta property="og:url" content="https://games.guts1-0.com/html/terms.html">
-    <meta property="og:site_name" content="GUTS:trainingGames">
-    <meta property="og:image" content="https://games.guts1-0.com/img/logo/game_logo_白.png">
-    <meta property="og:locale" content="ja_JP">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="ご利用規約｜GUTS:trainingGames">
-    <meta name="twitter:description" content="GUTS:trainingGamesのご利用にあたっての規約を掲載しています。ご利用前に必ずご確認ください。">
-    <meta name="twitter:image" content="https://games.guts1-0.com/img/logo/game_logo_白.png">
+    <title>ご利用規約</title>
     <link rel="stylesheet" href="../css/terms-style.css">
+    <link rel="stylesheet" href="../css/terms-sp.css">
 </head>
 <body>
     
     <header>
         <nav class="nav">
-            <ul>
-                <li><a href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a></li>
+            <a class="logo-link" href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a>
+            <ul id="siteMenu">
                 <li><a href="../index.html">ホーム</a></li>
                 <li><a href="about.html">サイトのご利用について</a></li>
                 <li><a href="info.html">お知らせ</a></li>
                 <!-- <li><a href="contact.html">お問い合わせ</a></li> -->
             </ul>
+            <button
+            class="menu-button"
+            id="menuButton"
+            type="button"
+            aria-label="メニューを開く"
+            aria-expanded="false"
+            aria-controls="siteMenu"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </nav>
     </header>
 
     <div class="content">
         <div class="terms">
-            <h1>ご利用規約</h1>
+            <h2>ご利用規約</h2>
 
             <p>以下の内容をご確認いただき、すべてにご同意いただける場合のみ、本サイト「GUTS:trainingGames」のコンテンツをご利用ください。ご同意いただけない場合は、閲覧・利用をお控えください。</p>
 
@@ -60,5 +60,23 @@
 
         </div>
     </div>
+        <script>
+            
+            const menuButton = document.getElementById("menuButton");
+            const siteMenu = document.getElementById("siteMenu");
+
+            if (menuButton && siteMenu) {
+                menuButton.addEventListener("click", () => {
+                    const isOpen = siteMenu.classList.toggle("is-open");
+
+                    menuButton.setAttribute("aria-expanded", isOpen);
+                    menuButton.setAttribute(
+                        "aria-label",
+                        isOpen ? "メニューを閉じる" : "メニューを開く"
+                    );
+                });
+            }
+
+        </script>
 </body>
 </html>

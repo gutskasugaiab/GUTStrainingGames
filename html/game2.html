@@ -11,15 +11,27 @@
 <body>
     
     <header>
-            <nav class="nav">
-                <ul>
-                    <li><a href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a></li>
-                    <li><a href="../index.html">ホーム</a></li>
-                    <li><a href="about.html">サイトのご利用について</a></li>
-                    <li><a href="info.html">お知らせ</a></li>
-                    <!-- <li><a href="contact.html">お問い合わせ</a></li> -->
-                </ul>
-            </nav>
+        <nav class="nav">
+            <a class="logo-link" href="../index.html"><img src="../img/logo/game_logo_白.png" class="logo"></a>
+            <ul id="siteMenu">
+                <li><a href="../index.html">ホーム</a></li>
+                <li><a href="about.html">サイトのご利用について</a></li>
+                <li><a href="info.html">お知らせ</a></li>
+                <!-- <li><a href="contact.html">お問い合わせ</a></li> -->
+            </ul>
+            <button
+            class="menu-button"
+            id="menuButton"
+            type="button"
+            aria-label="メニューを開く"
+            aria-expanded="false"
+            aria-controls="siteMenu"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
     </header>
 
     <!-- 広告バナー（ヘッダー下） -->
@@ -150,7 +162,6 @@
                 <a href="https://px.a8.net/svt/ejp?a8mat=4B1G9L+1JYSEY+0K+10YDIP" rel="nofollow">
                 <img border="0" width="300" height="250" alt="" src="https://www26.a8.net/svt/bgt?aid=260408217094&wid=002&eno=01&mid=s00000000002006207000&mc=1"></a>
                 <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4B1G9L+1JYSEY+0K+10YDIP" alt="">
-                </a>                
             </div>
         </aside>
     </main>
@@ -171,6 +182,24 @@
     ⛶ 全画面で遊ぶ
     </a>
 </body>
+    <script>
+        
+        const menuButton = document.getElementById("menuButton");
+        const siteMenu = document.getElementById("siteMenu");
+
+        if (menuButton && siteMenu) {
+            menuButton.addEventListener("click", () => {
+                const isOpen = siteMenu.classList.toggle("is-open");
+
+                menuButton.setAttribute("aria-expanded", isOpen);
+                menuButton.setAttribute(
+                    "aria-label",
+                    isOpen ? "メニューを閉じる" : "メニューを開く"
+                );
+            });
+        }
+
+    </script>
 <script>
     const accordion = document.getElementById("accordion");
     const gameDescription = document.getElementById("game-description");
