@@ -1,0 +1,100 @@
+/* ==========================================
+   プライバシーポリシーページ SP版レイアウト（幅768px以下）
+   privacy-style.css の「後」に読み込んでください
+   ========================================== */
+@media (max-width: 768px) {
+
+    body {
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    /* ---------- ヘッダー ---------- */
+    header {
+        padding: 8px 0;
+    }
+
+    .nav ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+        gap: 4px 0;
+    }
+
+    .nav li:first-child {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .logo {
+        width: 160px;
+        height: auto;
+    }
+
+    .nav li:not(:first-child) {
+        flex: 1 1 auto;
+    }
+
+    .nav a {
+        display: inline-block;
+        margin: 0;
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    /* ---------- 本文 ---------- */
+    .privacy {
+        margin: 16px 12px 24px;
+        padding: 16px;
+        border-radius: 10px;
+    }
+
+    .privacy h2 {
+        font-size: 20px;
+        margin: 4px 0 20px;
+    }
+
+    .privacy p {
+        font-size: 14px;
+        line-height: 1.8;
+        margin: 0 0 16px;
+        overflow-wrap: anywhere;
+    }
+
+    .privacy-block h3 {
+        font-size: 15px;
+    }
+
+    .privacy li {
+        font-size: 14px;
+    }
+
+    /* ---------- フッター ---------- */
+    footer {
+        padding: 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 400px) {
+    .logo {
+        width: 140px;
+    }
+
+    .nav a {
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+
+    .privacy {
+        margin: 12px 8px 20px;
+        padding: 14px;
+    }
+}

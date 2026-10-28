@@ -1,0 +1,125 @@
+/* ==========================================
+   サイトのご利用について SP版レイアウト（幅768px以下）
+   about-style.css の「後」に読み込んでください
+   ========================================== */
+@media (max-width: 768px) {
+
+    body {
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    /* ---------- ヘッダー ---------- */
+    header {
+        padding: 8px 0;
+    }
+
+    .nav ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+        gap: 4px 0;
+    }
+
+    .nav li:first-child {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .logo {
+        width: 160px;
+        height: auto;
+    }
+
+    .nav li:not(:first-child) {
+        flex: 1 1 auto;
+    }
+
+    .nav a {
+        display: inline-block;
+        margin: 0;
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    /* ---------- 1カラム化 ---------- */
+    main {
+        padding: 12px;
+    }
+
+    .container {
+        flex-direction: column;
+        gap: 24px;
+        padding: 12px;
+    }
+
+    .content,
+    .sidebar {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* ---------- 本文 ---------- */
+    .about {
+        margin: 0;
+        padding: 16px;
+        font-size: 14px;
+        line-height: 1.8;
+        /* 長い行の折り返し */
+        overflow-wrap: anywhere;
+    }
+
+    .about h2 {
+        font-size: 18px;
+        margin-top: 0;
+    }
+
+    .about h4 {
+        font-size: 15px;
+        margin: 20px 0 8px;
+    }
+
+    .about p {
+        margin: 0;
+    }
+
+    /* ---------- 広告 ---------- */
+    .sidebar .ad-label {
+        text-align: center;
+    }
+
+    .side-ad {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .side-ad a img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* ---------- フッター ---------- */
+    footer {
+        padding: 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 400px) {
+    .logo {
+        width: 140px;
+    }
+
+    .nav a {
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+}

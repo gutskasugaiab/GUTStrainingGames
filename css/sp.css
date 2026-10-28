@@ -1,0 +1,186 @@
+/* ==========================================
+   SP版レイアウト（スマホ・幅768px以下）
+   style.css の「後」に読み込んでください
+   ========================================== */
+@media (max-width: 768px) {
+
+    /* 全体：横スクロール防止 */
+    body {
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    /* ---------- ヘッダー ---------- */
+    header {
+        padding: 8px 0;
+    }
+
+    .nav ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+        gap: 4px 0;
+    }
+
+    /* ロゴは1行目に中央配置 */
+    .nav li:first-child {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .logo {
+        width: 160px;
+        height: auto;
+    }
+
+    /* メニュー3つは2行目に横並び */
+    .nav li:not(:first-child) {
+        flex: 1 1 auto;
+    }
+
+    .nav a {
+        display: inline-block;
+        margin: 0;
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    /* ---------- 説明文 ---------- */
+    .site-description {
+        margin: 12px;
+        padding: 14px;
+        font-size: 14px;
+    }
+
+    .site-description h2 {
+        font-size: 18px;
+    }
+
+    /* ---------- メイン（1カラム化） ---------- */
+    main {
+        padding: 12px;
+    }
+
+    .container {
+        flex-direction: column;
+        gap: 24px;
+        padding: 12px;
+        margin-top: 0;
+    }
+
+    .content,
+    .sidebar {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .content h2,
+    .sidebar h2 {
+        font-size: 18px;
+    }
+
+    /* ---------- ゲーム一覧 ---------- */
+    .game-list {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .game-card {
+        padding: 12px;
+    }
+
+    /* タップ端末ではホバー拡大を無効化し、タップ時に軽く縮む */
+    .game-card:hover {
+        transform: none;
+    }
+
+    .game-card:active {
+        transform: scale(0.98);
+    }
+
+    .game-card h3 {
+        font-size: 1.15rem;
+        top: 60%;
+        text-shadow:
+            0 2px 0 rgba(0, 0, 0, 0.8),
+            0 4px 0 rgba(80, 80, 80, 0.7),
+            0 8px 16px rgba(0, 0, 0, 0.6),
+            0 0 12px rgba(255, 255, 255, 0.5);
+    }
+
+    .game-card p {
+        font-size: 14px;
+        line-height: 1.6;
+        text-align: left;
+    }
+
+    /* ---------- お知らせ ---------- */
+    .timeline {
+        padding: 10px 12px;
+    }
+
+    /* ---------- 広告 ---------- */
+    .ad-banner {
+        margin: 12px 0;
+        padding: 0 12px;
+    }
+
+    /* 728x90 を画面幅に合わせて縮小（縦横比キープ） */
+    .ad-banner a img {
+        width: 100%;
+        max-width: 728px;
+        height: auto;
+    }
+
+    .sidebar .ad-label {
+        text-align: center;
+    }
+
+    .side-ad {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .side-ad a img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* ---------- フッター ---------- */
+    footer {
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .pc-only {
+        display: none;
+    }
+
+    .sp-only {
+        display: flex;
+    }
+}
+
+/* 小さめスマホ（幅400px以下）の微調整 */
+@media (max-width: 400px) {
+    .logo {
+        width: 140px;
+    }
+
+    .nav a {
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+
+    .game-card h3 {
+        font-size: 1rem;
+    }
+}

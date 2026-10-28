@@ -1,0 +1,167 @@
+/* ==========================================
+   ゲームページ SP版レイアウト（幅768px以下）
+   game-style.css の「後」に読み込んでください
+   ========================================== */
+@media (max-width: 768px) {
+
+    body {
+        overflow-x: hidden;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    /* ---------- ヘッダー ---------- */
+    header {
+        padding: 8px 0;
+    }
+
+    .nav ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+        gap: 4px 0;
+    }
+
+    .nav li:first-child {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .logo {
+        width: 160px;
+        height: auto;
+    }
+
+    .nav li:not(:first-child) {
+        flex: 1 1 auto;
+    }
+
+    .nav a {
+        display: inline-block;
+        margin: 0;
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    /* ---------- 1カラム化 ---------- */
+    main {
+        padding: 12px;
+    }
+
+    .container {
+        flex-direction: column;
+        gap: 24px;
+        padding: 12px;
+    }
+
+    .content {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+        align-items: stretch;      /* 子要素を横幅いっぱいに */
+        justify-content: flex-start;
+    }
+
+    .sidebar {
+        flex: none;
+        width: 100%;
+    }
+
+    /* ---------- アコーディオン（このゲームについて） ---------- */
+    .accordion {
+        margin: 8px 0 0;
+        padding: 14px 16px;
+        max-width: none;
+    }
+
+    .accordion h2 {
+        font-size: 1.05rem;
+    }
+
+    .game-description {
+        font-size: 14px;
+        max-width: none;
+        margin: 0 0 16px;
+    }
+
+    .game-description.active {
+        padding: 14px;
+        max-height: 4000px;        /* SPは文章が縦に伸びるので余裕を持たせる */
+    }
+
+    .game-description h3 {
+        font-size: 16px;
+    }
+
+    .game-description h4 {
+        font-size: 14px;
+    }
+
+    /* ---------- ゲーム本体（iframe） ----------
+       iframe は 1050x825 固定のため、画面幅に合わせて縮小表示します。
+       縮小率は JS（下記）で計算します */
+    iframe {
+        margin: 0;
+        transform-origin: top left;
+    }
+
+    /* ---------- 広告 ---------- */
+    .ad-banner {
+        margin: 12px 0;
+        padding: 0 12px;
+    }
+
+    .ad-banner a img {
+        width: 100%;
+        max-width: 728px;
+        height: auto;
+    }
+
+    .side-ad {
+        margin-bottom: 15px;
+    }
+
+    .side-ad a img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* ---------- 全画面ボタン ---------- */
+    .fullscreen-link {
+        right: 12px;
+        bottom: 12px;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    /* ---------- フッター ---------- */
+    footer {
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .pc-only {
+        display: none;
+    }
+
+    .sp-only {
+        display: flex;
+    }
+}
+
+@media (max-width: 400px) {
+    .logo {
+        width: 140px;
+    }
+
+    .nav a {
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+}

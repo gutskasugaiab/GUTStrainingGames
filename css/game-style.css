@@ -253,3 +253,7 @@ iframe {
 .fullscreen-link:hover {
     background: #1d4ed8;
 }
+
+.sp-only {
+    display: none;
+}

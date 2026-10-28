@@ -1,4 +1,4 @@
-/* /* 全体
+/* 全体 */
 body {
     margin: 0;
     font-family: sans-serif;
@@ -75,14 +75,6 @@ footer a {
     border-left: 5px solid #00adb5;
     border-radius: 8px;
     line-height: 1.6;
-}
-
-.site-title {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 15px 0 0;
-    color: #222;
 }
 
 .site-description h2 {
@@ -252,6 +244,10 @@ footer a {
     color: gray;
 }
 
+.sp-only {
+    display: none;
+}
+
 /* スマホ対応（超重要） */
 @media (max-width: 768px) {
     .nav ul {
@@ -273,5 +269,4 @@ footer a {
     .side-ad {
         margin-bottom: 15px;
     }
-} 
-
+}
