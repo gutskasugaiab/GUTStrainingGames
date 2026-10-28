@@ -1,10 +1,19 @@
+
 /* ==========================================
    SP版レイアウト（スマホ・幅768px以下）
-   style.css の「後」に読み込んでください
+   style.css の後に読み込む
    ========================================== */
+
 @media (max-width: 768px) {
 
-    /* 全体：横スクロール防止 */
+    /* ---------- 全体 ---------- */
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
     body {
         overflow-x: hidden;
         -webkit-text-size-adjust: 100%;
@@ -12,67 +21,197 @@
 
     img {
         max-width: 100%;
-    }
-
-    /* ---------- ヘッダー ---------- */
-    header {
-        padding: 8px 0;
-    }
-
-    .nav ul {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0 12px;
-        gap: 4px 0;
-    }
-
-    /* ロゴは1行目に中央配置 */
-    .nav li:first-child {
-        width: 100%;
-        margin-bottom: 4px;
-    }
-
-    .logo {
-        width: 160px;
         height: auto;
     }
 
-    /* メニュー3つは2行目に横並び */
-    .nav li:not(:first-child) {
-        flex: 1 1 auto;
+
+    /* ---------- ヘッダー ---------- */
+
+    header {
+        padding: 0;
     }
 
-    .nav a {
-        display: inline-block;
-        margin: 0;
-        padding: 8px 6px;
-        font-size: 12px;
+    .nav {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 56px;
+        padding: 6px 12px;
     }
+
+    /* ロゴ：左側に固定 */
+
+    .nav .logo-link {
+        display: block;
+        flex-shrink: 0;
+        width: auto;
+        margin: 0;
+        padding: 0;
+        line-height: 0;
+    }
+
+    .nav .logo {
+        display: block;
+        width: 160px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* メニュー：初期状態では非表示 */
+
+    .nav ul {
+        display: none;
+        list-style: none;
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav li {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* ハンバーガーボタン：右側 */
+
+    .menu-button {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 5px;
+
+        width: 44px;
+        height: 44px;
+        margin: 0;
+        padding: 10px;
+
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .menu-button span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        border-radius: 2px;
+        background: #fff;
+        transition:
+            transform 0.3s ease,
+            opacity 0.2s ease;
+    }
+
+    /* 開いたとき：上の線 */
+    .menu-button.is-open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+
+    /* 開いたとき：真ん中の線 */
+    .menu-button.is-open span:nth-child(2) {
+        opacity: 0;
+    }
+
+    /* 開いたとき：下の線 */
+    .menu-button.is-open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    .menu-button:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* メニューを開いた状態 */
+
+    .nav ul.is-open {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 8px 12px;
+
+        background: #1abc9c;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    /* メニュー項目 */
+
+    .nav ul.is-open li {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    .nav ul.is-open li a {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 14px 8px;
+
+        color: #fff;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: left;
+        text-decoration: none;
+
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .nav ul.is-open li:last-child a {
+        border-bottom: none;
+    }
+
+    .nav ul.is-open li a:hover {
+        background: rgba(0, 0, 0, 0.08);
+    }
+
 
     /* ---------- 説明文 ---------- */
+
     .site-description {
         margin: 12px;
         padding: 14px;
         font-size: 14px;
+        line-height: 1.7;
     }
 
     .site-description h2 {
+        margin-top: 0;
         font-size: 18px;
     }
 
-    /* ---------- メイン（1カラム化） ---------- */
+    .site-description p {
+        line-height: 1.7;
+    }
+
+
+    /* ---------- メインレイアウト ---------- */
+
     main {
         padding: 12px;
     }
 
     .container {
+        display: flex;
         flex-direction: column;
         gap: 24px;
-        padding: 12px;
         margin-top: 0;
+        padding: 12px;
     }
 
     .content,
@@ -87,17 +226,21 @@
         font-size: 18px;
     }
 
+
     /* ---------- ゲーム一覧 ---------- */
+
     .game-list {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: 16px;
     }
 
     .game-card {
+        min-width: 0;
         padding: 12px;
+        border-radius: 10px;
     }
 
-    /* タップ端末ではホバー拡大を無効化し、タップ時に軽く縮む */
     .game-card:hover {
         transform: none;
     }
@@ -106,9 +249,26 @@
         transform: scale(0.98);
     }
 
+    .game-card a {
+        display: block;
+        color: inherit;
+    }
+
+    .game-card img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+
     .game-card h3 {
-        font-size: 1.15rem;
         top: 60%;
+        left: 50%;
+        max-width: 100%;
+        font-size: 1.15rem;
+        white-space: normal;
+        overflow-wrap: anywhere;
+
         text-shadow:
             0 2px 0 rgba(0, 0, 0, 0.8),
             0 4px 0 rgba(80, 80, 80, 0.7),
@@ -117,51 +277,99 @@
     }
 
     .game-card p {
+        margin-bottom: 0;
+        color: #000;
         font-size: 14px;
         line-height: 1.6;
         text-align: left;
     }
 
+
     /* ---------- お知らせ ---------- */
+
     .timeline {
         padding: 10px 12px;
+        line-height: 1.6;
     }
 
+    .date {
+        font-size: 12px;
+    }
+
+    .more-link {
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+
     /* ---------- 広告 ---------- */
+
     .ad-banner {
         margin: 12px 0;
         padding: 0 12px;
+        text-align: center;
     }
 
-    /* 728x90 を画面幅に合わせて縮小（縦横比キープ） */
+    .ad-banner a {
+        display: inline-block;
+        max-width: 100%;
+    }
+
     .ad-banner a img {
+        display: block;
         width: 100%;
         max-width: 728px;
         height: auto;
     }
 
-    .sidebar .ad-label {
+    .ad-label {
+        font-size: 12px;
+        color: gray;
         text-align: center;
     }
 
     .side-ad {
-        text-align: center;
         margin-bottom: 15px;
+        text-align: center;
     }
 
-    .side-ad a img {
+    .side-ad a {
+        display: inline-block;
         max-width: 100%;
-        height: auto;
     }
+
+    .side-ad img {
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        margin: 0 auto;
+    }
+
 
     /* ---------- フッター ---------- */
+
     footer {
         padding: 12px;
         font-size: 12px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
     }
 
+    footer p {
+        margin: 8px 0;
+    }
+
+    footer a {
+        color: #fff;
+        text-decoration: none;
+    }
+
+
+    /* ---------- PC版・SP版の表示切り替え ---------- */
+
     .pc-only {
-        display: none;
+        display: none !important;
     }
 
     .sp-only {
@@ -169,18 +377,36 @@
     }
 }
 
-/* 小さめスマホ（幅400px以下）の微調整 */
+
+/* ==========================================
+   小さめスマホ（幅400px以下）
+   ========================================== */
+
 @media (max-width: 400px) {
-    .logo {
+
+    .nav .logo {
         width: 140px;
     }
 
-    .nav a {
-        font-size: 11px;
-        padding: 8px 4px;
+    .nav ul.is-open li a {
+        padding: 12px 8px;
+        font-size: 13px;
+    }
+
+    .site-description {
+        margin: 10px;
+        padding: 12px;
+    }
+
+    .game-card {
+        padding: 10px;
     }
 
     .game-card h3 {
         font-size: 1rem;
+    }
+
+    footer {
+        font-size: 11px;
     }
 }

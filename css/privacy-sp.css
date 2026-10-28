@@ -2,7 +2,16 @@
    プライバシーポリシーページ SP版レイアウト（幅768px以下）
    privacy-style.css の「後」に読み込んでください
    ========================================== */
+
 @media (max-width: 768px) {
+
+    /* ---------- 全体 ---------- */
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
 
     body {
         overflow-x: hidden;
@@ -11,43 +20,165 @@
 
     img {
         max-width: 100%;
-    }
-
-    /* ---------- ヘッダー ---------- */
-    header {
-        padding: 8px 0;
-    }
-
-    .nav ul {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0 12px;
-        gap: 4px 0;
-    }
-
-    .nav li:first-child {
-        width: 100%;
-        margin-bottom: 4px;
-    }
-
-    .logo {
-        width: 160px;
         height: auto;
     }
 
-    .nav li:not(:first-child) {
-        flex: 1 1 auto;
+
+    /* ---------- ヘッダー ---------- */
+
+    header {
+        padding: 0;
     }
 
-    .nav a {
-        display: inline-block;
-        margin: 0;
-        padding: 8px 6px;
-        font-size: 12px;
+    .nav {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 56px;
+        padding: 6px 12px;
     }
+
+    /* ロゴ：左側に固定 */
+
+    .nav .logo-link {
+        display: block;
+        flex-shrink: 0;
+        width: auto;
+        margin: 0;
+        padding: 0;
+        line-height: 0;
+    }
+
+    .nav .logo {
+        display: block;
+        width: 160px;
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* メニュー：初期状態では非表示 */
+
+    .nav ul {
+        display: none;
+        list-style: none;
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav li {
+        display: block;
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* ハンバーガーボタン：右側 */
+
+    .menu-button {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 5px;
+
+        width: 44px;
+        height: 44px;
+        margin: 0;
+        padding: 10px;
+
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .menu-button span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        border-radius: 2px;
+        background: #fff;
+        transition:
+            transform 0.3s ease,
+            opacity 0.2s ease;
+    }
+
+    /* 開いたとき：上の線 */
+    .menu-button.is-open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+
+    /* 開いたとき：真ん中の線 */
+    .menu-button.is-open span:nth-child(2) {
+        opacity: 0;
+    }
+
+    /* 開いたとき：下の線 */
+    .menu-button.is-open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    .menu-button:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* メニューを開いた状態 */
+
+    .nav ul.is-open {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 8px 12px;
+
+        background: #1abc9c;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    /* メニュー項目 */
+
+    .nav ul.is-open li {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    .nav ul.is-open li a {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 14px 8px;
+
+        color: #fff;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: left;
+        text-decoration: none;
+
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .nav ul.is-open li:last-child a {
+        border-bottom: none;
+    }
+
+    .nav ul.is-open li a:hover {
+        background: rgba(0, 0, 0, 0.08);
+    }
+
 
     /* ---------- 本文 ---------- */
     .privacy {
@@ -88,9 +219,8 @@
         width: 140px;
     }
 
-    .nav a {
-        font-size: 11px;
-        padding: 8px 4px;
+    .nav ul.is-open li a {
+        font-size: 13px;
     }
 
     .privacy {
