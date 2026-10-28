@@ -12,13 +12,25 @@
 
         <header>
             <nav class="nav">
-                <ul>
-                    <li><a href="index.html"><img src="img/logo/game_logo_白.png" class="logo"></a></li>
+                <a class="logo-link" href="index.html"><img src="img/logo/game_logo_白.png" class="logo"></a>
+                <ul id="siteMenu">
                     <li><a href="index.html">ホーム</a></li>
                     <li><a href="html/about.html">サイトのご利用について</a></li>
                     <li><a href="html/info.html">お知らせ</a></li>
                     <!-- <li><a href="html/contact.html">お問い合わせ</a></li> -->
                 </ul>
+                <button
+                class="menu-button"
+                id="menuButton"
+                type="button"
+                aria-label="メニューを開く"
+                aria-expanded="false"
+                aria-controls="siteMenu"
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
             </nav>
         </header>
 
@@ -196,7 +208,6 @@
                 <a href="https://px.a8.net/svt/ejp?a8mat=4B1G9L+1JYSEY+0K+10YDIP" rel="nofollow">
                 <img border="0" width="300" height="250" alt="" src="https://www26.a8.net/svt/bgt?aid=260408217094&wid=002&eno=01&mid=s00000000002006207000&mc=1"></a>
                 <img border="0" width="1" height="1" src="https://www16.a8.net/0.gif?a8mat=4B1G9L+1JYSEY+0K+10YDIP" alt="">
-                </a>
             </div>
 
             <!-- 広告② -->
@@ -222,5 +233,27 @@
             <p><a href="html/terms.html">ご利用規約</a> | <a href="html/privacy.html">プライバシーポリシー</a></p>
             <p>&copy; 2026 GUTS1.0株式会社 All Rights Reserved.</p>
         </footer>
+        <script>
+            const menuButton = document.getElementById("menuButton");
+            const siteMenu = document.getElementById("siteMenu");
+
+            if (menuButton && siteMenu) {
+                menuButton.addEventListener("click", () => {
+                    // 現在の状態を反転
+                    const isOpen = !siteMenu.classList.contains("is-open");
+
+                    // メニューとボタンを同時に切り替える
+                    siteMenu.classList.toggle("is-open", isOpen);
+                    menuButton.classList.toggle("is-open", isOpen);
+
+                    // アクセシビリティ設定も更新
+                    menuButton.setAttribute("aria-expanded", String(isOpen));
+                    menuButton.setAttribute(
+                        "aria-label",
+                        isOpen ? "メニューを閉じる" : "メニューを開く"
+                    );
+                });
+            }
+        </script>
     </body>
 </html>
