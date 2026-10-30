@@ -120,22 +120,26 @@
     ⛶ 全画面で遊ぶ
     </a>
     <script>
-        
-        const menuButton = document.getElementById("menuButton");
-        const siteMenu = document.getElementById("siteMenu");
+            const menuButton = document.getElementById("menuButton");
+            const siteMenu = document.getElementById("siteMenu");
 
-        if (menuButton && siteMenu) {
-            menuButton.addEventListener("click", () => {
-                const isOpen = siteMenu.classList.toggle("is-open");
+            if (menuButton && siteMenu) {
+                menuButton.addEventListener("click", () => {
+                    // 現在の状態を反転
+                    const isOpen = !siteMenu.classList.contains("is-open");
 
-                menuButton.setAttribute("aria-expanded", isOpen);
-                menuButton.setAttribute(
-                    "aria-label",
-                    isOpen ? "メニューを閉じる" : "メニューを開く"
-                );
-            });
-        }
+                    // メニューとボタンを同時に切り替える
+                    siteMenu.classList.toggle("is-open", isOpen);
+                    menuButton.classList.toggle("is-open", isOpen);
 
+                    // アクセシビリティ設定も更新
+                    menuButton.setAttribute("aria-expanded", String(isOpen));
+                    menuButton.setAttribute(
+                        "aria-label",
+                        isOpen ? "メニューを閉じる" : "メニューを開く"
+                    );
+                });
+            }
     </script>    
     <script>
         const accordion = document.getElementById("accordion");
