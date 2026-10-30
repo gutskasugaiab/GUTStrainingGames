@@ -111,3 +111,7 @@ footer a {
     font-size: 12px;
     color: gray;
 }
+
+.sp-only {
+    display: none;
+}

@@ -111,3 +111,7 @@ footer {
     text-align: center;
     padding: 15px;
 }
+
+.sp-only {
+    display: none;
+}

@@ -57,15 +57,53 @@
         height: auto;
     }
 
-    /* メニュー：初期状態では非表示 */
+    /* メニュー：常に配置しておき、透明にして隠す */
 
     .nav ul {
-        display: none;
-        list-style: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+
         width: 100%;
         height: auto;
         margin: 0;
-        padding: 0;
+        padding: 8px 12px;
+        list-style: none;
+
+        background: #1abc9c;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+
+        /* 閉じた状態 */
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        pointer-events: none;
+
+        /* 閉じるとき：アニメが終わってから visibility を切る */
+        transition:
+            opacity 0.25s ease,
+            transform 0.25s ease,
+            visibility 0s linear 0.25s;
+    }
+
+    /* メニューを開いた状態 */
+
+    .nav ul.is-open {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
+
+        /* 開くとき：visibility はすぐ表示 */
+        transition:
+            opacity 0.25s ease,
+            transform 0.25s ease,
+            visibility 0s;
     }
 
     .nav li {
@@ -127,36 +165,9 @@
         background: rgba(255, 255, 255, 0.12);
     }
 
-    /* メニューを開いた状態 */
-
-    .nav ul.is-open {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        z-index: 100;
-
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-
-        width: 100%;
-        height: auto;
-        margin: 0;
-        padding: 8px 12px;
-
-        background: #1abc9c;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-    }
-
     /* メニュー項目 */
 
-    .nav ul.is-open li {
-        display: block;
-        width: 100%;
-        height: auto;
-    }
-
-    .nav ul.is-open li a {
+    .nav ul li a {
         display: block;
         width: 100%;
         margin: 0;
@@ -171,11 +182,11 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .nav ul.is-open li:last-child a {
+    .nav ul li:last-child a {
         border-bottom: none;
     }
 
-    .nav ul.is-open li a:hover {
+    .nav ul li a:hover {
         background: rgba(0, 0, 0, 0.08);
     }
 
@@ -236,6 +247,16 @@
         max-width: 100%;
         height: auto;
     }
+
+    /* ---------- PC版・SP版の表示切り替え ---------- */
+
+    .pc-only {
+        display: none !important;
+    }
+
+    .sp-only {
+        display: flex;
+    }    
 
     /* ---------- フッター ---------- */
     footer {
