@@ -82,7 +82,7 @@
             </div>
 
             <!-- 広告② -->
-            <div class="side-ad">
+            <div class="side-ad pc-only">
                 <a href="https://px.a8.net/svt/ejp?a8mat=4B1G9L+1L5NMI+50+2HHNXT" rel="nofollow">
                 <img border="0" width="300" height="250" alt="" src="https://www26.a8.net/svt/bgt?aid=260408217096&wid=002&eno=01&mid=s00000000018015031000&mc=1"></a>
                 <img border="0" width="1" height="1" src="https://www13.a8.net/0.gif?a8mat=4B1G9L+1L5NMI+50+2HHNXT" alt="">
@@ -95,22 +95,26 @@
         <p>&copy; 2026 GUTS1.0株式会社 All Rights Reserved.</p>
     </footer>
         <script>
-            
             const menuButton = document.getElementById("menuButton");
             const siteMenu = document.getElementById("siteMenu");
 
             if (menuButton && siteMenu) {
                 menuButton.addEventListener("click", () => {
-                    const isOpen = siteMenu.classList.toggle("is-open");
+                    // 現在の状態を反転
+                    const isOpen = !siteMenu.classList.contains("is-open");
 
-                    menuButton.setAttribute("aria-expanded", isOpen);
+                    // メニューとボタンを同時に切り替える
+                    siteMenu.classList.toggle("is-open", isOpen);
+                    menuButton.classList.toggle("is-open", isOpen);
+
+                    // アクセシビリティ設定も更新
+                    menuButton.setAttribute("aria-expanded", String(isOpen));
                     menuButton.setAttribute(
                         "aria-label",
                         isOpen ? "メニューを閉じる" : "メニューを開く"
                     );
                 });
             }
-
         </script>
     </body>
 </html>
