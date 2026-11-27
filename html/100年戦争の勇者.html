@@ -5369,7 +5369,7 @@ window.SECRET_ENDING_SCRIPT = [
  * ファイルは「bgm」フォルダに置く (拡張子は mp3 / ogg / m4a / wav のどれでもOK)。
  *   BGM:  field1 〜 field10 (各フィールド) / boss (ボス) / maou (魔王) / yuusya (隠しボス)
  *         title (タイトル画面) / town (町)
- *         例) bgm/field1.mp3  bgm/boss.mp3  bgm/maou.mp3  bgm/title.mp3  bgm/town.mp3
+ *         例) ../bgm/10/field1.mp3  ../bgm/10/boss.mp3  ../bgm/10/maou.mp3  ../bgm/10/title.mp3  ../bgm/10/town.mp3
  *         - フィールド系は、該当するファイルがないとき boss → field○ → field の順に探す。
  *         - town がないときは、直前の曲がそのまま続く。title がないときはBGMなし。
  *         - 全部なければ BGM なし。
@@ -5377,10 +5377,10 @@ window.SECRET_ENDING_SCRIPT = [
  *           se_ultimate (必殺技) / se_cutin (カットイン) /
  *           se_fanfare (ボスを倒したとき。流れるとBGMは止まる) /
  *           se_gameover (全滅してゲームオーバーになったとき。BGMは止まる)
- *         例) bgm/se_correct.mp3
+ *         例) ../bgm/10/se_correct.mp3
  *         - ファイルがないときは、今までの電子音が鳴る。
  */
-const SOUND_DIR = "bgm/";
+const SOUND_DIR = "../bgm/10/";
 const SOUND_EXTS = ["mp3", "ogg", "m4a", "wav"];
 const SE_NAMES = [
   "correct",
@@ -6036,7 +6036,7 @@ const FIELDS = [
  * 隠しボス
  *   SECRET_BOSS_REQUIRED: 魔王を倒したあと、図鑑でこの数以上のモンスターに出会っていると隠しボス戦になる
  *   SECRET_BOSS_STATS   : 隠しボスのHP・攻撃力の倍率 (通常のボスの計算式に、さらにかける)
- *   BGM は bgm/yuusya.mp3 (なければ maou → boss の順に探す)
+ *   BGM は ../bgm/10/yuusya.mp3 (なければ maou → boss の順に探す)
  */
 const SECRET_FIELD = FIELDS.findIndex((f) => f.secret); // 隠しボスのフィールド番号 (なければ -1)
 const FINAL_FIELD = SECRET_FIELD >= 0 ? SECRET_FIELD - 1 : FIELDS.length - 1; // 魔王のいるフィールド
@@ -7389,7 +7389,7 @@ class GameEngine {
         true,
       );
       if (watch) {
-        // bgm/opening.* があればそれを、なければタイトルの曲を続ける
+        // ../bgm/10/opening.* があればそれを、なければタイトルの曲を続ける
         this.sound.bgm.play("opening", ["opening"], true);
         await this.playOpening();
       }
@@ -7416,13 +7416,13 @@ class GameEngine {
     const lines = useSecret ? sec : window.ENDING_SCRIPT;
     if (!Array.isArray(lines) || !lines.length) return;
     if (useSecret) {
-      // タイトル画面と同じ曲 (bgm/title.*)
+      // タイトル画面と同じ曲 (../bgm/10/title.*)
       this.sound.bgm.play("title", ["title"], true);
       // 背景は ../img/10/ending2.png → ../img/10/ending.png → オープニングと同じ玉座の間
       await this.playConversation(lines, ["../img/10/ending2.png", "../img/10/ending.png"]);
       return;
     }
-    // タイトル画面と同じ曲 (bgm/title.*)
+    // タイトル画面と同じ曲 (../bgm/10/title.*)
     this.sound.bgm.play("title", ["title"], true);
     // 背景は ../img/10/ending.png があればそれ、なければオープニングと同じ玉座の間
     await this.playConversation(lines, "../img/10/ending.png");
@@ -9629,7 +9629,7 @@ class GameEngine {
     });
   }
 
-  /** タイトル画面のBGM (bgm/title.*。なければ無音) */
+  /** タイトル画面のBGM (../bgm/10/title.*。なければ無音) */
   updateTitleBgm() {
     this.sound.bgm.play("title", ["title"]);
   }
