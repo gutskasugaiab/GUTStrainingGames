@@ -16,1161 +16,1287 @@
         rel="stylesheet">
 
     <style>
-    :root {
+        :root {
     --bg-teal: #005051;
     --side-bg: #bcd0ce;
     --blue: #628bff;
     --pink: #ff93ab;
     --red: #ff0137;
     --pill: #95c9df;
-    }
+}
 
-    html,
-    body {
-        margin: 0;
-        height: 100%;
-        overflow: hidden;
-        font-family: 'Zen Maru Gothic', sans-serif;
-        background-color: var(--bg-teal);
-        color: #111827;
-        user-select: none;
-        -webkit-user-select: none;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-        overscroll-behavior: none;
-    }
+html,
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background-color: var(--bg-teal);
+    color: #111827;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+}
 
-    .hand-font {
-        font-family: 'Yuji Syuku', serif;
-    }
+.hand-font {
+    font-family: 'Yuji Syuku', serif;
+}
 
-    .dot-font {
-        font-family: 'DotGothic16', sans-serif;
-    }
+.dot-font {
+    font-family: 'DotGothic16', sans-serif;
+}
 
-    /* ===== Viewport / Stage (JSで拡縮) ===== */
-    #viewport {
-        position: fixed;
-        inset: 0;
-        overflow: hidden;
-        box-sizing: border-box;
-        background: var(--bg-teal);
-        /* ノッチやホームバーに隠れないように (JSの fitStage が余白を差し引いて計算) */
-        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
-    }
+/* ===== Viewport / Stage (JSで拡縮) ===== */
+#viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    background: var(--bg-teal);
+    /* ノッチやホームバーに隠れないように (JSの fitStage が余白を差し引いて計算) */
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
 
-    #stage {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 1600px;
-        height: 1080px;
-        transform-origin: 0 0;
-        display: flex;
-        background: var(--bg-teal);
-    }
+#stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1600px;
+    height: 1080px;
+    transform-origin: 0 0;
+    display: flex;
+    background: var(--bg-teal);
+}
 
-    /* ===== Side columns (PC) ===== */
-    .side-col {
-        flex: 1 1 0;
-        min-width: 0;
-        background: var(--side-bg);
-        display: flex;
-        flex-direction: column;
-        box-sizing: border-box;
-        padding: 14px;
-        gap: 14px;
-    }
+/* ===== Side columns (PC) ===== */
+.side-col {
+    flex: 1 1 0;
+    min-width: 0;
+    background: var(--side-bg);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 14px;
+    gap: 14px;
+}
 
-    .char-card {
-        flex: 1 1 0;
-        min-height: 0;
-        min-width: 0;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 0 10px;
-        /* キャラクターごとの枠 */
-        background: #fff;
-        border: 6px solid #000;
-        border-radius: 12px;
-        transition: filter 0.3s, opacity 0.3s;
-    }
+.char-card {
+    flex: 1 1 0;
+    min-height: 0;
+    min-width: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0 10px;
+    /* キャラクターごとの枠 */
+    background: #fff;
+    border: 6px solid #000;
+    border-radius: 12px;
+    transition: filter 0.3s, opacity 0.3s;
+}
 
-    .char-card.dead {
-        filter: grayscale(1);
-        opacity: 0.55;
-    }
+.char-card.dead {
+    filter: grayscale(1);
+    opacity: 0.55;
+}
 
-    .char-portrait {
-        height: min(80%, 300px);
-        width: auto;
-        max-width: 50%;
-        object-fit: contain;
-        flex: 0 1 auto;
-        min-width: 0;
-        image-rendering: pixelated;
-        filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.35));
-    }
+.char-portrait {
+    height: min(80%, 300px);
+    width: auto;
+    max-width: 50%;
+    object-fit: contain;
+    flex: 0 1 auto;
+    min-width: 0;
+    image-rendering: pixelated;
+    filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.35));
+}
 
-    .char-info {
-        font-size: 26px;
-        font-weight: 900;
-        line-height: 1.3;
-        color: #111;
-        white-space: nowrap;
-    }
+.char-info {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.3;
+    color: #111;
+    white-space: nowrap;
+}
 
-    .char-name {
-        font-size: 34px;
-        line-height: 1.2;
-    }
+.char-name {
+    font-size: 34px;
+    line-height: 1.2;
+}
 
-    .char-lv {
-        font-size: 34px;
-    }
+.char-lv {
+    font-size: 34px;
+}
 
-    .char-info .char-lv {
-        margin-bottom: 4px;
-    }
+.char-info .char-lv {
+    margin-bottom: 4px;
+}
 
-    .char-sub {
-        margin-top: 6px;
-    }
+.char-sub {
+    margin-top: 6px;
+}
 
-    /* 能力の下: 状態変化が付いたときに出る欄 (空でも高さは同じなので、画面がずれない) */
-    .char-effects {
-        display: flex;
-        flex-wrap: wrap;
-        align-content: flex-start;
-        gap: 4px;
-        width: 0;
-        min-width: 100%;
-        height: 56px;
-        margin-top: 6px;
-        overflow: hidden;
-        white-space: nowrap;
-    }
+/* 能力の下: 状態変化が付いたときに出る欄 (空でも高さは同じなので、画面がずれない) */
+.char-effects {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 4px;
+    width: 0;
+    min-width: 100%;
+    height: 56px;
+    margin-top: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+}
 
-    .char-effects .status-tag {
-        margin-left: 0;
-    }
+.char-effects .status-tag {
+    margin-left: 0;
+}
 
-    /* ===== Center column ===== */
-    #col-center {
-        flex: 0 0 720px;
-        box-sizing: border-box;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        min-height: 0;
-        background: var(--bg-teal);
-    }
+/* ===== Center column ===== */
+#col-center {
+    flex: 0 0 720px;
+    box-sizing: border-box;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    background: var(--bg-teal);
+}
 
-    .ui-box {
-        background: #fff;
-        border: 8px solid #000;
-        box-sizing: border-box;
-    }
+.ui-box {
+    background: #fff;
+    border: 8px solid #000;
+    box-sizing: border-box;
+}
 
-    /* top bar */
-    .top-bar {
-        flex: none;
-        height: 84px;
-        padding: 0 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+/* top bar */
+.top-bar {
+    flex: none;
+    height: 84px;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-    .top-bar h1 {
-        margin: 0;
-        font-size: 42px;
-        font-weight: 900;
-        letter-spacing: 0.05em;
-        color: #000;
-    }
+.top-bar h1 {
+    margin: 0;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: #000;
+}
 
-    .option-btn {
-        background: none;
-        border: none;
-        font-size: 30px;
-        font-weight: 900;
-        color: #000;
-        cursor: pointer;
-        padding: 4px 6px;
-    }
+.option-btn {
+    background: none;
+    border: none;
+    font-size: 30px;
+    font-weight: 900;
+    color: #000;
+    cursor: pointer;
+    padding: 4px 6px;
+}
 
-    .option-btn:active {
-        transform: translateY(2px);
-    }
+.option-btn:active {
+    transform: translateY(2px);
+}
 
-    /* battle area (森) */
-    .battle-area {
-        flex: 1 1 0;
-        /* モンスター(210)+HPバー+余白が切れない高さ */
-        min-height: 270px;
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding-bottom: 14px;
-        box-sizing: border-box;
-        border-radius: 60px 80px 70px 90px / 80px 60px 90px 70px;
-        background: #000;
-    }
+/* battle area (森) */
+.battle-area {
+    flex: 1 1 0;
+    /* モンスター(210)+HPバー+余白が切れない高さ */
+    min-height: 270px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 14px;
+    box-sizing: border-box;
+    border-radius: 60px 80px 70px 90px / 80px 60px 90px 70px;
+    background: #000;
+}
 
-    .battle-bg {
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        background-size: cover;
-        background-position: center bottom;
-        background-repeat: no-repeat;
-        transition: opacity 0.35s;
-    }
+.battle-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    transition: opacity 0.35s;
+}
 
-    .battle-msg {
-        position: absolute;
-        left: 18px;
-        right: 18px;
-        bottom: 16px;
-        z-index: 8;
-        box-sizing: border-box;
-        background: #fff;
-        border: 6px solid #000;
-        border-radius: 10px;
-        padding: 8px 16px;
-        text-align: center;
-        font-family: 'Yuji Syuku', serif;
-        font-size: 32px;
-        font-weight: 900;
-        line-height: 1.3;
-        color: #000;
-        animation: msgIn 0.25s ease-out;
-    }
+.battle-msg {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 16px;
+    z-index: 8;
+    box-sizing: border-box;
+    background: #fff;
+    border: 6px solid #000;
+    border-radius: 10px;
+    padding: 8px 16px;
+    text-align: center;
+    font-family: 'Yuji Syuku', serif;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.3;
+    color: #000;
+    animation: msgIn 0.25s ease-out;
+}
 
-    @keyframes msgIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .battle-hud {
-        position: absolute;
-        top: 14px;
-        font-size: 20px;
-        font-weight: 900;
-        color: #fff;
-        background: rgba(0, 0, 0, 0.55);
-        padding: 2px 12px;
-        border-radius: 8px;
-        z-index: 5;
-    }
-
-    .battle-hud-left {
-        left: 20px;
-    }
-
-    .battle-hud-right {
-        right: 20px;
-        color: #fcd34d;
-    }
-
-    .monster-anchor {
-        position: relative;
-        z-index: 2;
-        flex: none;
-        width: 210px;
-        height: 210px;
-        transform: translateY(30px);
-    }
-
-    .monster-box {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: 100%;
-        cursor: pointer;
-    }
-
-    /* アタックモーション (モンスターの足元基準で左右から登場) */
-    .attack-sprite {
-        position: absolute;
-        bottom: -8px;
-        width: 250px;
-        height: 250px;
-        z-index: 4;
-        pointer-events: none;
-        filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.45));
-    }
-
-    .attack-sprite.left {
-        left: calc(50% - 280px);
-    }
-
-    .attack-sprite.right {
-        left: calc(50% - 20px);
-    }
-
-    .monster-img {
-        transform: scale(1.4);
-        transform-origin: 50% 78%;
-    }
-
-    .monster-box.gone,
-    .monster-plate.gone {
+@keyframes msgIn {
+    from {
         opacity: 0;
-        transition: opacity 0.5s;
+        transform: translateY(10px);
     }
 
-    /* 消える演出のあとは、そのまま透明のままにする */
-    .monster-box.gone.vanished {
-        transition: none;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
 
-    .monster-box.appear,
-    .monster-plate.appear {
-        animation: monsterAppear 0.5s ease-out;
-    }
+.battle-hud {
+    position: absolute;
+    top: 14px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 2px 12px;
+    border-radius: 8px;
+    z-index: 5;
+}
 
-    @keyframes monsterAppear {
-        from {
-            opacity: 0;
-            transform: translateY(-24px);
-        }
+.battle-hud-left {
+    left: 20px;
+}
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+.battle-hud-right {
+    right: 20px;
+    color: #fcd34d;
+}
 
-    .monster-svg,
-    .monster-img {
-        width: 90%;
-        height: 90%;
-        object-fit: contain;
-        filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.6));
-    }
+.monster-anchor {
+    position: relative;
+    z-index: 2;
+    flex: none;
+    width: 210px;
+    height: 210px;
+    transform: translateY(30px);
+}
 
-    .monster-plate {
-        position: relative;
-        z-index: 2;
-        margin-top: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        width: 190px;
-    }
+.monster-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
 
-    .monster-name {
-        /* 戦闘中はモンスター名を表示しない (名前は「○○が現れた」のメッセージで分かる) */
-        display: none;
-        white-space: nowrap;
-        background: #fff;
-        border-radius: 14px;
-        padding: 0 12px;
-        font-size: 20px;
-        font-weight: 900;
-        line-height: 1.4;
-        margin-bottom: 4px;
-    }
+/* アタックモーション (モンスターの足元基準で左右から登場) */
+.attack-sprite {
+    position: absolute;
+    bottom: -8px;
+    width: 250px;
+    height: 250px;
+    z-index: 4;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.45));
+}
 
-    /* bars (青=残り / ピンク=減った分) */
-    .bar {
-        position: relative;
-        box-sizing: border-box;
-        width: 100%;
-        border: 4px solid #000;
-        background: var(--pink);
-        overflow: hidden;
-    }
+.attack-sprite.left {
+    left: calc(50% - 280px);
+}
 
-    .bar-monster {
-        height: 18px;
-        border-width: 3px;
-    }
+.attack-sprite.right {
+    left: calc(50% - 20px);
+}
 
-    .bar-fill {
-        height: 100%;
-        width: 100%;
-        transition: width 0.3s;
-    }
+.monster-img {
+    transform: scale(1.4);
+    transform-origin: 50% 78%;
+}
 
-    .bar-blue {
-        background: var(--blue);
-    }
+.monster-box.gone,
+.monster-plate.gone {
+    opacity: 0;
+    transition: opacity 0.5s;
+}
 
-    .bar-red {
-        background: var(--red);
-    }
+/* 消える演出のあとは、そのまま透明のままにする */
+.monster-box.gone.vanished,
+.monster-plate.gone.vanished {
+    transition: none;
+    animation: none;
+    opacity: 0;
+}
 
-    /* 画面の縦が余ったとき: 戦闘エリアは比率を保ち、余白はクイズ画面を広げて使う (JSの fitStage が付け外し) */
-    #col-center.fixed-battle .battle-area {
-        flex: none;
-        height: var(--battle-h);
-    }
+.monster-box.appear,
+.monster-plate.appear {
+    animation: monsterAppear 0.5s ease-out;
+}
 
-    #col-center.fixed-battle .quiz-box {
-        flex: 1 1 auto;
-        justify-content: space-evenly;
-    }
-
-    /* quiz */
-    .quiz-box {
-        flex: none;
-        padding: 12px 22px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .quiz-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-    }
-
-    .quiz-head h2 {
-        min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin: 0;
-        font-size: 48px;
-        font-weight: 900;
-        line-height: 1.1;
-        color: #000;
-        border-bottom: 5px solid #000;
-        padding: 0 8px 0 2px;
-    }
-
-    .quiz-cat {
-        flex: none;
-        white-space: nowrap;
-        margin-left: 12px;
-        font-size: 20px;
-        font-weight: 900;
-        background: #e2e8f0;
-        border: 2px solid #000;
-        border-radius: 6px;
-        padding: 0 10px;
-    }
-
-    .quiz-box.intro-mode .question-text {
-        font-size: 26px;
-        font-weight: 700;
-        line-height: 1.4;
-    }
-
-    /* ジャンル選択(7ボタン)が2行に収まるよう、ボタンどうしのすき間をつめる */
-    .quiz-box.intro-mode .options-grid {
-        gap: 8px 10px;
-    }
-
-    .quiz-box.intro-mode .timer-row {
-        visibility: hidden;
-    }
-
-    .q-inner {
-        display: block;
-        max-width: 100%;
-    }
-
-    .question-text {
-        margin: 0;
-        height: 84px;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        font-size: 32px;
-        font-weight: 900;
-        line-height: 1.3;
-        color: #000;
-    }
-
-    .options-grid {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-content: center;
-        gap: 12px;
-        /* 文字数が多くても全体がずれないよう、2行ぶんの高さに固定 (文字が多い時は JS が文字を小さくする) */
-        height: 124px;
-    }
-
-    .ans-btn {
-        background: var(--pill);
-        color: #000;
-        border: none;
-        border-radius: 999px;
-        padding: 0.27em 0.73em;
-        line-height: 1.3;
-        white-space: nowrap;
-        max-width: 100%;
-        font-family: inherit;
-        font-size: var(--ans-fs, 30px);
-        font-weight: 900;
-        cursor: pointer;
-        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
-        transition: transform 0.08s, box-shadow 0.08s, background-color 0.15s;
-    }
-
-    .ans-btn:active {
-        transform: translateY(4px);
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-    }
-
-    .ans-btn.correct {
-        background: #34d399;
-    }
-
-    .ans-btn.wrong {
-        background: #fb7185;
-    }
-
-    .timer-row {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-    }
-
-    .timer-text {
-        min-width: 66px;
-        font-size: 30px;
-        font-weight: 900;
-        font-family: 'DotGothic16', monospace;
-        color: #000;
-    }
-
-    .timer-track {
-        flex: 1;
-        height: 10px;
-        border-radius: 6px;
-        background: var(--pink);
-        overflow: hidden;
-    }
-
-    .timer-fill {
-        height: 100%;
-        width: 100%;
-        background: var(--blue);
-        transition: width 0.1s linear;
-    }
-
-    /* party status */
-    .status-box {
-        flex: none;
-        padding: 10px 20px 12px;
-    }
-
-    .status-grid {
-        display: grid;
-        /* 名前 / 状態 / HP / SP。中央の幅(720px)に収まるよう、ゲージは残りを等分する */
-        grid-template-columns: 200px 130px minmax(0, 1fr) minmax(0, 1fr);
-        column-gap: 14px;
-        align-items: center;
-    }
-
-    .status-header {
-        font-size: 24px;
-        font-weight: 900;
-        letter-spacing: 0.1em;
-        padding-bottom: 4px;
-        margin-bottom: 4px;
-    }
-
-    .status-row {
-        padding: 4px 0;
-    }
-
-    .status-name {
-        font-size: 24px;
-        white-space: nowrap;
-        font-weight: 900;
-        line-height: 1.1;
-        color: #000;
-    }
-
-    .status-lv {
-        font-size: 20px;
-        font-weight: 900;
-        line-height: 1.1;
-        color: #475569;
-        padding-left: 10px;
-    }
-
-    /* 状態変化の欄: 高さと幅を固定して、状態が増減しても行がずれないようにする */
-    .status-effects {
-        display: flex;
-        flex-wrap: wrap;
-        align-content: center;
-        gap: 4px;
-        height: 52px;
-        overflow: hidden;
-    }
-
-    .status-effects .status-tag {
-        margin-left: 0;
-        white-space: nowrap;
-    }
-
-    .status-row .bar {
-        height: 26px;
-        width: 100%;
-        max-width: 140px;
-        border-radius: 6px;
-    }
-
-    .status-row.dead {
-        opacity: 0.45;
-    }
-
-    /* ===== キーボード操作のヒント (PCのみ) ===== */
-    @media (hover: hover) and (pointer: fine) {
-        .ans-btn[data-key]::before {
-            content: attr(data-key);
-            display: inline-block;
-            margin-right: 0.3em;
-            font-size: 0.6em;
-            vertical-align: 0.15em;
-            opacity: 0.55;
-        }
-    }
-
-    /* ===== Portrait (スマホ縦画面) ===== */
-    /* 縮小表示でも指で押しやすいように、タップ領域を広げる */
-    #stage.portrait .ans-btn {
-        padding: 0.45em 0.85em;
-    }
-
-    #stage.portrait .options-grid {
-        height: 146px;
-    }
-
-    #stage.portrait .option-btn {
-        padding: 12px 14px;
-    }
-
-    #stage.portrait .side-col {
-        display: none;
-    }
-
-    #stage.portrait #col-center {
-        flex: 0 0 720px;
-        width: 720px;
-        margin: 0 auto;
-    }
-
-    /* ===== Title screen ===== */
-    #title-screen {
-        overflow-y: auto;
-        position: fixed;
-        inset: 0;
-        z-index: 60;
-        background: #1e3a8a url('../img/10/maintitle.jpg') center / cover no-repeat;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.5s;
-    }
-
-    #title-screen.fade-out {
+@keyframes monsterAppear {
+    from {
         opacity: 0;
-        pointer-events: none;
+        transform: translateY(-24px);
     }
 
-    #title-screen.portrait-bg {
-        background-position: 68% center;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
 
-    .title-inner {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5vmin;
-        padding: 2vmin 4vw;
-        text-align: center;
-    }
+.monster-svg,
+.monster-img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.6));
+}
 
-    .title-logo {
-        margin: 0;
-        font-size: clamp(36px, 9vmin, 110px);
-        font-weight: 900;
-        color: #fff;
-        letter-spacing: 0.08em;
-        -webkit-text-stroke: 0.1em #1e1b4b;
-        paint-order: stroke fill;
-        text-shadow: 0 0.06em 0 #1e1b4b, 0 0 0.5em rgba(255, 255, 255, 0.6);
-    }
+.monster-plate {
+    position: relative;
+    z-index: 2;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 190px;
+}
 
-    .title-menu {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2.4vmin;
-    }
+.monster-name {
+    /* 戦闘中はモンスター名を表示しない (名前は「○○が現れた」のメッセージで分かる) */
+    display: none;
+    white-space: nowrap;
+    background: #fff;
+    border-radius: 14px;
+    padding: 0 12px;
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
 
-    .title-btn {
-        min-width: 9em;
-        font-size: clamp(18px, 3.4vmin, 40px);
-        font-weight: 900;
-        color: #000;
-        background: #fff;
-        border: 4px solid #000;
-        border-radius: 12px;
-        box-shadow: 4px 5px 0 #000;
-        padding: 0.4em 1.6em;
-        cursor: pointer;
-    }
+/* bars (青=残り / ピンク=減った分) */
+.bar {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    border: 4px solid #000;
+    background: var(--pink);
+    overflow: hidden;
+}
 
-    .title-btn:active:not(:disabled) {
-        transform: translate(4px, 5px);
-        box-shadow: none;
-    }
+.bar-monster {
+    height: 18px;
+    border-width: 3px;
+}
 
-    .title-btn:disabled {
-        background: #cbd5e1;
-        color: #64748b;
-        cursor: not-allowed;
-    }
+.bar-fill {
+    height: 100%;
+    width: 100%;
+    transition: width 0.3s;
+}
 
-    .title-start {
-        font-size: clamp(22px, 4.2vmin, 48px);
-    }
+.bar-blue {
+    background: var(--blue);
+}
 
-    /* ===== Modal用 手描き風ボックス ===== */
-    .sketch-box {
-        background-color: #ffffff;
-        border: 4px solid #000000;
-        box-shadow: 4px 4px 0px #000000;
-        border-radius: 8px;
-    }
+.bar-red {
+    background: var(--red);
+}
 
-    .sketch-button {
-        border: 3px solid #000000;
-        box-shadow: 2px 3px 0px #000000;
-        transition: all 0.1s ease;
-    }
+/* 画面の縦が余ったとき: 戦闘エリアは比率を保ち、余白はクイズ画面を広げて使う (JSの fitStage が付け外し) */
+#col-center.fixed-battle .battle-area {
+    flex: none;
+    height: var(--battle-h);
+}
 
-    .sketch-button:active {
-        transform: translate(2px, 3px);
-        box-shadow: 0px 0px 0px #000000;
-    }
+#col-center.fixed-battle .quiz-box {
+    flex: 1 1 auto;
+    justify-content: space-evenly;
+}
 
-    /* ===== Animations ===== */
-    @keyframes monsterShake {
-        0% {
-            transform: translate(0, 0) rotate(0deg);
-        }
+/* quiz */
+.quiz-box {
+    flex: none;
+    padding: 12px 22px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
 
-        20% {
-            transform: translate(-6px, 0) rotate(-3deg);
-        }
+.quiz-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
 
-        40% {
-            transform: translate(6px, 0) rotate(3deg);
-        }
+.quiz-head h2 {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    font-size: 48px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #000;
+    border-bottom: 5px solid #000;
+    padding: 0 8px 0 2px;
+}
 
-        60% {
-            transform: translate(-4px, 0) rotate(-1deg);
-        }
+.quiz-cat {
+    flex: none;
+    white-space: nowrap;
+    margin-left: 12px;
+    font-size: 20px;
+    font-weight: 900;
+    background: #e2e8f0;
+    border: 2px solid #000;
+    border-radius: 6px;
+    padding: 0 10px;
+}
 
-        80% {
-            transform: translate(4px, 0) rotate(1deg);
-        }
+.quiz-box.intro-mode .question-text {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.4;
+}
 
-        100% {
-            transform: translate(0, 0) rotate(0deg);
-        }
-    }
+/* ジャンル選択(7ボタン)が2行に収まるよう、ボタンどうしのすき間をつめる */
+.quiz-box.intro-mode .options-grid {
+    gap: 8px 10px;
+}
 
-    .animate-hit {
-        animation: monsterShake 0.4s ease-in-out;
-        filter: brightness(2) drop-shadow(0 0 10px red);
-    }
+.quiz-box.intro-mode .timer-row {
+    visibility: hidden;
+}
 
-    @keyframes screenShake {
+.q-inner {
+    display: block;
+    max-width: 100%;
+}
 
-        0%,
-        100% {
-            transform: translate(0, 0);
-        }
+.question-text {
+    margin: 0;
+    height: 84px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.3;
+    color: #000;
+}
 
-        25% {
-            transform: translate(-5px, 5px);
-        }
+.options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    gap: 12px;
+    /* 文字数が多くても全体がずれないよう、2行ぶんの高さに固定 (文字が多い時は JS が文字を小さくする) */
+    height: 124px;
+}
 
-        50% {
-            transform: translate(5px, -5px);
-        }
+.ans-btn {
+    background: var(--pill);
+    color: #000;
+    border: none;
+    border-radius: 999px;
+    padding: 0.27em 0.73em;
+    line-height: 1.3;
+    white-space: nowrap;
+    max-width: 100%;
+    font-family: inherit;
+    font-size: var(--ans-fs, 30px);
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+    transition: transform 0.08s, box-shadow 0.08s, background-color 0.15s;
+}
 
-        75% {
-            transform: translate(-5px, -5px);
-        }
-    }
+.ans-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
 
-    .animate-screenshake {
-        animation: screenShake 0.3s ease-in-out;
-    }
+.ans-btn.correct {
+    background: #34d399;
+}
 
-    @keyframes floatDamage {
-        0% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
+.ans-btn.wrong {
+    background: #fb7185;
+}
 
-        50% {
-            opacity: 1;
-            transform: translateY(-25px) scale(1.3);
-        }
+.timer-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
 
-        100% {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-        }
-    }
+.timer-text {
+    min-width: 66px;
+    font-size: 30px;
+    font-weight: 900;
+    font-family: 'DotGothic16', monospace;
+    color: #000;
+}
 
-    .floating-damage {
-        position: absolute;
-        animation: floatDamage 0.8s ease-out forwards;
-        font-weight: 900;
-        text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
-        z-index: 50;
-        pointer-events: none;
-    }
+.timer-track {
+    flex: 1;
+    height: 10px;
+    border-radius: 6px;
+    background: var(--pink);
+    overflow: hidden;
+}
 
-    /* ===== Shop ===== */
-    .shop-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        border: 2px solid #000;
-        border-radius: 8px;
-        padding: 6px 10px;
-        background: #f8fafc;
-    }
+.timer-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--blue);
+    transition: width 0.1s linear;
+}
 
-    .shop-name {
-        font-weight: 900;
-        font-size: 15px;
-    }
+/* party status */
+.status-box {
+    flex: none;
+    padding: 10px 20px 12px;
+}
 
-    .shop-desc {
-        font-size: 12px;
-        font-weight: 700;
-        color: #475569;
-    }
+.status-grid {
+    display: grid;
+    /* 名前 / 状態 / HP / SP。中央の幅(720px)に収まるよう、ゲージは残りを等分する */
+    grid-template-columns: 200px 130px minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 14px;
+    align-items: center;
+}
 
-    .shop-buy {
-        flex: none;
-        min-width: 76px;
-        border: 3px solid #000;
-        box-shadow: 2px 3px 0 #000;
-        border-radius: 8px;
-        background: #fcd34d;
-        font-weight: 900;
-        padding: 4px 10px;
-        cursor: pointer;
-    }
+.status-header {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
 
-    .shop-buy:active:not(:disabled) {
-        transform: translate(2px, 3px);
-        box-shadow: none;
-    }
+.status-row {
+    padding: 4px 0;
+}
 
-    .shop-buy:disabled {
-        background: #cbd5e1;
-        color: #64748b;
-        box-shadow: none;
-        cursor: not-allowed;
-    }
+.status-name {
+    font-size: 24px;
+    white-space: nowrap;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #000;
+}
 
-    .shop-row.shop-off {
-        opacity: 0.55;
-    }
+.status-lv {
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #475569;
+    padding-left: 10px;
+}
 
-    /* ===== Monster Dex (コレクション) ===== */
-    .dex-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
-        gap: 8px;
-        overflow-y: auto;
-        flex: 1 1 auto;
-        min-height: 0;
-        padding: 4px 4px 8px;
-    }
+/* 状態変化の欄: 高さと幅を固定して、状態が増減しても行がずれないようにする */
+.status-effects {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 4px;
+    height: 52px;
+    overflow: hidden;
+}
 
-    .dex-field {
-        grid-column: 1 / -1;
-        margin-top: 6px;
-        padding-bottom: 2px;
-        border-bottom: 2px solid #000;
-        font-size: 14px;
-        font-weight: 900;
-    }
+.status-effects .status-tag {
+    margin-left: 0;
+    white-space: nowrap;
+}
 
-    .dex-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        padding: 4px;
-        border: 3px solid #000;
-        border-radius: 8px;
-        background: #f8fafc;
-        box-shadow: 2px 3px 0 #000;
-        font-family: inherit;
-        cursor: pointer;
-    }
+.status-row .bar {
+    height: 26px;
+    width: 100%;
+    max-width: 140px;
+    border-radius: 6px;
+}
 
-    .dex-card.selected {
-        background: #fde68a;
-    }
+.status-row.dead {
+    opacity: 0.45;
+}
 
-    .dex-img {
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        object-fit: contain;
-    }
-
-    .dex-card.unseen .dex-img {
-        filter: brightness(0) opacity(0.3);
-    }
-
-    .dex-name {
-        font-size: 11px;
-        font-weight: 900;
-        line-height: 1.2;
-        text-align: center;
-    }
-
-    .dex-detail {
-        flex: none;
-        min-height: 3.6em;
-        padding: 6px 10px;
-        border: 2px solid #000;
-        border-radius: 8px;
-        background: #f1f5f9;
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1.5;
-    }
-
-    .dex-detail-name {
-        font-size: 16px;
-        font-weight: 900;
-    }
-
-    .dex-tab {
-        flex: 1;
-        padding: 4px 8px;
-        border: 3px solid #000;
-        border-radius: 8px;
-        background: #e2e8f0;
-        font-family: inherit;
-        font-size: 14px;
-        font-weight: 900;
-        cursor: pointer;
-    }
-
-    .dex-tab.active {
-        background: #fcd34d;
-        box-shadow: 2px 3px 0 #000;
-    }
-
-    .dex-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 44px;
-        font-size: 30px;
-        color: #0ea5e9;
-    }
-
-    .dex-item.rare .dex-icon {
-        color: #f59e0b;
-    }
-
-    .dex-item.unseen .dex-icon {
-        color: #000;
-        opacity: 0.25;
-    }
-
-    .dex-weak {
-        font-weight: 900;
-        color: #0369a1;
-    }
-
-    /* ===== ダメージ表示 (数字のみ / 種類で見た目を変える) ===== */
-    .floating-damage.dmg {
-        font-family: 'DotGothic16', sans-serif;
-        white-space: nowrap;
-        transform-origin: 50% 100%;
-    }
-
-    .dmg-normal {
-        font-size: 30px;
-        color: #fb7185;
-    }
-
-    /* 弱点: 水色で少し大きく */
-    .dmg-weak {
-        font-size: 42px;
-        color: #67e8f9;
-        text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000,
-            0 0 12px #06b6d4;
-    }
-
-    /* 必殺技: 金色でさらに大きく */
-    .dmg-ult {
-        font-size: 54px;
-        color: #fcd34d;
-        text-shadow: 3px 3px 0 #7c2d12, -3px -3px 0 #7c2d12, 3px -3px 0 #7c2d12, -3px 3px 0 #7c2d12,
-            0 0 16px #f59e0b;
-    }
-
-    /* 必殺技 + 弱点: 白っぽい金色で最大 */
-    .dmg-ult-weak {
-        font-size: 64px;
-        color: #fef9c3;
-        text-shadow: 3px 3px 0 #0e7490, -3px -3px 0 #0e7490, 3px -3px 0 #0e7490, -3px 3px 0 #0e7490,
-            0 0 20px #22d3ee, 0 0 30px #f59e0b;
-    }
-
-    /* モンスターの光り方 */
-    .animate-hit.hit-weak {
-        filter: brightness(1.8) drop-shadow(0 0 14px #22d3ee);
-    }
-
-    .animate-hit.hit-ult,
-    .animate-hit.hit-ult-weak {
-        filter: brightness(2.2) drop-shadow(0 0 18px #fbbf24);
-    }
-
-    /* 衝撃リング */
-    .hit-burst {
-        position: absolute;
-        width: 120px;
-        height: 120px;
-        margin: -60px 0 0 -60px;
-        border-radius: 50%;
-        pointer-events: none;
-        animation: burstOut 0.6s ease-out forwards;
-    }
-
-    .burst-weak {
-        border: 6px solid #67e8f9;
-        box-shadow: 0 0 18px #22d3ee, inset 0 0 14px #22d3ee;
-    }
-
-    .burst-ult {
-        border: 8px solid #fcd34d;
-        background: radial-gradient(circle, rgba(254, 240, 138, 0.85), rgba(251, 191, 36, 0) 70%);
-        box-shadow: 0 0 28px #f59e0b;
-        animation-duration: 0.7s;
-    }
-
-    .burst-ult-weak {
-        border: 8px solid #fff;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(34, 211, 238, 0.25) 70%);
-        box-shadow: 0 0 20px #22d3ee, 0 0 36px #f59e0b;
-        animation-duration: 0.7s;
-    }
-
-    @keyframes burstOut {
-        0% {
-            opacity: 1;
-            transform: scale(0.3);
-        }
-
-        100% {
-            opacity: 0;
-            transform: scale(2.4);
-        }
-    }
-
-    /* ===== 状態異常 ===== */
-    .status-tag {
+/* ===== キーボード操作のヒント (PCのみ) ===== */
+@media (hover: hover) and (pointer: fine) {
+    .ans-btn[data-key]::before {
+        content: attr(data-key);
         display: inline-block;
-        margin-left: 6px;
-        padding: 0 6px;
-        border: 2px solid #000;
-        border-radius: 6px;
-        font-size: 16px;
-        font-weight: 900;
-        line-height: 1.25;
-        color: #fff;
-        vertical-align: middle;
+        margin-right: 0.3em;
+        font-size: 0.6em;
+        vertical-align: 0.15em;
+        opacity: 0.55;
+    }
+}
+
+/* ===== Portrait (スマホ縦画面) ===== */
+/* 縮小表示でも指で押しやすいように、タップ領域を広げる */
+#stage.portrait .ans-btn {
+    padding: 0.45em 0.85em;
+}
+
+#stage.portrait .options-grid {
+    height: 146px;
+}
+
+#stage.portrait .option-btn {
+    padding: 12px 14px;
+}
+
+#stage.portrait .side-col {
+    display: none;
+}
+
+#stage.portrait #col-center {
+    flex: 0 0 720px;
+    width: 720px;
+    margin: 0 auto;
+}
+
+/* ===== Title screen ===== */
+#title-screen {
+    overflow-y: auto;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: #1e3a8a url('../img/10/maintitle.jpg') center / cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s;
+}
+
+#title-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#title-screen.portrait-bg {
+    background-position: 68% center;
+}
+
+.title-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5vmin;
+    padding: 2vmin 4vw;
+    text-align: center;
+}
+
+.title-logo {
+    margin: 0;
+    font-size: clamp(36px, 9vmin, 110px);
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 0.08em;
+    -webkit-text-stroke: 0.1em #1e1b4b;
+    paint-order: stroke fill;
+    text-shadow: 0 0.06em 0 #1e1b4b, 0 0 0.5em rgba(255, 255, 255, 0.6);
+}
+
+.title-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.4vmin;
+}
+
+.title-btn {
+    min-width: 9em;
+    font-size: clamp(18px, 3.4vmin, 40px);
+    font-weight: 900;
+    color: #000;
+    background: #fff;
+    border: 4px solid #000;
+    border-radius: 12px;
+    box-shadow: 4px 5px 0 #000;
+    padding: 0.4em 1.6em;
+    cursor: pointer;
+}
+
+.title-btn:active:not(:disabled) {
+    transform: translate(4px, 5px);
+    box-shadow: none;
+}
+
+.title-btn:disabled {
+    background: #cbd5e1;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.title-start {
+    font-size: clamp(22px, 4.2vmin, 48px);
+}
+
+/* ===== Modal用 手描き風ボックス ===== */
+.sketch-box {
+    background-color: #ffffff;
+    border: 4px solid #000000;
+    box-shadow: 4px 4px 0px #000000;
+    border-radius: 8px;
+}
+
+.sketch-button {
+    border: 3px solid #000000;
+    box-shadow: 2px 3px 0px #000000;
+    transition: all 0.1s ease;
+}
+
+.sketch-button:active {
+    transform: translate(2px, 3px);
+    box-shadow: 0px 0px 0px #000000;
+}
+
+/* ===== Animations ===== */
+@keyframes monsterShake {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
     }
 
-    .status-poison {
-        background: #a855f7;
+    20% {
+        transform: translate(-6px, 0) rotate(-3deg);
     }
 
-    .status-paralysis {
-        background: #ca8a04;
+    40% {
+        transform: translate(6px, 0) rotate(3deg);
     }
 
-    .status-curse {
-        background: #dc2626;
+    60% {
+        transform: translate(-4px, 0) rotate(-1deg);
     }
 
-    .floating-damage.fx-status {
-        font-size: 22px;
-        white-space: nowrap;
+    80% {
+        transform: translate(4px, 0) rotate(1deg);
     }
 
-    .fx-status-poison {
-        color: #e9d5ff;
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+.animate-hit {
+    animation: monsterShake 0.4s ease-in-out;
+    filter: brightness(2) drop-shadow(0 0 10px red);
+}
+
+@keyframes screenShake {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
     }
 
-    .fx-status-paralysis {
-        color: #fde047;
+    25% {
+        transform: translate(-5px, 5px);
     }
 
-    .fx-status-curse {
-        color: #fca5a5;
+    50% {
+        transform: translate(5px, -5px);
     }
 
-    .fx-status-heal {
-        color: #bbf7d0;
+    75% {
+        transform: translate(-5px, -5px);
+    }
+}
+
+.animate-screenshake {
+    animation: screenShake 0.3s ease-in-out;
+}
+
+@keyframes floatDamage {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 
-    /* ===== タイトルのボタン演出 (なぞると色が変わり、少し横にずれる) ===== */
-    .title-menu {
-        touch-action: none;
+    50% {
+        opacity: 1;
+        transform: translateY(-25px) scale(1.3);
     }
 
-    .title-btn {
-        position: relative;
-        transition: transform 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+    100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+}
+
+.floating-damage {
+    position: absolute;
+    animation: floatDamage 0.8s ease-out forwards;
+    font-weight: 900;
+    text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+    z-index: 50;
+    pointer-events: none;
+}
+
+/* ===== Shop ===== */
+.shop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: #f8fafc;
+}
+
+.shop-name {
+    font-weight: 900;
+    font-size: 15px;
+}
+
+.shop-desc {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.shop-buy {
+    flex: none;
+    min-width: 76px;
+    border: 3px solid #000;
+    box-shadow: 2px 3px 0 #000;
+    border-radius: 8px;
+    background: #fcd34d;
+    font-weight: 900;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+.shop-buy:active:not(:disabled) {
+    transform: translate(2px, 3px);
+    box-shadow: none;
+}
+
+.shop-buy:disabled {
+    background: #cbd5e1;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.shop-row.shop-off {
+    opacity: 0.55;
+}
+
+/* ===== Monster Dex (コレクション) ===== */
+.dex-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 4px 4px 8px;
+}
+
+.dex-field {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    padding-bottom: 2px;
+    border-bottom: 2px solid #000;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.dex-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border: 3px solid #000;
+    border-radius: 8px;
+    background: #f8fafc;
+    box-shadow: 2px 3px 0 #000;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.dex-card.selected {
+    background: #fde68a;
+}
+
+.dex-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+}
+
+.dex-card.unseen .dex-img {
+    filter: brightness(0) opacity(0.3);
+}
+
+.dex-name {
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.dex-detail {
+    flex: none;
+    min-height: 3.6em;
+    padding: 6px 10px;
+    border: 2px solid #000;
+    border-radius: 8px;
+    background: #f1f5f9;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.dex-detail-name {
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.dex-tab {
+    flex: 1;
+    padding: 4px 8px;
+    border: 3px solid #000;
+    border-radius: 8px;
+    background: #e2e8f0;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.dex-tab.active {
+    background: #fcd34d;
+    box-shadow: 2px 3px 0 #000;
+}
+
+.dex-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    font-size: 30px;
+    color: #0ea5e9;
+}
+
+.dex-item.rare .dex-icon {
+    color: #f59e0b;
+}
+
+.dex-item.unseen .dex-icon {
+    color: #000;
+    opacity: 0.25;
+    filter: grayscale(1) brightness(0);
+}
+
+.dex-icon-emoji {
+    line-height: 1;
+}
+
+.dex-icon-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+/* レアアイテムは、アイコンの右上に ★ をつける */
+.dex-item.rare:not(.unseen) .dex-icon {
+    position: relative;
+}
+
+.dex-item.rare:not(.unseen) .dex-icon::after {
+    content: "★";
+    position: absolute;
+    top: -2px;
+    right: 12%;
+    font-size: 14px;
+    color: #f59e0b;
+    text-shadow: 0 0 2px #000, 1px 1px 0 #000;
+}
+
+.dex-detail-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6em;
+    height: 1.6em;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.dex-weak {
+    font-weight: 900;
+    color: #0369a1;
+}
+
+/* ===== 連続正解コンボ表示 (戦闘エリアの右上、ゴールドの下) ===== */
+.combo-badge {
+    position: absolute;
+    right: 20px;
+    top: 52px;
+    z-index: 5;
+    padding: 2px 12px 4px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-family: 'DotGothic16', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.2;
+    text-align: right;
+    pointer-events: none;
+    transform-origin: 100% 0;
+}
+
+.combo-badge .combo-num {
+    font-size: 30px;
+    color: #fcd34d;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.combo-badge .combo-rate {
+    font-size: 15px;
+    color: #fda4af;
+}
+
+/* 最大コンボ: 赤く光らせる */
+.combo-badge.combo-max {
+    background: rgba(185, 28, 28, 0.85);
+}
+
+.combo-badge.combo-max .combo-rate {
+    color: #fef08a;
+}
+
+.combo-badge.combo-pop {
+    animation: comboPop 0.35s ease-out;
+}
+
+@keyframes comboPop {
+    0% {
+        transform: scale(1.5);
     }
 
-    .title-btn.hot:not(:disabled) {
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ===== ダメージ表示 (数字のみ / 種類で見た目を変える) ===== */
+@keyframes floatDmg {
+    0%   { opacity: 0; transform: translateY(8px) scale(0.5); }
+    12%  { opacity: 1; transform: translateY(-6px) scale(1.45); }
+    28%  { opacity: 1; transform: translateY(-14px) scale(1); }
+    75%  { opacity: 1; transform: translateY(-34px) scale(1); }
+    100% { opacity: 0; transform: translateY(-58px) scale(0.95); }
+}
+
+.floating-damage.dmg {
+    font-family: 'DotGothic16', sans-serif;
+    white-space: nowrap;
+    translate: -50% 0;              /* 数字の中心をモンスターの中心に合わせる */
+    transform-origin: 50% 100%;
+    animation: floatDmg 1.1s ease-out forwards;
+    font-weight: 900;
+    letter-spacing: 1px;
+    line-height: 1;
+    -webkit-text-stroke: 6px #000;   /* 太い黒フチで、どんな背景でも読める */
+    paint-order: stroke fill;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6));
+}
+
+/* 通常: 白〜赤で大きめに */
+.dmg-normal {
+    font-size: 40px;
+    color: #fff1f2;
+    text-shadow: 0 0 10px #f43f5e, 0 0 4px #fb7185;
+}
+
+/* 弱点: 水色で大きく */
+.dmg-weak {
+    font-size: 52px;
+    color: #cffafe;
+    text-shadow: 0 0 14px #06b6d4, 0 0 6px #22d3ee;
+}
+
+/* 必殺技: 金色でさらに大きく */
+.dmg-ult {
+    font-size: 64px;
+    color: #fde68a;
+    -webkit-text-stroke: 8px #7c2d12;
+    text-shadow: 0 0 18px #f59e0b, 0 0 8px #fbbf24;
+}
+
+/* 必殺技 + 弱点: 白っぽい金色で最大 */
+.dmg-ult-weak {
+    font-size: 76px;
+    color: #fffbeb;
+    -webkit-text-stroke: 9px #0e7490;
+    text-shadow: 0 0 22px #22d3ee, 0 0 32px #f59e0b;
+}
+
+/* モンスターの光り方 */
+.animate-hit.hit-weak {
+    filter: brightness(1.8) drop-shadow(0 0 14px #22d3ee);
+}
+
+.animate-hit.hit-ult,
+.animate-hit.hit-ult-weak {
+    filter: brightness(2.2) drop-shadow(0 0 18px #fbbf24);
+}
+
+/* 衝撃リング */
+.hit-burst {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    margin: -60px 0 0 -60px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: burstOut 0.6s ease-out forwards;
+}
+
+.burst-weak {
+    border: 6px solid #67e8f9;
+    box-shadow: 0 0 18px #22d3ee, inset 0 0 14px #22d3ee;
+}
+
+.burst-ult {
+    border: 8px solid #fcd34d;
+    background: radial-gradient(circle, rgba(254, 240, 138, 0.85), rgba(251, 191, 36, 0) 70%);
+    box-shadow: 0 0 28px #f59e0b;
+    animation-duration: 0.7s;
+}
+
+.burst-ult-weak {
+    border: 8px solid #fff;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(34, 211, 238, 0.25) 70%);
+    box-shadow: 0 0 20px #22d3ee, 0 0 36px #f59e0b;
+    animation-duration: 0.7s;
+}
+
+@keyframes burstOut {
+    0% {
+        opacity: 1;
+        transform: scale(0.3);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(2.4);
+    }
+}
+
+/* ===== 状態異常 ===== */
+.status-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border: 2px solid #000;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.25;
+    color: #fff;
+    vertical-align: middle;
+}
+
+.status-poison {
+    background: #a855f7;
+}
+
+.status-paralysis {
+    background: #ca8a04;
+}
+
+.status-curse {
+    background: #dc2626;
+}
+
+.floating-damage.fx-status {
+    font-size: 22px;
+    white-space: nowrap;
+}
+
+.fx-status-poison {
+    color: #e9d5ff;
+}
+
+.fx-status-paralysis {
+    color: #fde047;
+}
+
+.fx-status-curse {
+    color: #fca5a5;
+}
+
+.fx-status-heal {
+    color: #bbf7d0;
+}
+
+/* ===== タイトルのボタン演出 (なぞると色が変わり、少し横にずれる) ===== */
+.title-menu {
+    touch-action: none;
+}
+
+.title-btn {
+    position: relative;
+    transition: transform 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.title-btn.hot:not(:disabled) {
+    background: #fde047;
+    transform: translateX(0.5em);
+    box-shadow: 8px 5px 0 #000;
+}
+
+.title-btn.hot:not(:disabled)::before {
+    content: "\25B6";
+    position: absolute;
+    left: 0.5em;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7em;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .title-btn:hover:not(:disabled) {
         background: #fde047;
         transform: translateX(0.5em);
         box-shadow: 8px 5px 0 #000;
     }
 
-    .title-btn.hot:not(:disabled)::before {
+    .title-btn:hover:not(:disabled)::before {
         content: "\25B6";
         position: absolute;
         left: 0.5em;
@@ -1178,737 +1304,721 @@
         transform: translateY(-50%);
         font-size: 0.7em;
     }
+}
 
-    @media (hover: hover) and (pointer: fine) {
-        .title-btn:hover:not(:disabled) {
-            background: #fde047;
-            transform: translateX(0.5em);
-            box-shadow: 8px 5px 0 #000;
-        }
-
-        .title-btn:hover:not(:disabled)::before {
-            content: "\25B6";
-            position: absolute;
-            left: 0.5em;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.7em;
-        }
-    }
-
-    /* 押している間は、ぐっと沈む */
-    .title-btn.hot:active:not(:disabled),
-    .title-btn:active:not(:disabled) {
-        background: #facc15;
-        transform: translate(4px, 5px);
-        box-shadow: none;
-    }
+/* 押している間は、ぐっと沈む */
+.title-btn.hot:active:not(:disabled),
+.title-btn:active:not(:disabled) {
+    background: #facc15;
+    transform: translate(4px, 5px);
+    box-shadow: none;
+}
 
 
 
 
-    /* 買える物の一覧: はみ出した分はスクロール */
-    .shop-scroll {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        -webkit-overflow-scrolling: touch;
-        padding-right: 2px;
-    }
+/* 買える物の一覧: はみ出した分はスクロール */
+.shop-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 2px;
+}
 
-    /* 文字を大きく、タップしやすく */
-    .shop-row {
-        min-height: 68px;
-        padding: 10px 12px;
-        gap: 12px;
-    }
+/* 文字を大きく、タップしやすく */
+.shop-row {
+    min-height: 68px;
+    padding: 10px 12px;
+    gap: 12px;
+}
 
-    .shop-row.shop-tap {
-        cursor: pointer;
-    }
+.shop-row.shop-tap {
+    cursor: pointer;
+}
 
-    .shop-row.shop-tap:active {
-        background: #fef3c7;
-    }
+.shop-row.shop-tap:active {
+    background: #fef3c7;
+}
 
-    .shop-name {
-        font-size: 20px;
-        line-height: 1.25;
-    }
+.shop-name {
+    font-size: 20px;
+    line-height: 1.25;
+}
 
-    .shop-desc {
-        margin-top: 2px;
-        font-size: 15px;
-        line-height: 1.35;
-    }
+.shop-desc {
+    margin-top: 2px;
+    font-size: 15px;
+    line-height: 1.35;
+}
 
-    .shop-buy {
-        min-width: 96px;
-        min-height: 52px;
-        font-size: 18px;
-        padding: 6px 12px;
-    }
+.shop-buy {
+    min-width: 96px;
+    min-height: 52px;
+    font-size: 18px;
+    padding: 6px 12px;
+}
 
-    /* 画面の右下に出す 上下スクロールボタン */
-    .shop-scroll-btns {
-        position: fixed;
-        right: calc(24px + env(safe-area-inset-right, 0px));
-        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-        display: none;
-        gap: 10px;
-    }
+/* 画面の右下に出す 上下スクロールボタン */
+.shop-scroll-btns {
+    position: fixed;
+    right: calc(24px + env(safe-area-inset-right, 0px));
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    display: none;
+    gap: 10px;
+}
 
-    .shop-scroll-btn {
-        width: 52px;
-        height: 52px;
-        border: 3px solid #000;
-        border-radius: 50%;
-        background: #fcd34d;
-        box-shadow: 2px 3px 0 #000;
-        font-size: 22px;
-        font-weight: 900;
-        line-height: 1;
-        color: #000;
-        cursor: pointer;
-    }
+.shop-scroll-btn {
+    width: 52px;
+    height: 52px;
+    border: 3px solid #000;
+    border-radius: 50%;
+    background: #fcd34d;
+    box-shadow: 2px 3px 0 #000;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1;
+    color: #000;
+    cursor: pointer;
+}
 
-    .shop-scroll-btn:active {
-        transform: translate(2px, 3px);
-        box-shadow: none;
-    }
+.shop-scroll-btn:active {
+    transform: translate(2px, 3px);
+    box-shadow: none;
+}
 
-    .shop-scroll-btn.disabled {
-        opacity: 0.4;
-    }
+.shop-scroll-btn.disabled {
+    opacity: 0.4;
+}
 
 
-    /* ===== お店の画面: 戦闘画面と同じ構成 (上に枠付きの町の絵 / 下に操作パネル) ===== */
-    #modal-shop {
-        background: var(--bg-teal);
-        justify-content: center;
-    }
+/* ===== お店の画面: 戦闘画面と同じ構成 (上に枠付きの町の絵 / 下に操作パネル) ===== */
+#modal-shop {
+    background: var(--bg-teal);
+    justify-content: center;
+}
 
-    #shop-wrap {
-        width: 100%;
-        max-width: 640px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
+#shop-wrap {
+    width: 100%;
+    max-width: 640px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
-    #shop-scene {
-        position: relative;
-        flex: 1 1 0;
-        min-height: 90px;
-        overflow: hidden;
-        box-sizing: border-box;
-        border: 8px solid #000;
-        border-radius: 60px 80px 70px 90px / 80px 60px 90px 70px;
-        background: #1c1917 url('../img/10/town.png') center bottom / cover no-repeat;
-        image-rendering: pixelated;
-    }
+#shop-scene {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 90px;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 8px solid #000;
+    border-radius: 60px 80px 70px 90px / 80px 60px 90px 70px;
+    background: #1c1917 url('../img/10/town.png') center bottom / cover no-repeat;
+    image-rendering: pixelated;
+}
 
-    #shop-panel {
-        flex: 0 1 auto;
-        max-height: min(calc(100% - 102px), max(55%, 330px));
-        background: #fff;
-    }
+#shop-panel {
+    flex: 0 1 auto;
+    max-height: min(calc(100% - 102px), max(55%, 330px));
+    background: #fff;
+}
 
-    /* 狭い画面では「出発する」が右下のスクロールボタンと重ならないようにする */
+/* 狭い画面では「出発する」が右下のスクロールボタンと重ならないようにする */
+#shop-leave {
+    width: auto;
+}
+
+@media (max-width: 760px) {
     #shop-leave {
-        width: auto;
+        margin-right: 112px;
+    }
+}
+
+@media (min-width: 761px) and (max-width: 920px) {
+    #shop-leave {
+        margin-right: 56px;
+    }
+}
+
+/* ===== 必殺技のカットイン (戦闘エリアの真ん中) ===== */
+.cutin {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.cutin-dim {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+}
+
+.cutin[data-pos="left"] {
+    justify-content: flex-start;
+    padding-left: 0;
+}
+
+.cutin[data-pos="right"] {
+    justify-content: flex-end;
+    padding-right: 0;
+}
+
+.cutin {
+    box-sizing: border-box;
+    border-radius: inherit;
+    clip-path: inset(0);
+}
+
+.cutin-img {
+    position: relative;
+    max-width: 100%;
+    width: min(80%, 630px);
+    height: auto;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+    opacity: 0;
+}
+
+.cutin-flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ===== 必殺技の追加効果 ===== */
+/* 弱点ジャンルが光る (ウィザードの必殺技) */
+.ans-btn.weak-glow {
+    background: #fde68a;
+    animation: weakGlow 0.9s ease-in-out infinite;
+}
+
+@keyframes weakGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 6px 2px rgba(250, 204, 21, 0.55);
     }
 
-    @media (max-width: 760px) {
-        #shop-leave {
-            margin-right: 112px;
-        }
+    50% {
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 20px 8px rgba(250, 204, 21, 1);
     }
+}
 
-    @media (min-width: 761px) and (max-width: 920px) {
-        #shop-leave {
-            margin-right: 56px;
-        }
+.status-guard {
+    background: #2563eb;
+}
+
+.status-dodge {
+    background: #059669;
+}
+
+.fx-status-buff {
+    color: #bfdbfe;
+}
+
+
+/* ===== ボスの全体攻撃 ===== */
+.battle-hud-center {
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 18px;
+}
+
+/* 次の解答のあとが全体攻撃: 赤くして知らせる */
+.battle-hud-center.boss-hud-warn {
+    background: rgba(185, 28, 28, 0.9);
+    color: #fff;
+}
+
+.fx-status-aoe {
+    color: #fca5a5;
+}
+
+
+/* ===== 確認ダイアログ (画面の真ん中) ===== */
+#modal-confirm {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    /* タイトル(60)・オプション/町/図鑑(70)より前 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+#modal-confirm.hidden {
+    display: none;
+}
+
+.confirm-box {
+    width: 100%;
+    max-width: 380px;
+    padding: 22px 20px 18px;
+    box-sizing: border-box;
+    text-align: center;
+    color: #111827;
+}
+
+.confirm-msg {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.confirm-btns {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.confirm-btn {
+    flex: 1;
+    min-height: 52px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    color: #000;
+    cursor: pointer;
+}
+
+.confirm-no {
+    background: #e2e8f0;
+}
+
+.confirm-yes {
+    background: #fcd34d;
+}
+
+/* ===== 復活の呪文の入力画面: ドット風フォント =====
+   DotGothic16 は 16px を基準に作られたドット文字なので、16px の倍数だと文字がにじまない。
+   大きさを変えたいときは下の3つの値を変える。 */
+.spell-modal {
+    --spell-title-fs: 32px;
+    --spell-cell-fs: 32px;
+    --spell-text-fs: 16px;
+}
+
+.spell-modal,
+.spell-modal * {
+    font-family: 'DotGothic16', monospace !important;
+    font-weight: 400 !important;
+    -webkit-font-smoothing: none;
+    text-rendering: optimizeSpeed;
+}
+
+.spell-modal h2 {
+    font-size: var(--spell-title-fs);
+    line-height: 1.2;
+}
+
+.spell-modal p,
+.spell-modal button,
+.spell-modal input {
+    font-size: var(--spell-text-fs);
+}
+
+.spell-modal .spell-cell {
+    font-size: var(--spell-cell-fs);
+}
+
+/* ----- 復活の呪文の入力画面: 黒い背景に白い文字 ----- */
+.spell-modal {
+    background: #000 !important;
+}
+
+.spell-modal .sketch-box {
+    background: #000 !important;
+    border-color: #fff !important;
+    box-shadow: 4px 4px 0 #fff;
+}
+
+.spell-modal,
+.spell-modal * {
+    color: #fff !important;
+}
+
+.spell-modal input {
+    background: #000 !important;
+    border-color: #fff !important;
+    caret-color: #fff;
+}
+
+.spell-modal input::placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.spell-modal button.sketch-button {
+    background: #000 !important;
+    border-color: #fff !important;
+    box-shadow: 2px 3px 0 #fff;
+}
+
+.spell-modal button.sketch-button:active {
+    box-shadow: none;
+}
+
+.spell-modal button.sketch-button:hover {
+    background: #333 !important;
+}
+
+/* 呪文の1文字ずつの枠: 未入力=黒 / 合っている=緑 / まちがい=赤 */
+.spell-modal .spell-wait {
+    background: #000;
+    border-color: #fff;
+}
+
+.spell-modal .spell-ok {
+    background: #059669;
+    border-color: #fff;
+}
+
+.spell-modal .spell-ng {
+    background: #e11d48;
+    border-color: #fff;
+}
+
+/* 制限時間のバー */
+.spell-timer-track {
+    height: 10px;
+    margin-top: 4px;
+    border: 2px solid #fff;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.spell-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: #fff;
+}
+
+
+/* ===== オプション: キャラクター名の変更 ===== */
+.name-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.name-edit-row>span {
+    flex: none;
+    width: 5.5em;
+    font-size: 12px;
+}
+
+.name-edit-row>input {
+    flex: 1;
+    min-width: 0;
+    border: 3px solid #000;
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 14px;
+    font-weight: 900;
+    background: #fff;
+}
+
+/* ===== 音量ゲージ (オプション画面) 青=音量 / ピンク=残り ===== */
+.vol-gauge {
+    --v: 50%;
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.vol-gauge:focus {
+    outline: none;
+}
+
+.vol-gauge::-webkit-slider-runnable-track {
+    height: 20px;
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px #000;
+    background: linear-gradient(to right, var(--blue) 0, var(--blue) var(--v), var(--pink) var(--v), var(--pink) 100%);
+}
+
+.vol-gauge::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    width: 14px;
+    height: 28px;
+    margin-top: -4px;
+    border: 3px solid #000;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.vol-gauge::-moz-range-track {
+    height: 20px;
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px #000;
+    background: var(--pink);
+}
+
+.vol-gauge::-moz-range-progress {
+    height: 20px;
+    border-radius: 6px 0 0 6px;
+    background: var(--blue);
+}
+
+.vol-gauge::-moz-range-thumb {
+    box-sizing: border-box;
+    width: 14px;
+    height: 28px;
+    border: 3px solid #000;
+    border-radius: 4px;
+    background: #fff;
+}
+
+
+/* ===== オープニング (タイトル(60)の上・オプション/図鑑(70)・確認(80)の下) ===== */
+#opening {
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.5s;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#opening.in {
+    opacity: 1;
+}
+
+.op-bg {
+    position: absolute;
+    inset: 0;
+    /* 背景画像: ../img/10/opening.png (差し替えるときはここのファイル名を変える) */
+    background: #1a1f4a url('../img/10/opening.png') center / cover no-repeat;
+    image-rendering: pixelated;
+}
+
+/* 背景を少し暗くして、キャラとセリフ枠を見やすくする (濃さは 0.25 を変えて調整) */
+.op-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 40, 0.25);
+}
+
+.op-chars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* 立ち絵: しゃべっていない方は暗くなって、少し小さく外側の奥へ下がる */
+.op-char {
+    --back-x: 0%;
+    position: absolute;
+    bottom: 0;
+    height: 80%;
+    aspect-ratio: 7 / 8;
+    max-width: 46%;
+    z-index: 1;
+    opacity: 0;
+    transform-origin: 50% 100%;
+    transform: translate(var(--back-x), 10px) scale(0.9);
+    filter: brightness(0.4) saturate(0.7);
+    transition: transform 0.35s ease, filter 0.35s ease, opacity 0.6s ease;
+}
+
+#op-hero {
+    left: 3%;
+    --back-x: -5%;
+}
+
+#op-king {
+    right: 3%;
+    --back-x: 5%;
+}
+
+#opening.in .op-char {
+    opacity: 1;
+}
+
+#opening .op-char.active {
+    z-index: 2;
+    transform: translate(0, 0) scale(1.04);
+    filter: none;
+}
+
+.op-char img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0;
+    /* 全身絵でも上半身だけが見える */
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+/* セリフ枠 */
+.op-box {
+    position: absolute;
+    left: 50%;
+    bottom: 3.5%;
+    transform: translateX(-50%);
+    z-index: 3;
+    width: min(92%, 1180px);
+    min-height: 22%;
+    box-sizing: border-box;
+    padding: 1.6em 1.6em 1.1em;
+    background: #fff;
+    color: #111827;
+    font-size: clamp(17px, 2.4vmax, 32px);
+}
+
+.op-text {
+    margin: 0;
+    font-weight: 900;
+    line-height: 1.7;
+    white-space: pre-line;
+    min-height: 3.4em;
+}
+
+.op-name {
+    position: absolute;
+    top: 0;
+    left: 1.2em;
+    transform: translateY(-62%);
+    padding: 0.1em 1.1em;
+    font-size: 0.95em;
+    font-weight: 900;
+    background: #95c9df;
+    border: 3px solid #000;
+    border-radius: 999px;
+    box-shadow: 2px 3px 0 #000;
+    white-space: nowrap;
+}
+
+.op-name.right {
+    left: auto;
+    right: 1.2em;
+    background: #fcd34d;
+}
+
+.op-name:empty {
+    display: none;
+}
+
+.op-next {
+    position: absolute;
+    right: 1em;
+    bottom: 0.5em;
+    font-size: 0.8em;
+    opacity: 0;
+}
+
+.op-box.done .op-next {
+    opacity: 1;
+    animation: opBlink 0.9s steps(2, start) infinite;
+}
+
+@keyframes opBlink {
+    to {
+        visibility: hidden;
     }
+}
 
-    /* ===== 必殺技のカットイン (戦闘エリアの真ん中) ===== */
-    .cutin {
-        position: absolute;
-        inset: 0;
-        z-index: 9;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        cursor: pointer;
-    }
+.op-skip {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: calc(14px + env(safe-area-inset-right, 0px));
+    z-index: 4;
+    padding: 0.35em 1em;
+    font-size: clamp(14px, 2vmax, 22px);
+    font-weight: 900;
+    color: #000;
+    background: #fff;
+    border: 3px solid #000;
+    border-radius: 10px;
+    box-shadow: 2px 3px 0 #000;
+    cursor: pointer;
+}
 
-    .cutin-dim {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.55);
-        opacity: 0;
-    }
+.op-skip:active {
+    transform: translate(2px, 3px);
+    box-shadow: none;
+}
 
-    .cutin[data-pos="left"] {
-        justify-content: flex-start;
-        padding-left: 0;
-    }
-
-    .cutin[data-pos="right"] {
-        justify-content: flex-end;
-        padding-right: 0;
-    }
-
-    .cutin {
-        box-sizing: border-box;
-        border-radius: inherit;
-        clip-path: inset(0);
-    }
-
-    .cutin-img {
-        position: relative;
-        max-width: 100%;
-        width: min(80%, 630px);
-        height: auto;
-        image-rendering: pixelated;
-        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
-        opacity: 0;
-    }
-
-    .cutin-flash {
-        position: absolute;
-        inset: 0;
-        background: #fff;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    /* ===== 必殺技の追加効果 ===== */
-    /* 弱点ジャンルが光る (ウィザードの必殺技) */
-    .ans-btn.weak-glow {
-        background: #fde68a;
-        animation: weakGlow 0.9s ease-in-out infinite;
-    }
-
-    @keyframes weakGlow {
-
-        0%,
-        100% {
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 6px 2px rgba(250, 204, 21, 0.55);
-        }
-
-        50% {
-            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 0 20px 8px rgba(250, 204, 21, 1);
-        }
-    }
-
-    .status-guard {
-        background: #2563eb;
-    }
-
-    .status-dodge {
-        background: #059669;
-    }
-
-    .fx-status-buff {
-        color: #bfdbfe;
-    }
-
-
-    /* ===== ボスの全体攻撃 ===== */
-    .battle-hud-center {
-        left: 50%;
-        transform: translateX(-50%);
-        white-space: nowrap;
-        font-size: 18px;
-    }
-
-    /* 次の解答のあとが全体攻撃: 赤くして知らせる */
-    .battle-hud-center.boss-hud-warn {
-        background: rgba(185, 28, 28, 0.9);
-        color: #fff;
-    }
-
-    .fx-status-aoe {
-        color: #fca5a5;
-    }
-
-
-    /* ===== 確認ダイアログ (画面の真ん中) ===== */
-    #modal-confirm {
-        position: fixed;
-        inset: 0;
-        z-index: 80;
-        /* タイトル(60)・オプション/町/図鑑(70)より前 */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-        background: rgba(0, 0, 0, 0.6);
-    }
-
-    #modal-confirm.hidden {
-        display: none;
-    }
-
-    .confirm-box {
-        width: 100%;
-        max-width: 380px;
-        padding: 22px 20px 18px;
-        box-sizing: border-box;
-        text-align: center;
-        color: #111827;
-    }
-
-    .confirm-msg {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 900;
-        line-height: 1.7;
-        white-space: pre-line;
-    }
-
-    .confirm-btns {
-        display: flex;
-        gap: 12px;
-        margin-top: 20px;
-    }
-
-    .confirm-btn {
-        flex: 1;
-        min-height: 52px;
-        border-radius: 8px;
-        font-family: inherit;
-        font-size: 18px;
-        font-weight: 900;
-        color: #000;
-        cursor: pointer;
-    }
-
-    .confirm-no {
-        background: #e2e8f0;
-    }
-
-    .confirm-yes {
-        background: #fcd34d;
-    }
-
-    /* ===== 復活の呪文の入力画面: ドット風フォント =====
-    DotGothic16 は 16px を基準に作られたドット文字なので、16px の倍数だと文字がにじまない。
-    大きさを変えたいときは下の3つの値を変える。 */
-    .spell-modal {
-        --spell-title-fs: 32px;
-        --spell-cell-fs: 32px;
-        --spell-text-fs: 16px;
-    }
-
-    .spell-modal,
-    .spell-modal * {
-        font-family: 'DotGothic16', monospace !important;
-        font-weight: 400 !important;
-        -webkit-font-smoothing: none;
-        text-rendering: optimizeSpeed;
-    }
-
-    .spell-modal h2 {
-        font-size: var(--spell-title-fs);
-        line-height: 1.2;
-    }
-
-    .spell-modal p,
-    .spell-modal button,
-    .spell-modal input {
-        font-size: var(--spell-text-fs);
-    }
-
-    .spell-modal .spell-cell {
-        font-size: var(--spell-cell-fs);
-    }
-
-    /* ----- 復活の呪文の入力画面: 黒い背景に白い文字 ----- */
-    .spell-modal {
-        background: #000 !important;
-    }
-
-    .spell-modal .sketch-box {
-        background: #000 !important;
-        border-color: #fff !important;
-        box-shadow: 4px 4px 0 #fff;
-    }
-
-    .spell-modal,
-    .spell-modal * {
-        color: #fff !important;
-    }
-
-    .spell-modal input {
-        background: #000 !important;
-        border-color: #fff !important;
-        caret-color: #fff;
-    }
-
-    .spell-modal input::placeholder {
-        color: rgba(255, 255, 255, 0.45) !important;
-    }
-
-    .spell-modal button.sketch-button {
-        background: #000 !important;
-        border-color: #fff !important;
-        box-shadow: 2px 3px 0 #fff;
-    }
-
-    .spell-modal button.sketch-button:active {
-        box-shadow: none;
-    }
-
-    .spell-modal button.sketch-button:hover {
-        background: #333 !important;
-    }
-
-    /* 呪文の1文字ずつの枠: 未入力=黒 / 合っている=緑 / まちがい=赤 */
-    .spell-modal .spell-wait {
-        background: #000;
-        border-color: #fff;
-    }
-
-    .spell-modal .spell-ok {
-        background: #059669;
-        border-color: #fff;
-    }
-
-    .spell-modal .spell-ng {
-        background: #e11d48;
-        border-color: #fff;
-    }
-
-    /* 制限時間のバー */
-    .spell-timer-track {
-        height: 10px;
-        margin-top: 4px;
-        border: 2px solid #fff;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    .spell-timer-fill {
-        height: 100%;
-        width: 100%;
-        background: #fff;
-    }
-
-
-    /* ===== オプション: キャラクター名の変更 ===== */
-    .name-edit-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .name-edit-row>span {
-        flex: none;
-        width: 5.5em;
-        font-size: 12px;
-    }
-
-    .name-edit-row>input {
-        flex: 1;
-        min-width: 0;
-        border: 3px solid #000;
-        border-radius: 6px;
-        padding: 3px 6px;
-        font-size: 14px;
-        font-weight: 900;
-        background: #fff;
-    }
-
-    /* ===== 音量ゲージ (オプション画面) 青=音量 / ピンク=残り ===== */
-    .vol-gauge {
-        --v: 50%;
-        -webkit-appearance: none;
-        appearance: none;
-        display: block;
-        width: 100%;
-        height: 28px;
-        margin: 0;
-        background: transparent;
-        cursor: pointer;
-    }
-
-    .vol-gauge:focus {
-        outline: none;
-    }
-
-    .vol-gauge::-webkit-slider-runnable-track {
-        height: 20px;
-        border-radius: 6px;
-        box-shadow: 0 0 0 3px #000;
-        background: linear-gradient(to right, var(--blue) 0, var(--blue) var(--v), var(--pink) var(--v), var(--pink) 100%);
-    }
-
-    .vol-gauge::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        box-sizing: border-box;
-        width: 14px;
-        height: 28px;
-        margin-top: -4px;
-        border: 3px solid #000;
-        border-radius: 4px;
-        background: #fff;
-    }
-
-    .vol-gauge::-moz-range-track {
-        height: 20px;
-        border-radius: 6px;
-        box-shadow: 0 0 0 3px #000;
-        background: var(--pink);
-    }
-
-    .vol-gauge::-moz-range-progress {
-        height: 20px;
-        border-radius: 6px 0 0 6px;
-        background: var(--blue);
-    }
-
-    .vol-gauge::-moz-range-thumb {
-        box-sizing: border-box;
-        width: 14px;
-        height: 28px;
-        border: 3px solid #000;
-        border-radius: 4px;
-        background: #fff;
-    }
-
-
-    /* ===== オープニング (タイトル(60)の上・オプション/図鑑(70)・確認(80)の下) ===== */
-    #opening {
-        position: fixed;
-        inset: 0;
-        z-index: 65;
-        overflow: hidden;
-        opacity: 0;
-        transition: opacity 0.5s;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    #opening.in {
-        opacity: 1;
-    }
-
+/* スマホ(縦画面): 二人を中央へ寄せて重ね、しゃべっている方を手前に */
+@media (orientation: portrait) {
     .op-bg {
-        position: absolute;
-        inset: 0;
-        /* 背景画像: ../img/10/opening.png (差し替えるときはここのファイル名を変える) */
-        background: #1a1f4a url('../img/10/opening.png') center / cover no-repeat;
-        image-rendering: pixelated;
+        background-position: 68% center;
     }
 
-    /* 背景を少し暗くして、キャラとセリフ枠を見やすくする (濃さは 0.25 を変えて調整) */
-    .op-bg::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: rgba(8, 12, 40, 0.25);
-    }
-
-    .op-chars {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-    }
-
-    /* 立ち絵: しゃべっていない方は暗くなって、少し小さく外側の奥へ下がる */
     .op-char {
-        --back-x: 0%;
-        position: absolute;
-        bottom: 0;
-        height: 80%;
-        aspect-ratio: 7 / 8;
-        max-width: 46%;
-        z-index: 1;
-        opacity: 0;
-        transform-origin: 50% 100%;
-        transform: translate(var(--back-x), 10px) scale(0.9);
-        filter: brightness(0.4) saturate(0.7);
-        transition: transform 0.35s ease, filter 0.35s ease, opacity 0.6s ease;
+        height: auto;
+        width: 66%;
+        max-width: none;
+        bottom: 22%;
     }
 
     #op-hero {
-        left: 3%;
-        --back-x: -5%;
+        left: -8%;
     }
 
     #op-king {
-        right: 3%;
-        --back-x: 5%;
+        right: -8%;
     }
 
-    #opening.in .op-char {
-        opacity: 1;
-    }
-
-    #opening .op-char.active {
-        z-index: 2;
-        transform: translate(0, 0) scale(1.04);
-        filter: none;
-    }
-
-    .op-char img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: 50% 0;
-        /* 全身絵でも上半身だけが見える */
-        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.6));
-        -webkit-user-drag: none;
-        user-select: none;
-    }
-
-    /* セリフ枠 */
     .op-box {
-        position: absolute;
-        left: 50%;
-        bottom: 3.5%;
-        transform: translateX(-50%);
-        z-index: 3;
-        width: min(92%, 1180px);
-        min-height: 22%;
-        box-sizing: border-box;
-        padding: 1.6em 1.6em 1.1em;
-        background: #fff;
-        color: #111827;
-        font-size: clamp(17px, 2.4vmax, 32px);
+        bottom: 3%;
+        min-height: 19%;
+        padding: 1.4em 1.1em 1em;
+        font-size: clamp(17px, 2.3vh, 26px);
     }
+}
 
-    .op-text {
-        margin: 0;
-        font-weight: 900;
-        line-height: 1.7;
-        white-space: pre-line;
-        min-height: 3.4em;
-    }
 
-    .op-name {
-        position: absolute;
-        top: 0;
-        left: 1.2em;
-        transform: translateY(-62%);
-        padding: 0.1em 1.1em;
-        font-size: 0.95em;
-        font-weight: 900;
-        background: #95c9df;
-        border: 3px solid #000;
-        border-radius: 999px;
-        box-shadow: 2px 3px 0 #000;
-        white-space: nowrap;
-    }
+/* ===== ラスボスが消える演出 ===== */
+.monster-box.vanish {
+    animation: monsterVanish 2s ease-in forwards;
+}
 
-    .op-name.right {
-        left: auto;
-        right: 1.2em;
-        background: #fcd34d;
-    }
-
-    .op-name:empty {
-        display: none;
-    }
-
-    .op-next {
-        position: absolute;
-        right: 1em;
-        bottom: 0.5em;
-        font-size: 0.8em;
-        opacity: 0;
-    }
-
-    .op-box.done .op-next {
+@keyframes monsterVanish {
+    0% {
         opacity: 1;
-        animation: opBlink 0.9s steps(2, start) infinite;
+        filter: brightness(1);
+        transform: translateY(0);
     }
 
-    @keyframes opBlink {
-        to {
-            visibility: hidden;
-        }
+    35% {
+        opacity: 1;
+        filter: brightness(2.6) saturate(0.5);
     }
 
-    .op-skip {
-        position: absolute;
-        top: calc(12px + env(safe-area-inset-top, 0px));
-        right: calc(14px + env(safe-area-inset-right, 0px));
-        z-index: 4;
-        padding: 0.35em 1em;
-        font-size: clamp(14px, 2vmax, 22px);
-        font-weight: 900;
-        color: #000;
-        background: #fff;
-        border: 3px solid #000;
-        border-radius: 10px;
-        box-shadow: 2px 3px 0 #000;
-        cursor: pointer;
+    100% {
+        opacity: 0;
+        filter: brightness(3) blur(3px);
+        transform: translateY(-26px);
     }
-
-    .op-skip:active {
-        transform: translate(2px, 3px);
-        box-shadow: none;
-    }
-
-    /* スマホ(縦画面): 二人を中央へ寄せて重ね、しゃべっている方を手前に */
-    @media (orientation: portrait) {
-        .op-bg {
-            background-position: 68% center;
-        }
-
-        .op-char {
-            height: auto;
-            width: 66%;
-            max-width: none;
-            bottom: 22%;
-        }
-
-        #op-hero {
-            left: -8%;
-        }
-
-        #op-king {
-            right: -8%;
-        }
-
-        .op-box {
-            bottom: 3%;
-            min-height: 19%;
-            padding: 1.4em 1.1em 1em;
-            font-size: clamp(17px, 2.3vh, 26px);
-        }
-    }
-
-
-    /* ===== ラスボスが消える演出 ===== */
-    .monster-box.vanish {
-        animation: monsterVanish 2s ease-in forwards;
-    }
-
-    @keyframes monsterVanish {
-        0% {
-            opacity: 1;
-            filter: brightness(1);
-            transform: translateY(0);
-        }
-
-        35% {
-            opacity: 1;
-            filter: brightness(2.6) saturate(0.5);
-        }
-
-        100% {
-            opacity: 0;
-            filter: brightness(3) blur(3px);
-            transform: translateY(-26px);
-        }
-    }
+}
     </style>
 </head>
 
@@ -1975,6 +2085,7 @@
                     <div id="battle-bg" class="battle-bg"></div>
                     <div class="battle-hud battle-hud-left"><span id="hud-progress">1 / 5</span></div>
                     <div id="boss-hud" class="battle-hud battle-hud-center" style="display:none"></div>
+                    <div id="combo-badge" class="combo-badge" style="display:none"></div>
                     <div class="battle-hud battle-hud-right"><i class="fa-solid fa-coins"></i> <span
                             id="gold-val">0</span>G</div>
 
@@ -2333,6 +2444,7 @@
                 <button class="dex-tab active" data-tab="monster" onclick="game.setDexTab('monster')">モンスター</button>
                 <button class="dex-tab" data-tab="item" onclick="game.setDexTab('item')">アイテム</button>
             </div>
+            <div id="dex-bonus" class="text-xs font-bold text-rose-600"></div>
             <div id="dex-grid" class="dex-grid"></div>
             <div id="dex-detail" class="dex-detail"></div>
             <button onclick="game.closeDex()"
@@ -2848,8 +2960,84 @@ window.MONSTER_FIT = {
 
     </script>
     <script>
+        // アイテム図鑑のアイコン (ここを書き換えるだけで見た目を変えられます)
+//   キーは monsters の「画像ID」。値は [ドロップ品, レアアイテム] の順。
+//   絵文字のほか、画像ファイルのパス (例: "../img/10/i_slime_drop.png") も書けます。
+//   書かれていないアイテムは、従来の ■ / ★ アイコンで表示されます。
+window.ITEM_ICONS = {
+  slime: ["../img/10/d_1a.png", "../img/10/d_1b.png"],
+  goblin: ["../img/10/d_2a.png", "../img/10/d_2b.png"],
+  liliput: ["../img/10/d_3a.png", "../img/10/d_3b.png"],
+  slimeboss: ["../img/10/d_4a.png", "../img/10/d_4b.png"],
+  myconid: ["../img/10/d_5a.png", "../img/10/d_5b.png"],
+  maneater: ["../img/10/d_6a.png", "../img/10/d_6b.png"],
+  spider: ["../img/10/d_7a.png", "../img/10/d_7b.png"],
+  bigbat: ["../img/10/d_8a.png", "../img/10/d_8b.png"],
+  spiderboss: ["../img/10/d_9a.png", "../img/10/d_9b.png"],
+  skeleton: ["../img/10/d_10a.png", "../img/10/d_10b.png"],
+  phantom: ["../img/10/d_11a.png", "../img/10/d_11b.png"],
+  ogre: ["../img/10/d_12a.png", "../img/10/d_12b.png"],
+  wizard: ["../img/10/d_13a.png", "../img/10/d_13b.png"],
+  crab: ["../img/10/d_14a.png", "../img/10/d_14b.png"],
+  flame: ["../img/10/d_15a.png", "../img/10/d_15b.png"],
+  orc: ["../img/10/d_16a.png", "../img/10/d_16b.png"],
+  golem: ["../img/10/d_17a.png", "../img/10/d_17b.png"],
+  mummy: ["../img/10/d_18a.png", "../img/10/d_18b.png"],
+  medusa: ["../img/10/d_19a.png", "../img/10/d_19b.png"],
+  cyclops: ["../img/10/d_20a.png", "../img/10/d_20b.png"],
+  crystalgolem: ["../img/10/d_21a.png", "../img/10/d_21b.png"],
+  yeti: ["../img/10/d_22a.png", "../img/10/d_22b.png"],
+  gryphon: ["../img/10/d_23a.png", "../img/10/d_23b.png"],
+  ice: ["../img/10/d_24a.png", "../img/10/d_24b.png"],
+  stoneman: ["../img/10/d_25a.png", "../img/10/d_25b.png"],
+  siren: ["../img/10/d_26a.png", "../img/10/d_26b.png"],
+  dragon_g_: ["../img/10/d_27a.png", "../img/10/d_27b.png"],
+  kraken: ["../img/10/d_28a.png", "../img/10/d_28b.png"],
+  werewolf: ["../img/10/d_29a.png", "../img/10/d_29b.png"],
+  dragon_r_: ["../img/10/d_30a.png", "../img/10/d_30b.png"],
+  hydra: ["../img/10/d_31a.png", "../img/10/d_31b.png"],
+  minotauros: ["../img/10/d_32a.png", "../img/10/d_32b.png"],
+  demon: ["../img/10/d_33a.png", "../img/10/d_33b.png"],
+  lich: ["../img/10/d_34a.png", "../img/10/d_34b.png"],
+  ogreking: ["../img/10/d_35a.png", "../img/10/d_35b.png"],
+  dragon_b_: ["../img/10/d_36a.png", "../img/10/d_36b.png"],
+  demonking: ["../img/10/d_37a.png", "../img/10/d_37b.png"],
+  liliput_2: ["../img/10/d_38a.png", "../img/10/d_38b.png"],
+  goblin_2: ["../img/10/d_39a.png", "../img/10/d_39b.png"],
+  golem_green: ["../img/10/d_40a.png", "../img/10/d_40b.png"],
+  bigbat_2: ["../img/10/d_41a.png", "../img/10/d_41b.png"],
+  goblin_3: ["../img/10/d_42a.png", "../img/10/d_42b.png"],
+  maneater_white: ["../img/10/d_43a.png", "../img/10/d_43b.png"],
+  mummy_yellow: ["../img/10/d_44a.png", "../img/10/d_44b.png"],
+  bigbat_white: ["../img/10/d_45a.png", "../img/10/d_45b.png"],
+  cyclops_blue: ["../img/10/d_46a.png", "../img/10/d_46b.png"],
+  crab_green: ["../img/10/d_47a.png", "../img/10/d_47b.png"],
+  maneater_purple: ["../img/10/d_48a.png", "../img/10/d_48b.png"],
+  demon_yellow: ["../img/10/d_49a.png", "../img/10/d_49b.png"],
+  gryphon_2: ["../img/10/d_50a.png", "../img/10/d_50b.png"],
+  hydra_white: ["../img/10/d_51a.png", "../img/10/d_51b.png"],
+  mummy_red: ["../img/10/d_52a.png", "../img/10/d_52b.png"],
+  slime_horn: ["../img/10/d_53a.png", "../img/10/d_53b.png"],
+  myconid_2: ["../img/10/d_54a.png", "../img/10/d_54b.png"],
+  myconid_3: ["../img/10/d_55a.png", "../img/10/d_55b.png"],
+  phantomcostume: ["../img/10/d_56a.png", "../img/10/d_56b.png"],
+  skeleton_red: ["../img/10/d_57a.png", "../img/10/d_57b.png"],
+  orc_2: ["../img/10/d_58a.png", "../img/10/d_58b.png"],
+  skeleton_yellow: ["../img/10/d_59a.png", "../img/10/d_59b.png"],
+  yeti_gold: ["../img/10/d_60a.png", "../img/10/d_60b.png"],
+  spider_purple: ["../img/10/d_61a.png", "../img/10/d_61b.png"],
+  orc_3: ["../img/10/d_62a.png", "../img/10/d_62b.png"],
+  werewolf_2: ["../img/10/d_63a.png", "../img/10/d_63b.png"],
+  stoneman_gold: ["../img/10/d_64a.png", "../img/10/d_64b.png"],
+  yuusya: ["../img/10/d_65a.png", "../img/10/d_65b.png"],
+};
+
+    </script>
+    <script>
         /**
  * クイズ問題データ (ジャンル別)
+ *
+ * 問題重複はご愛敬で！！！！答えが間違えていたら知らせてください。（こっそり直していただけると助かります）
  *
  * 問題の追加方法:
  *   下の7ジャンルの配列に、次の形で1行足すだけです。
@@ -2953,9 +3141,9 @@ window.MONSTER_FIT = {
       ["織田信長が1560年の戦いで今川義元をやぶった戦いは？", "桶狭間の戦い", "姉川の戦い", "長篠の戦い", "本能寺の変"],
       ["豊臣秀吉が行った、全国の土地の面積や収穫高を調べた事業は？", "太閤検地", "刀狩", "楽市楽座", "地租改正"],
       ["第二次世界大戦が終わった年は西暦何年？", "1945年", "1939年", "1941年", "1951年"],
-      ["イタリアの首都は？", "ローマ", "ミラノ", "ヴェネツィア", "ナポリ"],
-      ["ドイツの首都は？", "ベルリン", "ミュンヘン", "フランクフルト", "ハンブルク"],
-      ["カナダの首都は？", "オタワ", "トロント", "バンクーバー", "モントリオール"],
+      ["イタリアの首都は？", "ローマ", "オタワ", "トーキョー", "ベルリン"],
+      ["ドイツの首都は？", "ベルリン", "ローマ", "トーキョー", "オタワ"],
+      ["カナダの首都は？", "オタワ", "ベルリン", "トーキョー", "ローマ"],
       ["日本で一番長いトンネルとして知られる青函トンネルが結ぶのは？", "本州と北海道", "本州と四国", "本州と九州", "北海道と利尻島"],
       ["沖縄県にある、日本最南端の有人島は？", "波照間島", "石垣島", "宮古島", "与那国島"],
       ["「百人一首」の撰者として知られる歌人は？", "藤原定家", "紀貫之", "小野篁", "在原業平"],
@@ -2979,6 +3167,26 @@ window.MONSTER_FIT = {
       ["国連が定めた世界人権宣言が採択された年は？", "1948年", "1945年", "1951年", "1966年"],
       ["江戸時代の五街道のうち、江戸と京都を結ぶ主要道は？", "東海道", "甲州街道", "日光街道", "奥州街道"],
       ["「坊っちゃん」や「吾輩は猫である」で知られる夏目漱石の本名は？", "夏目金之助", "夏目銀之助", "夏目鉄之助", "夏目龍之介"],
+      ["「平家物語」の冒頭で、栄えたものも必ずおとろえることの例えに出てくる花は？", "沙羅双樹", "桜", "梅", "藤"],
+      ["世界で一番人口が多い大陸は？", "アジア", "アフリカ", "ヨーロッパ", "北アメリカ"],
+      ["「国境の長いトンネルを抜けると雪国であった」で始まる小説の作者は？", "川端康成", "三島由紀夫", "太宰治", "谷崎潤一郎"],
+      ["古代ギリシャの哲学者プラトンの師は？", "ソクラテス", "アリストテレス", "ピタゴラス", "ヘラクレイトス"],
+      ["日本の三権である立法・行政と、もうひとつは？", "司法", "外交", "監査", "立憲"],
+      ["フランス革命が始まった年は？", "1789年", "1776年", "1804年", "1815年"],
+      ["「万葉集」の代表的な歌人で、「歌聖」とよばれるのは？", "柿本人麻呂", "在原業平", "紀貫之", "藤原定家"],
+      ["国会を構成する二つの議院は、衆議院とどこ？", "参議院", "貴族院", "元老院", "枢密院"],
+      ["古代に東洋と西洋を結んだ交易路「シルクロード」が結んだのは、おもにどの地域？", "中国とヨーロッパ", "日本とアメリカ", "インドとオーストラリア", "アフリカと南アメリカ"],
+      ["「源氏物語」の主人公・光源氏の生涯をえがいた時代は？", "平安時代", "奈良時代", "鎌倉時代", "室町時代"],
+      ["世界三大宗教に含まれないものは？", "ヒンドゥー教", "仏教", "イスラム教", "キリスト教"],
+      ["江戸時代の五街道の起点となった場所は？", "日本橋", "京都", "大坂", "江戸城"],
+      ["日本の標準時の基準となる東経135度の子午線が通る兵庫県の市は？", "明石市", "神戸市", "姫路市", "西宮市"],
+      ["2023年に中国を抜いて、人口が世界一となった国は？", "インド", "アメリカ", "インドネシア", "パキスタン"],
+      ["漢字「蛍」の読み方は？", "ほたる", "かぶとむし", "ちょう", "とんぼ"],
+      ["英語で「月曜日」は？", "Monday", "Sunday", "Tuesday", "Friday"],
+      ["「論語」に言葉が記された、中国の思想家は？", "孔子", "老子", "孟子", "荘子"],
+      ["現存する世界最古の木造建築をふくむ、聖徳太子ゆかりの寺は？", "法隆寺", "東大寺", "唐招提寺", "薬師寺"],
+      ["オーストラリア大陸があるのは、赤道より北？南？", "南半球", "北半球", "赤道の真上", "どちらでもない"],
+      ["アジアとヨーロッパにまたがる、トルコ最大の都市は？", "イスタンブール", "アンカラ", "イズミル", "カイロ"],
     ],
 
     理系学問: [
@@ -3096,6 +3304,26 @@ window.MONSTER_FIT = {
       ["植物の根が主に吸収するものは？", "水や無機養分", "酸素だけ", "日光", "二酸化炭素だけ"],
       ["太陽系で2番目に大きい惑星は？", "土星", "木星", "天王星", "海王星"],
       ["地下にある高温でどろどろにとけた岩石の物質を何という？", "マグマ", "溶岩", "軽石", "火山弾"],
+      ["光の三原色は、赤・緑とあとひとつは？", "青", "黄", "白", "黒"],
+      ["音の高さを決めるものは？", "振動数（周波数）", "振幅", "音の速さ", "温度"],
+      ["人間の骨の数は、大人でおよそいくつ？", "206本", "106本", "306本", "406本"],
+      ["台風の中心部分にできる、風が弱く雲がない部分を何という？", "台風の目", "台風の壁", "台風の尾", "台風の腕"],
+      ["水に溶けると酸性を示す気体は？", "二酸化炭素", "ヘリウム", "窒素", "水素"],
+      ["太陽の光を、虹のように分ける道具は？", "プリズム", "レンズ", "鏡", "ガラス棒"],
+      ["日本で最も多くの電気をつくっている発電方法（近年）は？", "火力発電", "水力発電", "風力発電", "太陽光発電"],
+      ["ニワトリのたまごは何でできた殻でおおわれている？", "炭酸カルシウム", "塩化ナトリウム", "ケイ素", "鉄"],
+      ["季節が生まれる主な理由は？", "地球の地軸がかたむいているから", "太陽との距離が変わるから", "月の満ち欠けのため", "雲の量が変わるから"],
+      ["プランクトンの一種で、水の色を赤く変えることがあるのは？", "赤潮", "青潮", "白潮", "黒潮"],
+      ["金属の中で、もっとも電気を通しやすいのは？", "銀", "銅", "金", "鉄"],
+      ["満月から次の満月までは、およそ何日？", "約30日", "約7日", "約15日", "約365日"],
+      ["ダイヤモンドの主成分は？", "炭素", "ケイ素", "鉄", "窒素"],
+      ["クジラは何類に分類される？", "ほ乳類", "魚類", "両生類", "は虫類"],
+      ["気圧の単位として、天気予報で使われるのは？", "ヘクトパスカル", "ミリメートル", "デシベル", "カンデラ"],
+      ["目の中で、光を感じとる部分は？", "網膜", "角膜", "水晶体", "虹彩"],
+      ["恐竜が栄えた時代は？", "中生代", "古生代", "新生代", "先カンブリア時代"],
+      ["オゾン層が吸収してくれる、体に有害な光は？", "紫外線", "赤外線", "可視光線", "電波"],
+      ["青いリトマス紙が赤く変わるのは、どんな液体？", "酸性", "アルカリ性", "中性", "食塩水だけ"],
+      ["食塩の化学名は？", "塩化ナトリウム", "炭酸カルシウム", "水酸化ナトリウム", "塩化カリウム"],
     ],
 
     "アニメ＆ゲーム": [
@@ -3216,6 +3444,26 @@ window.MONSTER_FIT = {
       ["「ファイナルファンタジー」シリーズで、状態異常「毒」を治すアイテムは？", "どくけし", "ポーション", "フェニックスの尾", "エーテル"],
       ["「スプラトゥーン」シリーズで、戦いの舞台となる街の一つは？", "ハイカラスクエア", "マサラタウン", "ミッドガル", "カカシ村"],
       ["「太鼓の達人」で、ふちをたたくときの音は？", "カッ", "ドン", "ポン", "シャン"],
+      ["「ドラゴンボール」で、孫悟空の代表的な必殺技は？", "かめはめ波", "ギャリック砲", "魔貫光殺砲", "気円斬"],
+      ["「ONE PIECE」で、麦わらの一味の船医の名前は？", "トニートニー・チョッパー", "サンジ", "ウソップ", "ブルック"],
+      ["「スプラトゥーン」でプレイヤーがイカの姿で泳ぐ液体は？", "インク", "水", "ジュース", "オイル"],
+      ["「ヒロアカ」こと「僕のヒーローアカデミア」の主人公は？", "緑谷出久", "爆豪勝己", "轟焦凍", "飯田天哉"],
+      ["「ジョジョの奇妙な冒険」の作者は？", "荒木飛呂彦", "冨樫義博", "井上雄彦", "稲垣理一郎"],
+      ["「北斗の拳」の主人公は？", "ケンシロウ", "ラオウ", "トキ", "ジャギ"],
+      ["「スラムダンク」の桜木花道が所属するバスケ部の高校は？", "湘北高校", "海南大附属高校", "陵南高校", "翔陽高校"],
+      ["「パックマン」で、食べるとゴーストが食べられるようになるアイテムは？", "パワーエサ", "さくらんぼ", "スーパースター", "ハート"],
+      ["「ドラえもん」の、のび太の得意なことは？", "あやとりや射撃", "勉強", "野球", "水泳"],
+      ["「ポケットモンスター」で、サトシの出身地は？", "マサラタウン", "ハナダシティ", "トキワシティ", "ニビシティ"],
+      ["「ポケットモンスター」の生みの親は？", "田尻智", "宮本茂", "堀井雄二", "桜井政博"],
+      ["「スーパーマリオ」シリーズを生み出した任天堂のゲームデザイナーは？", "宮本茂", "横井軍平", "岩田聡", "桜井政博"],
+      ["「NARUTO」の主人公・うずまきナルトの夢は？", "火影になること", "忍界大戦に勝つこと", "最強の剣士になること", "海賊王になること"],
+      ["「ONE PIECE」の作者は？", "尾田栄一郎", "岸本斉史", "久保帯人", "堀越耕平"],
+      ["「進撃の巨人」の作者は？", "諫山創", "荒川弘", "大高忍", "石田スイ"],
+      ["落ちものパズル「テトリス」が生まれた国は？", "ソビエト連邦（ロシア）", "日本", "アメリカ", "イギリス"],
+      ["「ドラゴンクエスト」の呪文「ザキ」の効果は？", "相手を即死させる", "相手を眠らせる", "味方を回復する", "味方を守る"],
+      ["「ガンダム」シリーズの生みの親として知られるのは？", "富野由悠季", "宮崎駿", "庵野秀明", "押井守"],
+      ["「ドラゴンクエスト」の呪文「ルーラ」の効果は？", "行ったことのある町へ瞬間移動する", "敵を眠らせる", "HPを回復する", "敵の守備力を下げる"],
+      ["「ポケットモンスター」で、ミュウツーは何から作られたポケモン？", "ミュウ", "ピカチュウ", "ルギア", "ミュウツー自身"],
     ],
 
     スポーツ: [
@@ -3335,6 +3583,26 @@ window.MONSTER_FIT = {
       ["アーチェリーで矢を放つために使う道具は？", "弓", "槍", "ラケット", "クラブ"],
       ["フィギュアスケートで、片足で滑走しながらもう片方の足を後ろに高く上げる姿勢は？", "スパイラル", "スピン", "アクセル", "フリップ"],
       ["野球で、バッターがボール球を4つ選んで一塁へ進むことを何という？", "四球(フォアボール)", "三振", "死球", "敬遠のみ"],
+      ["サッカーで、試合中に1チームがフィールドに出られる人数は？", "11人", "9人", "10人", "12人"],
+      ["野球で、アウトが何個になると攻守交代する？", "3つ", "2つ", "4つ", "5つ"],
+      ["次のうち、日本のプロ野球セ・リーグに所属する球団は？", "阪神タイガース", "福岡ソフトバンクホークス", "北海道日本ハムファイターズ", "東北楽天ゴールデンイーグルス"],
+      ["プロ野球で、1シーズン最多勝利投手に贈られる賞は？", "最多勝", "沢村賞", "首位打者", "最優秀救援"],
+      ["フィギュアスケートで、空中で3回転半まわるジャンプは？", "トリプルアクセル", "トリプルルッツ", "トリプルループ", "クワッドサルコウ"],
+      ["水泳の「個人メドレー」の泳法の順番は？", "バタフライ→背泳ぎ→平泳ぎ→自由形", "背泳ぎ→バタフライ→自由形→平泳ぎ", "平泳ぎ→自由形→背泳ぎ→バタフライ", "自由形→平泳ぎ→バタフライ→背泳ぎ"],
+      ["野球で、投手が打者を3人で終わらせることを何という？", "三者凡退", "完封", "サヨナラ", "ノックアウト"],
+      ["卓球のボールの色は、公式戦ではふつう何色？", "白かオレンジ", "赤", "青", "黒"],
+      ["野球で、ピッチャーズプレートからホームベースまでの距離は？", "18.44m", "15m", "20m", "25m"],
+      ["柔道で、初心者がしめる帯の色は？", "白", "黒", "赤", "青"],
+      ["柔道の創始者は？", "嘉納治五郎", "力道山", "宮本武蔵", "塚原卜伝"],
+      ["お正月に行われる、大学駅伝の「箱根駅伝」は何区間？", "10区間", "8区間", "12区間", "5区間"],
+      ["ゴルフの1ラウンドは、ふつう何ホール？", "18ホール", "9ホール", "12ホール", "24ホール"],
+      ["高校野球の春の全国大会は、何という名前でよばれる？", "選抜（センバツ）", "夏の甲子園", "国体", "インターハイ"],
+      ["野球で、一塁・二塁・三塁・ホームを結ぶ形は？", "ダイヤモンド", "スクエア", "サークル", "トライアングル"],
+      ["相撲の力士が、取り組みの前に土俵にまくものは？", "塩", "砂", "米", "水"],
+      ["競馬の牡馬三冠は、皐月賞、日本ダービーと、あとひとつは？", "菊花賞", "天皇賞", "有馬記念", "桜花賞"],
+      ["バレーボールで、ふつうの1セットは何点先取（最終セット以外）？", "25点", "15点", "21点", "30点"],
+      ["卓球のボールの直径は？", "40mm", "20mm", "60mm", "80mm"],
+      ["ラグビーW杯2019日本大会で、日本代表が初めて進んだのは？", "決勝トーナメント（ベスト8）", "決勝", "3位決定戦", "準決勝"],
     ],
 
     芸能: [
@@ -3453,6 +3721,26 @@ window.MONSTER_FIT = {
       ["クラシック音楽で、交響曲を英語で何という？", "Symphony", "Sonata", "Opera", "Concerto"],
       ["写真や映像で、撮影対象を照らす仕事を担当する人は？", "照明スタッフ", "録音スタッフ", "編集スタッフ", "脚本家"],
       ["映画の台詞や場面を書いた設計図にあたるものは？", "脚本", "ポスター", "字幕", "パンフレット"],
+      ["映画「七人の侍」を監督したのは？", "黒澤明", "小津安二郎", "宮崎駿", "北野武"],
+      ["歌舞伎のはじまりをつくったとされる女性は？", "出雲阿国", "世阿弥", "近松門左衛門", "清少納言"],
+      ["落語で、話のしめくくりのオチの部分を何という？", "サゲ", "枕", "高座", "前座"],
+      ["漫画「サザエさん」の作者は？", "長谷川町子", "手塚治虫", "さくらももこ", "藤子・F・不二雄"],
+      ["「NHK紅白歌合戦」が放送されるのは？", "12月31日", "12月24日", "1月1日", "12月30日"],
+      ["映画「千と千尋の神隠し」の監督は？", "宮崎駿", "高畑勲", "庵野秀明", "押井守"],
+      ["アニメ映画「風の谷のナウシカ」の監督は？", "宮崎駿", "高畑勲", "庵野秀明", "押井守"],
+      ["「スーパーマリオブラザーズ」のテーマ曲を作曲した人物は？", "近藤浩治", "すぎやまこういち", "植松伸夫", "光田康典"],
+      ["「世界の北野」と呼ばれる映画監督は？", "北野武", "黒澤明", "小津安二郎", "是枝裕和"],
+      ["「タイタニック」のヒロインを演じた女優は？", "ケイト・ウィンスレット", "ジュリア・ロバーツ", "アン・ハサウェイ", "ナタリー・ポートマン"],
+      ["「千と千尋の神隠し」の音楽を担当した作曲家は？", "久石譲", "坂本龍一", "すぎやまこういち", "宇多田ヒカル"],
+      ["映画「ゴジラ」の音楽を作曲した人物は？", "伊福部昭", "久石譲", "武満徹", "坂本龍一"],
+      ["ディズニー初の長編アニメ映画は？", "白雪姫", "シンデレラ", "ピノキオ", "バンビ"],
+      ["ピクサー初の長編アニメ映画は？", "トイ・ストーリー", "モンスターズ・インク", "ファインディング・ニモ", "カーズ"],
+      ["画家ピカソの出身国は？", "スペイン", "フランス", "イタリア", "ドイツ"],
+      ["手塚治虫の代表作で、「不死鳥」を題材にした作品は？", "火の鳥", "ブラック・ジャック", "リボンの騎士", "三つ目がとおる"],
+      ["「天空の城ラピュタ」で、空に浮かんでいる島の名前は？", "ラピュタ", "ガリバー", "ユートピア", "アトランティス"],
+      ["ロックバンド「ビートルズ」が解散した年は？", "1970年", "1960年", "1980年", "1990年"],
+      ["日本の伝統芸能「狂言」は、おもにどんな演目？", "おかしみのある劇", "悲しい武将の話", "歌と踊りのみ", "人形劇"],
+      ["映画「おくりびと」が、2009年に受賞したアカデミー賞は？", "外国語映画賞", "作品賞", "主演男優賞", "監督賞"],
     ],
 
     ライフスタイル: [
@@ -3571,6 +3859,26 @@ window.MONSTER_FIT = {
       ["火災が発生したとき、煙を吸わないように避難するときの基本姿勢は？", "姿勢を低くして口と鼻をハンカチなどで覆う", "姿勢を高くして走る", "エレベーターで降りる", "窓をすべて開けて待つ"],
       ["電気を使わないときにコンセントから抜くことで減らせるものは？", "待機電力", "水道料金", "通信速度", "室温"],
       ["靴の左右を見分けるときに確認する部分は？", "つま先の形や内側のふくらみ", "靴底の色だけ", "ひもの長さだけ", "かかとの高さだけ"],
+      ["冬至にかぼちゃを食べたり、ゆず湯に入ったりするのは、何を願うため？", "無病息災", "商売繁盛", "学業成就", "安産祈願"],
+      ["節分に「鬼は外」と豆をまくのは、何のため？", "邪気（鬼）をはらうため", "豊作をいのるため", "雨を降らせるため", "年齢を数えるため"],
+      ["期限をすぎても、すぐには食べられなくならない「おいしく食べられる期限」は？", "賞味期限", "消費期限", "製造期限", "保存期限"],
+      ["端午の節句（5月5日）に飾るものは？", "こいのぼり", "ひな人形", "笹飾り", "門松"],
+      ["食べ物の「カロリー」は、何の量をあらわしている？", "エネルギー", "重さ", "温度", "塩分"],
+      ["和食の「一汁三菜」の「一汁」にあたるものは？", "みそ汁などの汁物", "ごはん", "漬物", "メインのおかず"],
+      ["家庭でブレーカーが落ちる、おもな原因は？", "一度に電気を使いすぎた", "電球が切れた", "天気が悪い", "コンセントが古い"],
+      ["「お盆」に、ご先祖さまの霊を迎えるために焚く火を何という？", "迎え火", "送り火", "かがり火", "花火"],
+      ["お米の「新米」が出回るのは、おもにいつ？", "秋", "春", "夏", "冬"],
+      ["洋服の洗濯表示で、「30」の数字は何をあらわす？", "水温の上限30度", "洗う回数", "洗剤の量", "乾燥時間"],
+      ["「立春」は、おもに何月ごろ？", "2月", "4月", "8月", "11月"],
+      ["ひなまつり（3月3日）に飾る花は？", "桃", "桜", "梅", "ひまわり"],
+      ["七五三が行われる日は？", "11月15日", "3月3日", "5月5日", "1月7日"],
+      ["春や秋のお彼岸にお供えする、あんこで包んだお菓子は？", "おはぎ（ぼたもち）", "たいやき", "みたらし団子", "どら焼き"],
+      ["十五夜（お月見）にお供えするものは？", "月見団子とススキ", "桜もちと桃", "ちまきと菖蒲", "おせち"],
+      ["端午の節句に食べる、葉にくるんだお菓子は？", "柏もち", "桜もち", "草もち", "くずもち"],
+      ["節分に食べる、巻き寿司は？", "恵方巻", "ちらしずし", "いなりずし", "てまりずし"],
+      ["3月14日の「ホワイトデー」は、何のお返しの日？", "バレンタインデー", "母の日", "父の日", "誕生日"],
+      ["母の日に贈る花として定番なのは？", "カーネーション", "バラ", "ひまわり", "チューリップ"],
+      ["塩分をとりすぎると、起こりやすい病気は？", "高血圧", "骨折", "近視", "虫歯"],
     ],
 
     パソコン: [
@@ -3686,6 +3994,26 @@ window.MONSTER_FIT = {
       ["音声をデジタルデータに変換する際、一定間隔で測定する処理は？", "サンプリング", "レンダリング", "暗号化", "圧縮展開"],
       ["コンピューターに処理手順を指示する命令の集まりは？", "プログラム", "ハードディスク", "モニター", "周辺機器"],
       ["インターネット上で本人確認を行う操作は？", "認証", "描画", "印刷", "同期"],
+      ["「USB」の「U」は何の略？", "Universal", "Unique", "United", "Ultra"],
+      ["Windowsで、直前の操作を「元に戻す」ショートカットキーは？", "Ctrl + Z", "Ctrl + V", "Ctrl + X", "Ctrl + A"],
+      ["画面全体を画像として保存するときに使うキーは？", "PrintScreen", "Esc", "Home", "Insert"],
+      ["Wi-Fiなどでインターネットにつなぐときに、通信を中継する機器は？", "ルーター", "プリンター", "スキャナー", "モニター"],
+      ["「CPU」の役割は？", "計算や処理をおこなう頭脳", "画面に映像を映す", "電気をためておく", "音を出す"],
+      ["「HTML」は、何をつくるための言語？", "Webページ", "ゲームのBGM", "表計算", "ウイルス対策"],
+      ["ファイルを「ZIP」にするおもな目的は？", "まとめて小さくする", "ウイルスを探す", "画面を録画する", "音を大きくする"],
+      ["Windowsで、文字を大文字で入力するときに押しながら打つキーは？", "Shift", "Ctrl", "Alt", "Tab"],
+      ["Webサイトを見るときに使うソフトの総称は？", "ブラウザ", "エディタ", "ドライバ", "ファイラ"],
+      ["プログラミングで、同じ処理を何度もくりかえす仕組みは？", "ループ", "条件分岐", "変数", "関数"],
+      ["Windowsで、「保存」をするショートカットキーは？", "Ctrl + S", "Ctrl + P", "Ctrl + N", "Ctrl + Q"],
+      ["Windowsで、「すべて選択」をするショートカットキーは？", "Ctrl + A", "Ctrl + E", "Ctrl + D", "Ctrl + L"],
+      ["文字を「検索」するショートカットキーは？", "Ctrl + F", "Ctrl + G", "Ctrl + H", "Ctrl + K"],
+      ["近距離で機器どうしを無線でつなぐ技術「Bluetooth」は、おもに何に使う？", "イヤホンやマウスの接続", "テレビ放送", "電話の交換", "電気の送電"],
+      ["「QRコード」を開発した、日本の会社は？", "デンソーウェーブ", "ソニー", "任天堂", "パナソニック"],
+      ["「PDF」を開発した会社は？", "Adobe", "Microsoft", "Google", "Apple"],
+      ["「HDD」は、何を使ってデータを記録している？", "回転する磁気ディスク", "フラッシュメモリ", "光ディスク", "紙テープ"],
+      ["「クラウド」サービスとは、データをどこに保存する仕組み？", "インターネット上のサーバー", "自分のパソコンだけ", "USBメモリだけ", "紙"],
+      ["インターネットに接続するサービスを提供する会社を何という？", "プロバイダ", "ブラウザ", "ドライバ", "メーカー"],
+      ["「ブラウザ」で、前に見たページに戻るボタンは？", "戻るボタン", "更新ボタン", "ホームボタン", "お気に入りボタン"],
     ],
   };
 
@@ -3758,6 +4086,26 @@ window.MONSTER_FIT = {
       ["英語で「さようなら」を表すあいさつは？", "goodbye", "hello", "welcome", "please"],
       ["「口」を3つ集めてできている漢字は？", "品", "晶", "森", "虫"],
       ["「日」を3つ集めてできている漢字は？", "晶", "品", "明", "星"],
+      ["日本の国旗の中心にえがかれているものは？", "赤い丸（太陽）", "桜", "星", "富士山"],
+      ["ことわざ「七転び八○○」の○○に入る言葉は？", "起き", "倒れ", "笑い", "泣き"],
+      ["日本で一番大きい島は？", "本州", "北海道", "九州", "四国"],
+      ["七夕で、おりひめとひこぼしが会えるとされる日は？", "7月7日", "3月3日", "5月5日", "12月25日"],
+      ["日本の「県」の中で、名前に「島」がつくのは？", "広島県", "宮城県", "長野県", "石川県"],
+      ["「春」に咲く、日本を代表する花といえば？", "桜", "ひまわり", "コスモス", "つばき"],
+      ["「いろは」の「い」の次の音は？", "ろ", "は", "に", "ほ"],
+      ["日本の首都・東京にある、高さ634メートルの電波塔は？", "東京スカイツリー", "東京タワー", "通天閣", "名古屋テレビ塔"],
+      ["「桃太郎」が持っていった食べ物は？", "きびだんご", "おにぎり", "おまんじゅう", "せんべい"],
+      ["漢字「水」の読み方（訓読み）は？", "みず", "ひ", "き", "かぜ"],
+      ["昔話「かさじぞう」で、おじいさんがかさをかぶせたのは？", "お地蔵さま", "仏像", "神さま", "石灯籠"],
+      ["昔話「さるかに合戦」で、かにをだましたのは？", "さる", "きつね", "たぬき", "うさぎ"],
+      ["みかんの生産が多いことで有名な県は？", "和歌山県", "青森県", "山形県", "栃木県"],
+      ["昔話「一寸法師」が、鬼と戦うときに使った武器は？", "針の刀", "弓矢", "こん棒", "やり"],
+      ["日本の国歌は？", "君が代", "荒城の月", "故郷", "さくらさくら"],
+      ["「五十音」で「わ」の次にくる文字は？", "を", "ん", "ら", "や"],
+      ["ことわざ「果報は○○て待て」の○○は？", "寝", "走っ", "食べ", "泣い"],
+      ["富士山がまたがっている2つの県は？", "静岡県と山梨県", "長野県と岐阜県", "神奈川県と東京都", "山梨県と長野県"],
+      ["日本の通貨「円」の紙幣のうち、いちばん金額が大きいのは？", "一万円札", "五千円札", "千円札", "二千円札"],
+      ["日本で「桜前線」が最初に咲き始めるのは、おもにどの地方？", "南の地方", "北の地方", "東の地方", "西の地方"],
     ],
     理系学問: [
       ["1メートルは何センチメートル？", "100cm", "10cm", "1000cm", "50cm"],
@@ -3820,6 +4168,26 @@ window.MONSTER_FIT = {
       ["1000グラムは何キログラム？", "1kg", "10kg", "100kg", "0.1kg"],
       ["水が川から海へ流れ、太陽に温められて空へのぼり雲になる全体のめぐりを何という？", "水の循環", "光合成", "公転", "呼吸"],
       ["虹の7色のうち、いちばん外側(上側)に見える色は？", "赤", "紫", "青", "緑"],
+      ["「9×9」の答えは？", "81", "72", "99", "91"],
+      ["太陽は東からのぼると、どちらにしずむ？", "西", "南", "北", "東"],
+      ["水がこおって氷になる温度（セ氏）は？", "0度", "10度", "100度", "−10度"],
+      ["赤っぽく見える、地球のとなりの惑星は？", "火星", "金星", "木星", "水星"],
+      ["動物のうち、卵ではなく赤ちゃんを産むのは？", "クジラ", "ペンギン", "カエル", "ワニ"],
+      ["アサガオの種をまくと、はじめに出てくる葉は？", "子葉（ふたば）", "本葉", "つる", "根"],
+      ["お湯をわかすと、水は何になる？", "水蒸気", "氷", "砂糖", "塩"],
+      ["夜空にかがやく、地球の衛星は？", "月", "太陽", "金星", "北極星"],
+      ["電池につなぐと光る、豆電球の中の部品は？", "フィラメント", "ゴム", "磁石", "砂"],
+      ["1年のうちで、いちばん寒い季節は？", "冬", "夏", "春", "秋"],
+      ["地球は、何のまわりをまわっている？", "太陽", "月", "火星", "北極星"],
+      ["雨は、何から降ってくる？", "雲", "霧", "虹", "風"],
+      ["ひまわりは、花をどちらに向ける？", "太陽の方", "月の方", "地面の方", "北の方"],
+      ["100円玉が10枚で、いくら？", "1000円", "100円", "500円", "10000円"],
+      ["三角形の辺の数は？", "3本", "4本", "5本", "6本"],
+      ["カブトムシの成虫が好んでなめる食べ物は？", "樹液", "草の葉", "土", "水"],
+      ["雷で、ピカッと光ってからゴロゴロと音が遅れて聞こえるのはなぜ？", "光のほうが音より速いから", "音のほうが光より速いから", "雲が音をさえぎるから", "風にじゃまされるから"],
+      ["アゲハチョウの幼虫は、何になる？", "さなぎ", "たまご", "成虫の羽", "蚕"],
+      ["氷がとけると、何になる？", "水", "砂", "水蒸気", "雪"],
+      ["晴れた日の昼間、空が青く見えるのは何のため？", "太陽の光が空気で散らばるから", "海の色が映るから", "雲が青いから", "月の光のため"],
     ],
     "アニメ＆ゲーム": [
       ["「となりのトトロ」で、メイのお姉さんの名前は？", "サツキ", "ミカ", "ハル", "ナナ"],
@@ -3882,6 +4250,26 @@ window.MONSTER_FIT = {
       ["「太鼓の達人」で、画面の右から左へ流れてくる丸い印を何という？", "音符(ドン・カッ)", "コイン", "スター", "ハート"],
       ["ゲームで、ステージの最後に登場する強い敵を何という？", "ボス(ボスキャラ)", "村人", "商人", "仲間"],
       ["ゲームで、途中の記録を残しておくことを何という？", "セーブ", "リセット", "クリア", "スタート"],
+      ["「スーパーマリオ」で、マリオのぼうしの色は？", "赤", "青", "緑", "黄"],
+      ["「それいけ！アンパンマン」で、アンパンマンのライバルといえば？", "ばいきんまん", "カレーパンマン", "しょくぱんまん", "ジャムおじさん"],
+      ["「ちびまる子ちゃん」のまる子の友達で、いつも「たまちゃん」と呼ばれるのは？", "穂波たまえ", "野口笑子", "花輪和彦", "永沢君男"],
+      ["「ドラえもん」の「どこでもドア」でできることは？", "行きたい場所へすぐ行ける", "空を飛べる", "透明になれる", "時間をもどせる"],
+      ["「ドラえもん」の「タケコプター」は、何をする道具？", "空を飛ぶ", "時間を止める", "壁をすり抜ける", "水中で息をする"],
+      ["「アンパンマン」の新しい顔を焼いてくれる人は？", "ジャムおじさん", "ばいきんまん", "しょくぱんまん", "チーズ"],
+      ["「しまじろう」は何の動物？", "とら", "ねこ", "くま", "ぶた"],
+      ["「ポケモン」のモンスターボールは、赤と何色？", "白", "青", "黄", "緑"],
+      ["「シンデレラ」が魔法で乗ることになった乗り物は？", "かぼちゃの馬車", "ガラスの船", "金色の自動車", "白いそり"],
+      ["「ドラえもん」の耳がなくなった原因は？", "ネズミにかじられた", "けんかで切れた", "生まれつきない", "事故でとれた"],
+      ["「ヒトカゲ」のしっぽの先で、燃えているものは？", "炎", "氷", "葉っぱ", "電気"],
+      ["映画「魔女の宅急便」の主人公の名前は？", "キキ", "ナウシカ", "千尋", "サツキ"],
+      ["映画「ファインディング・ニモ」で、ニモは何の魚？", "カクレクマノミ", "キンギョ", "メダカ", "ドジョウ"],
+      ["映画「ミニオンズ」のキャラクター、ミニオンの体の色は？", "黄色", "青", "緑", "赤"],
+      ["漫画「ピーナッツ」に出てくる、スヌーピーの犬種は？", "ビーグル", "ダックスフント", "チワワ", "柴犬"],
+      ["「ドラえもん」のからだの色は？", "青", "赤", "黄", "緑"],
+      ["「ONE PIECE」のルフィがいつもかぶっているぼうしは？", "麦わらぼうし", "カウボーイハット", "ニット帽", "シルクハット"],
+      ["「トムとジェリー」で、トムは何の動物？", "ねこ", "いぬ", "ねずみ", "うさぎ"],
+      ["「クレヨンしんちゃん」で、しんちゃんが大好きなお菓子は？", "チョコビ", "ポッキー", "うまい棒", "ベビースター"],
+      ["「スーパーマリオ」で、スーパーキノコを取るとマリオはどうなる？", "大きくなる", "小さくなる", "空を飛ぶ", "透明になる"],
     ],
     スポーツ: [
       ["水泳の「クロール・平泳ぎ・背泳ぎ」と並ぶ4つ目の泳ぎ方は？", "バタフライ", "犬かき", "横泳ぎ", "立ち泳ぎ"],
@@ -3944,6 +4332,26 @@ window.MONSTER_FIT = {
       ["体操競技で、床に敷いて前転や後転をする柔らかい用具は？", "マット", "鉄棒", "とび箱", "平均台"],
       ["運動会の徒競走で、ゴールのときに胸で切るテープを何という？", "ゴールテープ", "セロハンテープ", "ガムテープ", "マスキングテープ"],
       ["スポーツの試合で、両チームの得点が同じまま終わることを何という？", "引き分け(ドロー)", "コールド勝ち", "不戦勝", "反則負け"],
+      ["水泳の4つの泳法にふくまれないのは？", "犬かき", "クロール", "平泳ぎ", "バタフライ"],
+      ["野球で、ボールを打つときに使う道具は？", "バット", "ラケット", "スティック", "クラブ"],
+      ["柔道や空手の選手が着る衣服は？", "道着", "水着", "ジャージ", "ユニフォーム"],
+      ["サッカーで、反則をした選手に出される退場の合図は？", "レッドカード", "イエローカード", "ブルーカード", "グリーンカード"],
+      ["相撲で、土俵の外に出たらどうなる？", "負け", "勝ち", "引き分け", "やり直し"],
+      ["運動会でよく行う、2チームで綱を引き合う種目は？", "綱引き", "玉入れ", "大玉転がし", "騎馬戦"],
+      ["バスケットボールで、ボールを入れる輪っかのことを何という？", "リング（バスケット）", "ゴール枠", "ネット枠", "ホール"],
+      ["柔道で、投げ技が決まると何がもらえる？", "一本", "ストライク", "ゴール", "ホームラン"],
+      ["オリンピックで、3位の選手に贈られるメダルは？", "銅メダル", "金メダル", "鉄メダル", "プラチナメダル"],
+      ["駅伝で、走者から走者へ受けわたすものは？", "たすき", "バトン", "はちまき", "旗"],
+      ["鉄棒の運動のひとつで、足を振り上げて体を回転させるのは？", "逆上がり", "前転", "側転", "腕立て"],
+      ["ゴルフで、ボールを一打でカップに入れることを何という？", "ホール・イン・ワン", "バーディー", "パー", "ボギー"],
+      ["学校のリレーで、1チームのふつうの人数は？", "4人", "2人", "6人", "8人"],
+      ["プールの泳ぎで、うつぶせで水をかいて進む、いちばん基本的な泳ぎ方は？", "クロール", "背泳ぎ", "平泳ぎ", "バタフライ"],
+      ["野球で、バッターが打ったあとに走る先は？", "一塁", "ホーム", "三塁", "ベンチ"],
+      ["縄を回しながらジャンプする運動は？", "縄跳び", "フラフープ", "鉄棒", "マット運動"],
+      ["雪の山で、板に乗ってすべる冬のスポーツは？", "スノーボード", "サーフィン", "カヌー", "ヨット"],
+      ["ドッジボールで、ボールをどうする？", "相手にぶつける", "ボールをかかえて走る", "ネット越しに打つ", "手を使わず運ぶ"],
+      ["ハードル走は、何をしながら走る？", "ハードルを飛び越える", "ボールをける", "バトンを渡す", "ボールをつく"],
+      ["サッカーで、キーパー以外が手でボールにさわると何という反則？", "ハンド", "オフサイド", "スローイン", "コーナー"],
     ],
     芸能: [
       ["顔にくま取りという化粧をして演じる日本の伝統芸能は？", "歌舞伎", "能", "落語", "狂言"],
@@ -4006,6 +4414,26 @@ window.MONSTER_FIT = {
       ["日本の昔話やアニメでも親しまれる「一休さん」は、どんなお寺の子ども？", "お坊さん(小僧)", "お侍さん", "お医者さん", "大工さん"],
       ["音楽で、歌や演奏の始まりに合わせて「1、2、3、4」と数える速さの基準は？", "リズム(拍子)", "歌詞", "題名", "ジャケット"],
       ["ステージで踊りを披露する人のことを何という？", "ダンサー", "作家", "カメラマン", "編集者"],
+      ["サンタクロースが着ている服の色は？", "赤", "青", "緑", "黒"],
+      ["映画「アナと雪の女王」で、大ヒットした主題歌は？", "レット・イット・ゴー", "ホール・ニュー・ワールド", "リメンバー・ミー", "ビビディ・バビディ・ブー"],
+      ["学校で習う楽器「リコーダー」は、何の仲間？", "笛（管楽器）", "弦楽器", "打楽器", "鍵盤楽器"],
+      ["「ウルトラマン」が、地球で活動できる時間は？", "3分", "1分", "10分", "30分"],
+      ["ディズニーのキャラクターで、水兵服を着たアヒルは？", "ドナルドダック", "グーフィー", "プルート", "ミッキーマウス"],
+      ["「ドレミの歌」が出てくる有名な映画は？", "サウンド・オブ・ミュージック", "メリー・ポピンズ", "マイ・フェア・レディ", "オズの魔法使い"],
+      ["「ピカチュウ」の声優さんの名前は？", "大谷育江", "林原めぐみ", "田中真弓", "野沢雅子"],
+      ["お笑いで、2人が漫才をするコンビのことを何という？", "コンビ", "トリオ", "ピン芸人", "一座"],
+      ["クリスマスの定番の歌「ジングル・ベル」で、そりを引くのは？", "馬", "犬", "ラクダ", "牛"],
+      ["「アンパンマンマーチ」の歌詞で、「何のために生まれて」のあとに続くのは？", "何をして生きるのか", "どこで生きるのか", "誰と生きるのか", "いつまで生きるのか"],
+      ["「シンデレラ」がはいた靴は、何でできている？", "ガラス", "金", "木", "ゴム"],
+      ["「白雪姫」に出てくる小人は何人？", "7人", "5人", "3人", "10人"],
+      ["「ウクレレ」の弦は、ふつう何本？", "4本", "6本", "3本", "8本"],
+      ["サンタクロースのそりを引くのは？", "トナカイ", "馬", "犬", "ラクダ"],
+      ["「トランペット」は、何の仲間の楽器？", "管楽器", "弦楽器", "打楽器", "鍵盤楽器"],
+      ["「ミッキーマウス」の耳の形は？", "丸い", "三角", "四角", "細長い"],
+      ["アニメ「ドラえもん」の作者のペンネームは？", "藤子・F・不二雄", "手塚治虫", "赤塚不二夫", "鳥山明"],
+      ["「人魚姫」をもとにしたディズニー映画のヒロインの名前は？", "アリエル", "ジャスミン", "ベル", "オーロラ"],
+      ["誕生日ケーキにのせて、火をつけて願いごとをするものは？", "ろうそく", "花火", "はし", "キャンディ"],
+      ["ピアノの黒い鍵盤は、白い鍵盤にくらべて音が？", "半音ちがう", "同じ", "とても大きい", "出ない"],
     ],
     ライフスタイル: [
       ["虫歯を防ぐために、毎日するとよいことは？", "歯みがき", "夜ふかし", "甘いものを食べる", "ジュースを飲む"],
@@ -4068,6 +4496,26 @@ window.MONSTER_FIT = {
       ["2月3日ごろに行われる、豆まきをする行事は？", "節分", "ひな祭り", "七夕", "お月見"],
       ["秋に満月をながめてお団子をおそなえする行事は？", "お月見(十五夜)", "お花見", "七草がゆ", "豆まき"],
       ["家の中で、家族みんなが集まってくつろいだりテレビを見たりする部屋は？", "リビング(居間)", "玄関", "押し入れ", "物置"],
+      ["手洗いのとき、石けんでこすって洗う時間のめやすは？", "20秒", "3秒", "1分", "5分"],
+      ["横断歩道の信号が「青」のときは？", "わたってよい", "止まる", "走ってはいけない", "しゃがむ"],
+      ["節分で、鬼にむかって投げるものは？", "豆", "もち", "お米", "だんご"],
+      ["夏の暑い日にとくに気をつけたい病気は？", "熱中症", "骨折", "虫歯", "近視"],
+      ["お米をたく家電は？", "炊飯器", "冷蔵庫", "洗濯機", "掃除機"],
+      ["牛乳は、何から作られる？", "牛のお乳", "大豆", "お米", "とうもろこし"],
+      ["野菜や肉を切るときに使う道具は？", "包丁", "しゃもじ", "おたま", "フライ返し"],
+      ["1日のはじまりにするあいさつは？", "おはよう", "こんばんは", "さようなら", "おやすみ"],
+      ["雨の日にさす道具は？", "かさ", "うちわ", "ぼうし", "マスク"],
+      ["お風呂に入るのは、からだを何にするため？", "きれいにする", "つめたくする", "重くする", "かわかす"],
+      ["「ただいま」と言うのは、どんなとき？", "家に帰ったとき", "家を出るとき", "寝るとき", "ごはんを食べるとき"],
+      ["カレーライスによく入っている野菜は？", "じゃがいも・にんじん・たまねぎ", "きゅうり・ナス・ピーマン", "ほうれん草・ねぎ・しょうが", "キャベツ・レタス・白菜"],
+      ["おにぎりのまわりに巻くことが多いものは？", "海苔", "昆布", "わかめ", "レタス"],
+      ["みそ汁の味つけに使うものは？", "みそ", "しょうゆ", "ソース", "ケチャップ"],
+      ["パンの原料としていちばん多く使われるのは？", "小麦粉", "米粉", "そば粉", "片栗粉"],
+      ["ポテトチップスの原料は？", "じゃがいも", "さつまいも", "とうもろこし", "小麦"],
+      ["歯みがきは、おもにいつするとよい？", "食後", "食前だけ", "寝ているとき", "お風呂の中だけ"],
+      ["洗濯物をほすときに使う道具は？", "ハンガー", "フライパン", "なべ", "やかん"],
+      ["かぜをひかないために、外から帰ったらすることは？", "手洗い・うがい", "ジャンプ", "日光浴", "昼寝"],
+      ["食事のあと、「ごちそうさまでした」と言うのは何に感謝するため？", "食べ物と作った人", "先生", "天気", "テレビ"],
     ],
     パソコン: [
       ["マウスのボタンをすばやく2回押すことを何という？", "ダブルクリック", "ドラッグ", "スクロール", "ホバー"],
@@ -4130,6 +4578,26 @@ window.MONSTER_FIT = {
       ["インターネットで動画を見るとき、一時的に止めるボタンのマークは？", "縦線2本(❚❚)", "右向き三角(▶)", "丸(●)", "バツ(×)"],
       ["インターネットで動画を再生するときに押すボタンのマークは？", "右向き三角(▶)", "縦線2本(❚❚)", "四角(■)", "矢印ぐるぐる"],
       ["パソコンの「デスクトップ」とは、起動したときに最初に表示される何のこと？", "基本の作業画面", "キーボードの裏側", "電源コード", "マウスの底面"],
+      ["Windowsで、選んだものを「コピー」するショートカットキーは？", "Ctrl + C", "Ctrl + V", "Ctrl + X", "Ctrl + Z"],
+      ["Windowsで、電源を切るときの操作は？", "シャットダウン", "ログイン", "ダウンロード", "フォーマット"],
+      ["キーボードで、入力の確定や改行に使うキーは？", "Enter", "Esc", "Shift", "Caps Lock"],
+      ["パスワードとして、いちばん安全なのは？", "長くて複雑なもの", "誕生日", "1234", "自分の名前"],
+      ["「YouTube」は、どんなサービス？", "動画の投稿・視聴", "地図の表示", "天気予報", "辞書"],
+      ["画面のいちばん下にある、起動中のアプリが並ぶ帯は？", "タスクバー", "メニューバー", "ツールバー", "ステータスバー"],
+      ["インターネットで検索するときに使うサービスは？", "検索エンジン", "電卓", "メモ帳", "時計"],
+      ["「パスワード」を人に教えてはいけないのはなぜ？", "勝手に使われてしまうから", "忘れるから", "長いから", "楽しくないから"],
+      ["パソコンで音を聞くときにつなぐ機器は？", "ヘッドホン", "マウス", "プリンター", "スキャナー"],
+      ["スマホの充電に使うケーブルの形で、現在主流なのは？", "USB Type-C", "VGA", "DVI", "S端子"],
+      ["「コピペ」とは、何の略？", "コピーアンドペースト", "コンピューターペーパー", "コピーアンドプリント", "コンピュータペット"],
+      ["「スクリーンショット」とは？", "画面を画像として保存すること", "画面を暗くすること", "画面を拡大すること", "画面を消すこと"],
+      ["「ログイン」とは？", "IDやパスワードで利用を始めること", "ファイルを消すこと", "画面を閉じること", "音を消すこと"],
+      ["ファイル名の最後が「.txt」のファイルは？", "テキストファイル", "画像ファイル", "音楽ファイル", "動画ファイル"],
+      ["ノートパソコンが、コンセントなしでも動くのは何のおかげ？", "バッテリー", "ファン", "マウス", "キーボード"],
+      ["スマホやパソコンの画面を指でさわって操作することを何という？", "タッチ操作", "音声操作", "念力操作", "足操作"],
+      ["パソコンを使いすぎたとき、目を守るためにすることは？", "ときどき休む", "画面に近づく", "部屋を暗くする", "連続で何時間も使う"],
+      ["インターネットで、見たいページの場所を示すものは？", "URL", "ID", "PIN", "CPU"],
+      ["「キーボード」の「Delete」キーは、おもに何をする？", "文字を消す", "文字を大きくする", "画面を閉じる", "音を出す"],
+      ["パソコンの「ごみ箱」から削除すると、ふつうどうなる？", "ファイルが消える", "画面が暗くなる", "音が出る", "印刷される"],
     ],
   };
 
@@ -4195,6 +4663,26 @@ window.MONSTER_FIT = {
       ["日本で一番長い川は信濃川ですが、流域面積が日本一広い川は？", "利根川", "信濃川", "石狩川", "北上川"],
       ["日本の排他的経済水域(EEZ)の面積は、世界でおよそ何番目？", "6位前後(世界有数の広さ)", "1位", "30位", "100位以下"],
       ["日本国憲法で、内閣総理大臣を指名するのはどこ？", "国会", "最高裁判所", "天皇", "国民投票"],
+      ["「土佐日記」を書いたとされる人物は？", "紀貫之", "菅原道真", "在原業平", "藤原道綱母"],
+      ["「天は人の上に人を造らず」で始まる、福沢諭吉の著作は？", "学問のすゝめ", "西洋事情", "文明論之概略", "福翁自伝"],
+      ["室町時代、京都を焼け野原にした「応仁の乱」が始まった年は？", "1467年", "1333年", "1582年", "1600年"],
+      ["平等院鳳凰堂を建てたのは？", "藤原頼通", "藤原道長", "平清盛", "足利義満"],
+      ["古代ローマの初代皇帝は？", "アウグストゥス", "カエサル", "ネロ", "トラヤヌス"],
+      ["第一次世界大戦のあと、1919年に結ばれた講和条約は？", "ベルサイユ条約", "サンフランシスコ平和条約", "ポーツマス条約", "ウィーン条約"],
+      ["江戸時代、「奥の細道」の旅に同行した、松尾芭蕉の弟子は？", "河合曽良", "与謝蕪村", "小林一茶", "向井去来"],
+      ["「方丈記」「平家物語」などが書かれた時代は？", "鎌倉時代", "平安時代", "室町時代", "江戸時代"],
+      ["地中海に面していない国は？", "スイス", "スペイン", "イタリア", "ギリシャ"],
+      ["中国の歴史で、秦の始皇帝が行ったことは？", "万里の長城の建設・文字の統一", "科挙の開始", "遣唐使の派遣", "大運河の完成"],
+      ["「古事記」の内容を暗唱したとされる人物は？", "稗田阿礼", "太安万侶", "舎人親王", "柿本人麻呂"],
+      ["701年に制定された、日本の法律のきまりは？", "大宝律令", "養老律令", "十七条の憲法", "墾田永年私財法"],
+      ["1815年、ナポレオンが敗れた戦いは？", "ワーテルローの戦い", "トラファルガーの海戦", "アウステルリッツの戦い", "ライプツィヒの戦い"],
+      ["「資本論」を書いた経済学者は？", "カール・マルクス", "アダム・スミス", "ケインズ", "マックス・ウェーバー"],
+      ["「目には目を」で知られる、古代メソポタミアの法典は？", "ハンムラビ法典", "十戒", "ローマ法大全", "大宝律令"],
+      ["アヘン戦争の結果、清がイギリスにゆずった島は？", "香港島", "台湾", "海南島", "マカオ"],
+      ["794年、都を平安京にうつした天皇は？", "桓武天皇", "天智天皇", "聖武天皇", "天武天皇"],
+      ["1851年に、第1回万国博覧会が開かれた都市は？", "ロンドン", "パリ", "ニューヨーク", "ウィーン"],
+      ["織田信長が使った印判「天下布武」の意味は？", "武力で天下を治める", "天下泰平を祈る", "武士の世をやめる", "天下の商業を栄えさせる"],
+      ["アメリカのリンカーンが「奴隷解放宣言」を出した年は？", "1863年", "1776年", "1789年", "1912年"],
     ],
     理系学問: [
       ["DNAの塩基で、アデニン(A)と対になるのは？", "チミン(T)", "グアニン(G)", "シトシン(C)", "ウラシル(U)"],
@@ -4257,6 +4745,26 @@ window.MONSTER_FIT = {
       ["円周率πの小数点以下第5位までの数字は「3.14159」ですが、第3位までの切り捨ては？", "3.141", "3.142", "3.145", "3.149"],
       ["2の8乗はいくつ？", "256", "128", "512", "64"],
       ["太陽系で、自転の向きが他の多くの惑星と逆向き(東から西)になっている惑星は？", "金星", "火星", "木星", "土星"],
+      ["光の速さは、秒速およそ何km？", "30万km", "3万km", "300万km", "3000km"],
+      ["元素の周期表をつくったロシアの化学者は？", "メンデレーエフ", "ラボアジエ", "ドルトン", "キュリー"],
+      ["人体で最も面積が大きい臓器は？", "皮膚", "肝臓", "肺", "小腸"],
+      ["理論上の最低温度「絶対零度」は、セ氏およそ何度？", "−273度", "−100度", "−373度", "−173度"],
+      ["地球の大気にもっとも多くふくまれる気体は？", "窒素", "酸素", "二酸化炭素", "アルゴン"],
+      ["人間の染色体は何本？", "46本", "23本", "48本", "64本"],
+      ["酸化した銅がもとの銅に戻る化学変化を何という？", "還元", "酸化", "中和", "燃焼"],
+      ["地球の年齢は、およそ何億年？", "46億年", "4.6億年", "460億年", "1億年"],
+      ["「ブラックホール」のまわりで、光さえ抜け出せなくなる境界を何という？", "事象の地平面", "超新星", "惑星状星雲", "中性子"],
+      ["次の気体のうち、空気より軽いものは？", "ヘリウム", "二酸化炭素", "塩素", "酸素"],
+      ["電圧は、電流と何をかけると求められる？（オームの法則）", "抵抗", "電力", "時間", "電荷"],
+      ["ヒトの心臓は、何心房何心室？", "2心房2心室", "1心房1心室", "2心房1心室", "1心房2心室"],
+      ["地球の内部で、外核の状態は？", "液体", "固体", "気体", "プラズマ"],
+      ["鉄が空気中でさびたときにできる主成分は？", "酸化鉄", "硫化鉄", "塩化鉄", "炭酸鉄"],
+      ["太陽の表面温度は、およそ何度？", "約6000度", "約600度", "約6万度", "約600万度"],
+      ["金属の中でもっとも軽い元素は？", "リチウム", "ナトリウム", "アルミニウム", "マグネシウム"],
+      ["16進数の「F」は、10進数でいくつ？", "15", "16", "10", "14"],
+      ["ビタミンB1が不足すると起こる病気は？", "脚気", "壊血病", "夜盲症", "くる病"],
+      ["海の満ち引き（潮汐）が起こる、おもな原因は？", "月と太陽の引力", "風", "地震", "海流"],
+      ["人体でもっとも硬い部分は？", "歯のエナメル質", "骨", "爪", "軟骨"],
     ],
     "アニメ＆ゲーム": [
       ["ファミコン版「スーパーマリオブラザーズ」が発売された年は？", "1985年", "1983年", "1990年", "1980年"],
@@ -4308,7 +4816,7 @@ window.MONSTER_FIT = {
       ["「機動戦士ガンダム」で、地球連邦軍の戦艦ホワイトベースの艦長を務めた人物は？", "ブライト・ノア", "アムロ・レイ", "カイ・シデン", "ハヤト・コバヤシ"],
       ["「新世紀エヴァンゲリオン」で、特務機関NERV(ネルフ)の総司令は？", "碇ゲンドウ", "冬月コウゾウ", "葛城ミサト", "加持リョウジ"],
       ["「風の谷のナウシカ」で、ナウシカが乗るジェット推進の飛行装置は？", "メーヴェ", "ガンシップ", "コルベット", "フラップター"],
-      ["「天空の城ラピュタ」で、ムスカが最後に唱えた滅びの呪文は？", "バルス", "リーテ・ラトバリタ・ウルス", "インドラの矢", "ラピュタ"],
+      ["「天空の城ラピュタ」で、主人公が最後に唱えた滅びの呪文は？", "バルス", "ムスカ", "バノレス", "ラピュタ"],
       ["「千と千尋の神隠し」で、ハクの本当の名前は？", "ニギハヤミコハクヌシ", "カオナシ", "釜爺", "坊"],
       ["「ジョジョの奇妙な冒険」で、第3部以降に登場する超能力の具現化を何という？", "スタンド(幽波紋)", "波紋", "念能力", "悪魔の実"],
       ["「BLEACH」の主人公、黒崎一護が振るう斬魄刀の名前は？", "斬月", "千本桜", "氷輪丸", "鏡花水月"],
@@ -4319,6 +4827,26 @@ window.MONSTER_FIT = {
       ["「ぷよぷよ」シリーズの開発元として知られるかつてのゲーム会社は？", "コンパイル", "ハドソン", "ナムコ", "タイトー"],
       ["「ストリートファイターII」で、ソニックブームやサマーソルトキックを使うアメリカ空軍のキャラは？", "ガイル", "リュウ", "ケン", "バイソン"],
       ["「モンスターハンター」シリーズで、ハンターの狩りをサポートする猫のような獣人族は？", "アイルー", "メラルー", "チャチャ", "ガルク"],
+      ["「ゼルダの伝説」シリーズで、たびたび宿敵として登場する大魔王は？", "ガノンドロフ", "ザント", "ミドナ", "ダークリンク"],
+      ["「ドラゴンクエストIII」の最後に待ちうける大魔王は？", "ゾーマ", "ミルドラース", "デスピサロ", "シドー"],
+      ["「ストリートファイター」シリーズで、「波動拳」を使う代表的なキャラクターは？", "リュウ", "ガイル", "ブランカ", "ダルシム"],
+      ["携帯ゲーム機「ゲームボーイ」を発売した会社は？", "任天堂", "セガ", "ソニー", "バンダイ"],
+      ["「ドラゴンボール」の作者は？", "鳥山明", "尾田栄一郎", "岸本斉史", "久保帯人"],
+      ["「ドラゴンクエストIV」は何シリーズと呼ばれている？", "天空", "ロト", "終末", "石板"],
+      ["「ポケットモンスター 金・銀」で新たに追加された、ポケモンのタイプは？", "あく・はがね", "フェアリー", "ドラゴン", "ゴースト"],
+      ["「機動戦士ガンダム」で、赤い彗星と呼ばれるキャラクターは？", "シャア・アズナブル", "ランバ・ラル", "ガルマ・ザビ", "ドズル・ザビ"],
+      ["アニメ「進撃の巨人」で、主人公エレンが憎んでいる存在は？", "巨人", "王政", "調査兵団", "憲兵団"],
+      ["「ドラゴンクエストV」の主人公が小さいころに連れて行かれる国は？", "ラインハット", "アリアハン", "サントハイム", "ガーデンブルグ"],
+      ["「ドラゴンクエスト」の第1作が発売された年は？", "1986年", "1983年", "1990年", "1995年"],
+      ["「ファイナルファンタジー」の第1作が発売された年は？", "1987年", "1983年", "1992年", "1997年"],
+      ["「プレイステーション」が発売された年は？", "1994年", "1989年", "1998年", "2000年"],
+      ["「Nintendo Switch」が発売された年は？", "2017年", "2013年", "2015年", "2019年"],
+      ["「ドラゴンボール」で、ベジータが王子をつとめる、サイヤ人の星の名前は？", "惑星ベジータ", "惑星ナメック", "地球", "惑星フリーザ"],
+      ["「機動戦士ガンダム」で、地球連邦軍と戦う宇宙の勢力は？", "ジオン公国", "ティターンズ", "ネオ・ジオン", "ザンスカール帝国"],
+      ["「マインクラフト」を最初に作った人物は？", "マルクス・ペルソン", "ビル・ゲイツ", "ジョン・カーマック", "ゲイブ・ニューウェル"],
+      ["「ゼルダの伝説 ブレス オブ ザ ワイルド」が発売された年は？", "2017年", "2011年", "2014年", "2020年"],
+      ["「スーパーマリオブラザーズ」に登場する、土管から出てくる植物の敵は？", "パックンフラワー", "ノコノコ", "クリボー", "ジュゲム"],
+      ["「ストリートファイターII」の、中国出身の女性キャラクターは？", "春麗", "キャミィ", "舞", "ジュリ"],
     ],
     スポーツ: [
       ["2022年のFIFAワールドカップで優勝した国は？", "アルゼンチン", "フランス", "ブラジル", "クロアチア"],
@@ -4381,6 +4909,26 @@ window.MONSTER_FIT = {
       ["アメリカンフットボールで、タッチダウンを決めたときに入る基本の得点は？", "6点", "3点", "1点", "7点"],
       ["クリケットで、1チームの出場選手は何人？", "11人", "9人", "15人", "7人"],
       ["近代五種競技に含まれる5つの種目は、フェンシング・水泳・レーザーラン(射撃＋ラン)と、かつて馬術だった枠から変更された何？", "障害物レース(オブスタクル)", "自転車ロード", "カヌー", "体操"],
+      ["近代オリンピックの第1回大会（1896年）が開かれた都市は？", "アテネ", "パリ", "ロンドン", "ローマ"],
+      ["野球の「完全試合」とは？", "相手に1人も走者を出さずに勝つ", "1点も取られずに勝つ", "全打席でヒットを打つ", "全員が三振に打ち取られる"],
+      ["テニスの四大大会で、クレー（土）コートで行われる大会は？", "全仏オープン", "ウィンブルドン", "全米オープン", "全豪オープン"],
+      ["ラグビー（ユニオン）で、トライをきめると何点入る？", "5点", "3点", "2点", "7点"],
+      ["野球の「サイクルヒット」とは？", "1試合で単打・二塁打・三塁打・本塁打をすべて打つ", "1試合で3打席連続ホームランを打つ", "1試合で3つの盗塁をする", "1試合で全員がヒットを打つ"],
+      ["バドミントンのシャトルの羽根に、おもに使われる鳥の羽根は？", "ガチョウ・アヒル", "ニワトリ", "ハト", "ワシ"],
+      ["自転車レース「ツール・ド・フランス」で、総合首位の選手が着るジャージの色は？", "黄色", "赤", "青", "緑"],
+      ["ゴルフの四大大会（メジャー）のひとつは？", "マスターズ・トーナメント", "ザ・プレーヤーズ選手権", "ライダーカップ", "ツアー選手権"],
+      ["バスケットボールを考案したのは？", "ジェームズ・ネイスミス", "マイケル・ジョーダン", "ウィリアム・ウェブ・エリス", "ピエール・ド・クーベルタン"],
+      ["サッカーのW杯で、2018年大会（ロシア）を制した国は？", "フランス", "クロアチア", "ブラジル", "ドイツ"],
+      ["サッカーのワールドカップ第1回大会（1930年）の開催国は？", "ウルグアイ", "ブラジル", "イタリア", "フランス"],
+      ["近代五種に含まれない競技は？", "柔道", "フェンシング", "水泳", "馬術"],
+      ["日本人初のオリンピック金メダリストで、陸上三段跳びで優勝したのは？", "織田幹雄", "人見絹枝", "南部忠平", "孫基禎"],
+      ["オリンピックの聖火が最初に点火される地は？", "ギリシャのオリンピア", "アテネの市庁舎", "パリの凱旋門", "ローマのコロッセオ"],
+      ["サッカーの試合で、延長戦のあとの決着方法は？", "PK戦", "コイントス", "ジャンケン", "引き分け再試合"],
+      ["野球の「三冠王」とは、打率・本塁打と、あとひとつは？", "打点", "盗塁", "得点", "四球"],
+      ["日本の三重県にある、F1日本グランプリの舞台となるサーキットは？", "鈴鹿サーキット", "富士スピードウェイ", "もてぎ", "岡山国際"],
+      ["ゴルフのマスターズ・トーナメントが開かれる場所は？", "オーガスタ・ナショナル", "セントアンドリュース", "ペブルビーチ", "ウィングドフット"],
+      ["テニスのウィンブルドンで、選手が着るウェアの基本ルールは？", "白を基調とする", "黒のみ", "赤のみ", "自由"],
+      ["オリンピックの金メダルの中身は、おもに何でできている？", "銀", "金", "銅", "プラチナ"],
     ],
     芸能: [
       ["ビートルズの出身地は、イギリスのどの都市？", "リヴァプール", "ロンドン", "マンチェスター", "バーミンガム"],
@@ -4443,6 +4991,26 @@ window.MONSTER_FIT = {
       ["「キング・オブ・ロックンロール」と称されたアメリカの歌手は？", "エルヴィス・プレスリー", "マイケル・ジャクソン", "フランク・シナトラ", "チャック・ベリー"],
       ["劇団四季を1953年に創立した中心人物の演出家は？", "浅利慶太", "蜷川幸雄", "野田秀樹", "三谷幸喜"],
       ["日本の漫才のスタイルを確立し、戦前から戦後にかけて活躍した伝説的コンビは？", "横山エンタツ・花菱アチャコ", "夢路いとし・喜味こいし", "やすし・きよし", "ダウンタウン"],
+      ["「千と千尋の神隠し」が、2002年のベルリン国際映画祭で受賞した賞は？", "金熊賞", "パルムドール", "金獅子賞", "審査員賞"],
+      ["能を大成し、「風姿花伝」を書いたのは？", "世阿弥", "観阿弥", "出雲阿国", "近松門左衛門"],
+      ["ベートーヴェンの交響曲第9番の合唱部分で有名な曲は？", "歓喜の歌", "運命", "月光", "エリーゼのために"],
+      ["人形浄瑠璃の作者で、「曽根崎心中」を書いたのは？", "近松門左衛門", "井原西鶴", "松尾芭蕉", "世阿弥"],
+      ["ゴッホが描いた作品は？", "ひまわり", "睡蓮", "叫び", "最後の晩餐"],
+      ["ミュージカル「オペラ座の怪人」の作曲家は？", "アンドリュー・ロイド＝ウェバー", "レナード・バーンスタイン", "ジョン・ウィリアムズ", "スティーブン・ソンドハイム"],
+      ["「ロード・オブ・ザ・リング」の原作者は？", "J・R・R・トールキン", "C・S・ルイス", "J・K・ローリング", "ジョージ・R・R・マーティン"],
+      ["ピカソが「ゲルニカ」で描いたのは、何についての悲しみ？", "スペイン内戦の空爆", "フランス革命", "日露戦争", "ペスト"],
+      ["歌舞伎・文楽・能楽の中で、人形をあやつって演じるのは？", "文楽（人形浄瑠璃）", "能楽", "歌舞伎", "狂言"],
+      ["「蒸気船ウィリー」（1928年）に初めて登場したディズニーキャラクターは？", "ミッキーマウス", "ドナルドダック", "グーフィー", "プルート"],
+      ["画家ゴッホの出身国は？", "オランダ", "フランス", "スペイン", "ベルギー"],
+      ["「叫び」を描いたノルウェーの画家は？", "ムンク", "ゴッホ", "ゴーギャン", "クリムト"],
+      ["「記憶の固執」（溶ける時計）で知られる画家は？", "ダリ", "ピカソ", "マグリット", "ミロ"],
+      ["「モナ・リザ」が展示されている美術館は？", "ルーヴル美術館", "大英博物館", "プラド美術館", "メトロポリタン美術館"],
+      ["「富嶽三十六景」を描いた浮世絵師は？", "葛飾北斎", "歌川広重", "喜多川歌麿", "東洲斎写楽"],
+      ["「東海道五十三次」を描いた浮世絵師は？", "歌川広重", "葛飾北斎", "喜多川歌麿", "菱川師宣"],
+      ["ベートーヴェンの「運命」は交響曲第何番？", "第5番", "第3番", "第6番", "第9番"],
+      ["シェイクスピアの四大悲劇にふくまれないのは？", "ロミオとジュリエット", "ハムレット", "マクベス", "オセロ"],
+      ["「アイーダ」を作曲したイタリアのオペラ作曲家は？", "ヴェルディ", "プッチーニ", "ロッシーニ", "ビゼー"],
+      ["「ミロのヴィーナス」が展示されている美術館は？", "ルーヴル美術館", "ウフィツィ美術館", "大英博物館", "オルセー美術館"],
     ],
     ライフスタイル: [
       ["料理の「さしすせそ」で、「せ」にあたる調味料は？", "しょうゆ", "塩", "酢", "砂糖"],
@@ -4505,6 +5073,26 @@ window.MONSTER_FIT = {
       ["家電製品の省エネ性能を示す「統一省エネラベル」で、星の数が多いほど何を表す？", "省エネ性能が高い", "消費電力が大きい", "本体価格が高い", "サイズが小さい"],
       ["日本の郵便で、はがき(第二種郵便物・通常はがき)の重さの上限は？", "6g以内(2g以上)", "50g以内", "100g以内", "1g以内"],
       ["日本の住民基本台帳ネットワークなどで使われる、個人番号(マイナンバー)は何桁の数字？", "12桁", "7桁", "10桁", "16桁"],
+      ["日本酒の原料は？", "米", "麦", "ぶどう", "いも"],
+      ["人間が皮ふでビタミンDをつくるために必要なものは？", "日光（紫外線）", "運動", "睡眠", "水"],
+      ["数え年で、男性の「大厄」とされるのは何歳？", "42歳", "33歳", "25歳", "61歳"],
+      ["結婚記念日で「銀婚式」は結婚何年目？", "25年目", "10年目", "50年目", "60年目"],
+      ["五節句にふくまれないものは？", "十五夜（月見）", "端午", "重陽", "上巳"],
+      ["国連が定めた、持続可能な開発目標「SDGs」の目標の数は？", "17", "10", "8", "30"],
+      ["賃貸住宅で、退去のときに一部が返ってくることがあるお金は？", "敷金", "礼金", "仲介手数料", "管理費"],
+      ["日本の「大安」「仏滅」などをまとめて何という？", "六曜", "十二支", "五行", "四季"],
+      ["結婚式で、新郎新婦が最初に行う共同作業として知られるものは？", "ケーキ入刀", "指輪交換", "乾杯", "スピーチ"],
+      ["「ふろしき」で四角い箱を包むときの基本の結び方は？", "真結び", "ちょうちょ結び", "こま結び", "かた結び"],
+      ["おせち料理の「数の子」にこめられた願いは？", "子孫繁栄", "健康", "勉強", "金運"],
+      ["おせち料理の「黒豆」にこめられた願いは？", "まめ（健康）に働く", "長寿", "豊作", "安産"],
+      ["冬至は、おもに何月何日ごろ？", "12月22日ごろ", "12月31日", "1月1日", "11月23日"],
+      ["BMIは、体重(kg)を何で割って求める？", "身長(m)の2乗", "身長(cm)", "年齢", "体脂肪率"],
+      ["ヴィーガンが、基本的に食べないものは？", "肉・魚・卵・乳製品", "野菜", "果物", "豆類"],
+      ["6月に結婚すると幸せになるといわれる言い伝えは？", "ジューンブライド", "ホワイトウェディング", "ゴールデンウィーク", "ブルームーン"],
+      ["ハザードマップに、おもに示されているのは？", "災害の危険な場所や避難場所", "おいしい店", "観光地", "駐車場"],
+      ["年越しそばを食べる意味として、よくいわれるのは？", "細く長く生きる", "お金持ちになる", "勉強が上達", "旅行できる"],
+      ["春の七草にふくまれないものは？", "菜の花", "セリ", "ナズナ", "スズナ（かぶ）"],
+      ["ふぐの毒の成分は？", "テトロドトキシン", "ソラニン", "アフラトキシン", "カフェイン"],
     ],
     パソコン: [
       ["Webの住所「URL」は何の略？", "Uniform Resource Locator", "Universal Resource Link", "United Resource Locator", "Unique Raw Location"],
@@ -4567,6 +5155,26 @@ window.MONSTER_FIT = {
       ["RAID構成のうち、2台以上のディスクに同じデータを同時に書き込んで耐障害性を高める方式は？", "RAID 1(ミラーリング)", "RAID 0(ストライピング)", "JBOD", "単一ドライブ"],
       ["CPUが処理する命令やデータを一時的に保持する、メインメモリより高速な小容量メモリは？", "キャッシュメモリ", "SSD", "光学ドライブ", "USBメモリ"],
       ["プログラムの実行中に使われなくなったメモリ領域を自動的に解放する仕組みは？", "ガベージコレクション", "コンパイル", "デフラグ", "オーバークロック"],
+      ["2進数の「1010」を10進数になおすと？", "10", "8", "12", "5"],
+      ["「HTTPS」の「S」は何をあらわす？", "Secure（安全）", "Server", "System", "Speed"],
+      ["パソコンの「RAM（メモリ）」の特徴は？", "電源を切ると内容が消える", "電源を切っても内容が残る", "読み出し専用", "光でデータを記録する"],
+      ["「SQL」は、何をするための言語？", "データベースの操作", "Webデザイン", "3Dゲームの制作", "音声認識"],
+      ["プログラミング言語「Python」の名前の由来は？", "コメディ番組「モンティ・パイソン」", "動物のニシキヘビ", "開発者の名前", "ギリシャの都市の名前"],
+      ["Appleの共同創業者で、スティーブ・ジョブズとともに会社を立ち上げたのは？", "スティーブ・ウォズニアック", "ビル・ゲイツ", "ポール・アレン", "マーク・ザッカーバーグ"],
+      ["拡張子「.exe」のファイルは、何のファイル？", "実行ファイル（プログラム）", "画像", "音声", "文書"],
+      ["「GPU」がとくに得意とする処理は？", "画像・映像の描画", "電源の管理", "データの保存", "通信の暗号化"],
+      ["暗号化の方式で、「公開鍵」と「秘密鍵」を使うものは？", "公開鍵暗号", "共通鍵暗号", "ハッシュ", "換字式"],
+      ["「ビット」の2進数で、「ON」をあらわすのは？", "1", "0", "2", "X"],
+      ["Linuxのカーネルを開発した人物が、のちに作ったバージョン管理システムは？", "Git", "Subversion", "Mercurial", "CVS"],
+      ["JavaScriptとJavaの関係は？", "別のプログラミング言語", "同じ言語", "JavaScriptはJavaの古い名前", "JavaはJavaScriptの一部"],
+      ["「Unicode」の目的は？", "世界中の文字を統一して扱う", "音楽を圧縮する", "画像を暗号化する", "ネットを高速化する"],
+      ["「VPN」の役割は？", "通信を暗号化して安全にネットワークに接続する", "画面を録画する", "音声を録音する", "ファイルを圧縮する"],
+      ["「キャッシュ」の目的は？", "一度使ったデータを保存して高速化する", "ウイルスを探す", "文字を入力する", "画面を拡大する"],
+      ["「MACアドレス」とは？", "ネットワーク機器ごとの固有の識別番号", "パソコンのメーカー名", "Macパソコン専用の住所", "メールアドレスの一種"],
+      ["2進数で、10進数の8をあらわすと？", "1000", "0100", "1100", "1010"],
+      ["「SSL/TLS」は、何のための技術？", "通信の暗号化", "画像の圧縮", "文字の入力", "動画の再生"],
+      ["「ASCII」は、おもに何をあらわす規格？", "英数字などの文字コード", "画像形式", "音声形式", "通信速度"],
+      ["「OS」の役割は？", "ハードとソフトを仲立ちして管理する", "ウイルスを作る", "通信料を決める", "画面の色を選ぶ"],
     ],
   };
 
@@ -4626,11 +5234,9 @@ window.OPENING_SCRIPT = [
 //   intro を書かなければ、そのボスは何も話さず戦闘に入ります
 window.BOSS_SCRIPT = {
   // 平原
-  slimeboss: {
-  },
+  slimeboss: {},
   // 迷いの森
-  spiderboss: {
-  },
+  spiderboss: {},
   // 魔導士の小屋
   wizard: {
     intro: [
@@ -4639,18 +5245,13 @@ window.BOSS_SCRIPT = {
     ],
   },
   // 灼熱の砂漠
-  golem: {
-  },
+  golem: {},
   // 王家の墓
   crystalgolem: {
-    intro: [
-      "グゴゴ…",
-      "王タチノ眠リヲ妨ゲル者、全テ排除スル",
-    ],
+    intro: ["グゴゴ…", "王タチノ眠リヲ妨ゲル者、全テ排除スル"],
   },
   // 荒れた岩山
-  stoneman: {
-  },
+  stoneman: {},
   // 毒の沼地
   kraken: {
     intro: [
@@ -4678,10 +5279,7 @@ window.BOSS_SCRIPT = {
       "”勇者”よ、待っておったぞ…。",
       "あの男の力により再び蘇った我を倒して見せよ！",
     ],
-    defeat: [
-      "…見事だ、”勇者”よ。",
-      "これで…ようやく…",
-    ],
+    defeat: ["…見事だ、”勇者”よ。", "これで…ようやく…"],
   },
   // 隠しボス (魔王を倒したあと、図鑑を60体以上うめていると現れる)
   //   intro  : 魔王を倒した直後、戦いが始まる前のセリフ
@@ -4771,7 +5369,7 @@ window.SECRET_ENDING_SCRIPT = [
  * ファイルは「bgm」フォルダに置く (拡張子は mp3 / ogg / m4a / wav のどれでもOK)。
  *   BGM:  field1 〜 field10 (各フィールド) / boss (ボス) / maou (魔王) / yuusya (隠しボス)
  *         title (タイトル画面) / town (町)
- *         例) ../bgm/10/field1.mp3  ../bgm/10/boss.mp3  ../bgm/10/maou.mp3  ../bgm/10/title.mp3  ../bgm/10/town.mp3
+ *         例) bgm/field1.mp3  bgm/boss.mp3  bgm/maou.mp3  bgm/title.mp3  bgm/town.mp3
  *         - フィールド系は、該当するファイルがないとき boss → field○ → field の順に探す。
  *         - town がないときは、直前の曲がそのまま続く。title がないときはBGMなし。
  *         - 全部なければ BGM なし。
@@ -4779,10 +5377,10 @@ window.SECRET_ENDING_SCRIPT = [
  *           se_ultimate (必殺技) / se_cutin (カットイン) /
  *           se_fanfare (ボスを倒したとき。流れるとBGMは止まる) /
  *           se_gameover (全滅してゲームオーバーになったとき。BGMは止まる)
- *         例) ../bgm/10/se_correct.mp3
+ *         例) bgm/se_correct.mp3
  *         - ファイルがないときは、今までの電子音が鳴る。
  */
-const SOUND_DIR = "../bgm/10/";
+const SOUND_DIR = "bgm/";
 const SOUND_EXTS = ["mp3", "ogg", "m4a", "wav"];
 const SE_NAMES = [
   "correct",
@@ -5438,7 +6036,7 @@ const FIELDS = [
  * 隠しボス
  *   SECRET_BOSS_REQUIRED: 魔王を倒したあと、図鑑でこの数以上のモンスターに出会っていると隠しボス戦になる
  *   SECRET_BOSS_STATS   : 隠しボスのHP・攻撃力の倍率 (通常のボスの計算式に、さらにかける)
- *   BGM は ../bgm/10/yuusya.mp3 (なければ maou → boss の順に探す)
+ *   BGM は bgm/yuusya.mp3 (なければ maou → boss の順に探す)
  */
 const SECRET_FIELD = FIELDS.findIndex((f) => f.secret); // 隠しボスのフィールド番号 (なければ -1)
 const FINAL_FIELD = SECRET_FIELD >= 0 ? SECRET_FIELD - 1 : FIELDS.length - 1; // 魔王のいるフィールド
@@ -5496,9 +6094,9 @@ const MONSTER_ITEMS = {
   maneater_white: ["灰色の花びら", "石化の蜜"],
   mummy_yellow: ["金色の包帯", "黄金の護符"],
   bigbat_white: ["白いつばさ", "雪夜の牙"],
-  cyclops_blue: ["青い巨人のこん棒", "蒼き一つ目の水晶"],
+  cyclops_blue: ["巨人のコイン", "蒼き一つ目の水晶"],
   crab_green: ["緑のはさみ", "毒沼の真珠"],
-  maneater_purple: ["紫の花びら", "猛毒の蜜つぼ"],
+  maneater_purple: ["紫の花びら", "猛毒のつぼ"],
   demon_yellow: ["焦げた悪魔の羽", "地獄の契約書"],
   gryphon_2: ["茶色の大きな羽根", "嵐のくちばし"],
   hydra_white: ["青いヒュドラの牙", "三つ首の宝珠"],
@@ -5597,6 +6195,13 @@ const WEAK_BONUS = 1.3;
 const DROP_RATE = { common: 0.5, rare: 0.08 };
 /** ボスの場合 (ドロップ品は必ず落とす) */
 const DROP_RATE_BOSS = { common: 0.2, rare: 0.05 };
+/** コレクション1種類(モンスター図鑑1体・アイテム1個)ごとに、与ダメージが増える割合 (0.002 = 0.2%) */
+const COLLECTION_BONUS_PER = 0.002;
+/** 戦闘不能の味方が1人いるごとに、与ダメージが減る割合 (0.05 = 5%) */
+const DOWN_DAMAGE_PENALTY = 0.05;
+/** 連続正解コンボ: 2連続目から1コンボにつき +5%、最大 +50% (11連続で最大) */
+const COMBO_BONUS_PER = 0.05;
+const COMBO_BONUS_MAX = 0.5;
 /** シーフの「盗む」が成功したとき、ゴールドではなくレアアイテムを盗む確率 */
 const STEAL_ITEM_RATE = 0.5;
 
@@ -5794,7 +6399,7 @@ const BOSS_AOE_REDUCE = [
 /** モンスターのHP/攻撃力 (f: フィールド番号0~, m: 何体目0~4) 調整したい場合はここ */
 /**  */
 function monsterStats(f, m) {
-  let hp = 150 + f * 44 + m * 26;
+  let hp = 160 + f * 42 + m * 38;
   let atk = 24 + f * 18 + m * 15;
   if (m === monsterCount(f) - 1) {
     hp = Math.round(hp * 2.6); // ボス
@@ -6134,6 +6739,7 @@ class GameEngine {
     this.monsterHp = 0;
     this.monsterMaxHp = 0;
     this.missCount = 0; // このモンスター相手にまちがえた回数
+    this.combo = 0; // 連続正解数 (まちがい・時間切れで0に戻る)
 
     // Quiz State
     this.currentQuestion = null;
@@ -6292,6 +6898,36 @@ class GameEngine {
     const n =
       SP_GAIN_MIN + Math.floor(Math.random() * (SP_GAIN_MAX - SP_GAIN_MIN + 1));
     m.sp = Math.min(100, m.sp + n);
+  }
+
+  /** 連続正解コンボによるダメージ加算率 (2連続目から1コンボ5%、最大50%) */
+  comboRate() {
+    return Math.min(
+      COMBO_BONUS_MAX,
+      Math.max(0, (this.combo | 0) - 1) * COMBO_BONUS_PER,
+    );
+  }
+
+  /** 戦闘エリアのコンボ表示を更新する (2連続未満は非表示) */
+  updateComboUI(pop = false) {
+    const el = document.getElementById("combo-badge");
+    if (!el) return;
+    if ((this.combo | 0) < 2) {
+      el.style.display = "none";
+      return;
+    }
+    const rate = this.comboRate();
+    const isMax = rate >= COMBO_BONUS_MAX;
+    el.innerHTML =
+      `<span class="combo-num">${this.combo}</span> COMBO` +
+      `<br><span class="combo-rate">ダメージ +${Math.round(rate * 100)}%${isMax ? " MAX" : ""}</span>`;
+    el.classList.toggle("combo-max", isMax);
+    el.style.display = "";
+    if (pop) {
+      el.classList.remove("combo-pop");
+      void el.offsetWidth; // アニメーションを再生しなおす
+      el.classList.add("combo-pop");
+    }
   }
 
   isParalyzed(m) {
@@ -6636,6 +7272,8 @@ class GameEngine {
     }
     // 進行中の演出・タイマーをすべて打ち切る
     this.runId++;
+    this.combo = 0;
+    this.updateComboUI();
     this.hideAttackSprite();
     clearInterval(this.timer);
     clearTimeout(this._msgTimer);
@@ -6751,7 +7389,7 @@ class GameEngine {
         true,
       );
       if (watch) {
-        // ../bgm/10/opening.* があればそれを、なければタイトルの曲を続ける
+        // bgm/opening.* があればそれを、なければタイトルの曲を続ける
         this.sound.bgm.play("opening", ["opening"], true);
         await this.playOpening();
       }
@@ -6778,13 +7416,13 @@ class GameEngine {
     const lines = useSecret ? sec : window.ENDING_SCRIPT;
     if (!Array.isArray(lines) || !lines.length) return;
     if (useSecret) {
-      // タイトル画面と同じ曲 (../bgm/10/title.*)
+      // タイトル画面と同じ曲 (bgm/title.*)
       this.sound.bgm.play("title", ["title"], true);
       // 背景は ../img/10/ending2.png → ../img/10/ending.png → オープニングと同じ玉座の間
       await this.playConversation(lines, ["../img/10/ending2.png", "../img/10/ending.png"]);
       return;
     }
-    // タイトル画面と同じ曲 (../bgm/10/title.*)
+    // タイトル画面と同じ曲 (bgm/title.*)
     this.sound.bgm.play("title", ["title"], true);
     // 背景は ../img/10/ending.png があればそれ、なければオープニングと同じ玉座の間
     await this.playConversation(lines, "../img/10/ending.png");
@@ -7002,6 +7640,8 @@ class GameEngine {
     }
     this.sound.init();
     this.runId++;
+    this.combo = 0;
+    this.updateComboUI();
     this.fieldIdx = s.fieldIdx;
     this.monsterIdx = Math.max(
       0,
@@ -7082,6 +7722,32 @@ class GameEngine {
     return names ? names[kind === "rare" ? 1 : 0] : `${id}のかけら`;
   }
 
+  /** アイテムのアイコンを入れる (item_icons.js の ITEM_ICONS。なければ ■ / ★) */
+  fillItemIcon(el, id, kind) {
+    const def = window.ITEM_ICONS && window.ITEM_ICONS[id];
+    const v = def && def[kind === "rare" ? 1 : 0];
+    el.innerHTML = "";
+    if (!v) {
+      el.innerHTML =
+        kind === "rare"
+          ? '<i class="fa-solid fa-star"></i>'
+          : '<i class="fa-solid fa-cube"></i>';
+      return;
+    }
+    if (/\.(png|jpe?g|gif|webp|svg)$/i.test(v)) {
+      const img = document.createElement("img");
+      img.className = "dex-icon-img";
+      img.src = v;
+      img.alt = "";
+      el.appendChild(img);
+    } else {
+      const sp = document.createElement("span");
+      sp.className = "dex-icon-emoji";
+      sp.textContent = v;
+      el.appendChild(sp);
+    }
+  }
+
   /** アイテムを入手として記録する。初めて手に入れたら true */
   recordItem(id, kind, how) {
     const key = `${id}:${kind}`;
@@ -7105,6 +7771,28 @@ class GameEngine {
       kind,
       isNew: this.recordItem(id, kind, "drop"),
     }));
+  }
+
+  // ================= コレクションボーナス =================
+
+  /** 集めたコレクションの種類数 (出会ったモンスター + 手に入れたアイテム) */
+  countCollection() {
+    let n = 0;
+    FIELDS.forEach((f) => {
+      f.monsters.forEach(([id]) => {
+        if (this.dex[id] && this.dex[id].seen > 0) n++;
+        ["drop", "rare"].forEach((kind) => {
+          const r = this.items[`${id}:${kind}`];
+          if (r && r.n > 0) n++;
+        });
+      });
+    });
+    return n;
+  }
+
+  /** 与ダメージにかける倍率 (1種類につき +0.2%) */
+  collectionMul() {
+    return 1 + this.countCollection() * COLLECTION_BONUS_PER;
   }
 
   // ================= モンスター図鑑 (コレクション) =================
@@ -7217,10 +7905,7 @@ class GameEngine {
           card.className = `dex-card dex-item ${got ? "seen" : "unseen"} ${kind}`;
           const icon = document.createElement("div");
           icon.className = "dex-icon";
-          icon.innerHTML =
-            kind === "rare"
-              ? '<i class="fa-solid fa-star"></i>'
-              : '<i class="fa-solid fa-cube"></i>';
+          this.fillItemIcon(icon, id, kind);
           const label = document.createElement("div");
           label.className = "dex-name";
           label.textContent = got ? this.itemName(id, kind) : "？？？";
@@ -7231,6 +7916,9 @@ class GameEngine {
       });
     });
     document.getElementById("dex-count").textContent = `${found} / ${total}`;
+    const cn = this.countCollection();
+    document.getElementById("dex-bonus").textContent =
+      `コレクションボーナス: ${cn}種 → 与ダメージ +${(Math.round(cn * COLLECTION_BONUS_PER * 1000) / 10).toFixed(1)}%`;
     document.getElementById("dex-detail").textContent = itemTab
       ? "アイテムを選ぶと、くわしい情報が見られます。"
       : "モンスターを選ぶと、くわしい情報が見られます。";
@@ -7296,7 +7984,13 @@ class GameEngine {
     }
     const title = document.createElement("div");
     title.className = "dex-detail-name";
-    title.textContent = (kind === "rare" ? "★ " : "") + this.itemName(id, kind);
+    const bigIcon = document.createElement("span");
+    bigIcon.className = "dex-detail-icon";
+    this.fillItemIcon(bigIcon, id, kind);
+    title.append(
+      bigIcon,
+      (kind === "rare" ? "★ " : "") + this.itemName(id, kind),
+    );
     const info = document.createElement("div");
     info.textContent =
       `${kind === "rare" ? "レアアイテム" : "ドロップ品"} ／ 入手元: ${name}（${field.name}）` +
@@ -7438,11 +8132,16 @@ class GameEngine {
     return new Promise((resolve) => {
       const box = document.getElementById("monster-sprite-box");
       const plate = document.querySelector(".monster-plate");
+      // 登場時の .appear が残っていると、.vanish を外した瞬間に登場アニメが
+      // 再生し直されて再表示されてしまうので、先に外しておく
+      box.classList.remove("appear");
+      plate.classList.remove("appear");
       box.classList.add("vanish");
       plate.classList.add("gone");
       setTimeout(() => {
         // 消えたままにする (vanished: .gone の透明化アニメを付けない。付けると一瞬 再表示される)
         box.classList.add("gone", "vanished");
+        plate.classList.add("vanished");
         box.classList.remove("vanish");
         resolve();
       }, 2000);
@@ -7822,6 +8521,8 @@ class GameEngine {
     if (isCorrect) {
       this.sound.playCorrect();
       btnElement.classList.add("correct");
+      this.combo = (this.combo | 0) + 1; // 連続正解コンボ
+      this.updateComboUI(true);
 
       // 攻撃キャラを先に決める (SPが100%のキャラがいる時だけ必殺技、いなければ通常攻撃)
       const attacker = this.pickAttacker();
@@ -7837,12 +8538,20 @@ class GameEngine {
       const isUlt = attacker.sp >= 100;
 
       // 動ける生存メンバーによるダメージ計算
+      // 戦闘不能のメンバーも攻撃力は合計に入れ、人数ぶん (1人につき10%) だけ減らす
       let totalDmg = 0;
+      let downCount = 0;
       this.party.forEach((m) => {
-        if (m.hp > 0 && !this.isParalyzed(m)) {
+        if (m.hp <= 0) {
+          downCount++;
+          totalDmg += m.pow + Math.floor(Math.random() * 5);
+        } else if (!this.isParalyzed(m)) {
           totalDmg += this.effectivePow(m) + Math.floor(Math.random() * 5);
         }
       });
+      totalDmg = Math.floor(
+        totalDmg * Math.max(0, 1 - downCount * DOWN_DAMAGE_PENALTY),
+      );
 
       // 必殺技のときは、攻撃キャラのスキルぶん ダメージ加算 (以降の倍率の対象になる)
       if (isUlt) totalDmg += attacker.skill | 0;
@@ -7851,6 +8560,10 @@ class GameEngine {
       const ratio = this.timeLeft / this.maxTime;
       const bonus = SPEED_BONUS.find((b) => ratio >= b.min);
       if (bonus) totalDmg = Math.floor(totalDmg * (1 + bonus.rate));
+
+      // 連続正解コンボのダメージ加算
+      const comboRate = this.comboRate();
+      if (comboRate > 0) totalDmg = Math.floor(totalDmg * (1 + comboRate));
 
       // 攻撃キャラの得意・苦手ジャンル判定
       let catBonus = 1.0;
@@ -7871,7 +8584,9 @@ class GameEngine {
       // 難易度による最終ダメージ補正
       totalDmg = Math.max(
         1,
-        Math.floor(totalDmg * DIFFICULTY[this.difficulty].dmg),
+        Math.floor(
+          totalDmg * DIFFICULTY[this.difficulty].dmg * this.collectionMul(),
+        ),
       );
 
       const runId = this.runId;
@@ -7928,6 +8643,8 @@ class GameEngine {
 
     this.sound.playWrong();
     btnElement.classList.add("wrong");
+    this.combo = 0;
+    this.updateComboUI();
     this.missCount++;
     this.monsterAttack();
     this.saveProgress("battle");
@@ -8087,6 +8804,8 @@ class GameEngine {
     this.isAnswering = false;
     this.lastSpeedRatio = 0;
     this.sound.playWrong();
+    this.combo = 0;
+    this.updateComboUI();
     this.missCount++;
     this.monsterAttack();
     this.saveProgress("battle");
@@ -8593,6 +9312,8 @@ class GameEngine {
     const snap = this.reviveSnap;
     if (!snap || !REVIVE_DIFFICULTIES.includes(this.difficulty)) return;
     this.runId++;
+    this.combo = 0;
+    this.updateComboUI();
     const rid = this.runId;
     this.hideAttackSprite();
     clearInterval(this.timer);
@@ -8651,6 +9372,8 @@ class GameEngine {
     const keepGold = carryGold === true ? Math.floor(this.gold / 2) : 0;
     this.stopSpellTimer();
     this.runId++;
+    this.combo = 0;
+    this.updateComboUI();
     this.reviveTown = false;
     this.reviveSnap = null;
     const rv = document.getElementById("revive-btn");
@@ -8732,11 +9455,12 @@ class GameEngine {
     const el = document.createElement("div");
     el.className = `floating-damage ${textStyle}`;
     el.innerText = text;
-    el.style.left = `${rect.left + rect.width / 2 - 20 + dx}px`;
+    el.style.left = `${rect.left + rect.width / 2 + (textStyle.includes("dmg") ? 0 : -20) + dx}px`;
     el.style.top = `${rect.top + 20 + dy}px`;
 
     layer.appendChild(el);
-    setTimeout(() => el.remove(), 800);
+    // ダメージ数字(dmg)はゆっくり見せるので、少し長く表示する
+    setTimeout(() => el.remove(), textStyle.includes("dmg") ? 1100 : 800);
   }
 
   /** キーボード操作: 「1」〜「9」で上から順に回答ボタンを押す */
@@ -8905,7 +9629,7 @@ class GameEngine {
     });
   }
 
-  /** タイトル画面のBGM (../bgm/10/title.*。なければ無音) */
+  /** タイトル画面のBGM (bgm/title.*。なければ無音) */
   updateTitleBgm() {
     this.sound.bgm.play("title", ["title"]);
   }
