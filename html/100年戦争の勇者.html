@@ -1334,14 +1334,6 @@ body {
     gap: 12px;
 }
 
-.shop-row.shop-tap {
-    cursor: pointer;
-}
-
-.shop-row.shop-tap:active {
-    background: #fef3c7;
-}
-
 .shop-name {
     font-size: 20px;
     line-height: 1.25;
@@ -1846,9 +1838,18 @@ body {
     transition: transform 0.35s ease, filter 0.35s ease, opacity 0.6s ease;
 }
 
-#op-hero {
+/* 左側の4人(ヒーロー・ファイター・ウィザード・シーフ)は同じ位置。
+   しゃべった人が出て、ほかの3人は隠れる (王様のセリフ中は直前に左でしゃべった人が暗く残る) */
+#op-hero,
+#op-fighter,
+#op-wizard,
+#op-thief {
     left: 3%;
     --back-x: -5%;
+}
+
+#opening .op-char.off {
+    opacity: 0 !important;
 }
 
 #op-king {
@@ -1979,7 +1980,10 @@ body {
         bottom: 22%;
     }
 
-    #op-hero {
+    #op-hero,
+    #op-fighter,
+    #op-wizard,
+    #op-thief {
         left: -8%;
     }
 
@@ -2019,6 +2023,434 @@ body {
         transform: translateY(-26px);
     }
 }
+
+/* ============================================================
+   町(お店)の画面 — スマホ(縦画面)用レイアウト
+   720x1280 基準。fitStage() が #modal-shop に .portrait を付け、
+   #shop-wrap を画面に合わせて拡縮します。横画面は従来のまま。
+   ============================================================ */
+.shop-list-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+}
+
+.shop-list-wrap>.shop-scroll {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.shop-bar,
+.shop-party-cards {
+    display: none;
+}
+
+.shop-actions {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.shop-actions>#shop-leave {
+    flex: 1 1 auto;
+}
+
+#modal-shop.portrait {
+    padding: 0;
+}
+
+#modal-shop.portrait #shop-wrap {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 720px;
+    max-width: none;
+    height: 1280px;
+    box-sizing: border-box;
+    padding: 20px 22px 36px;
+    gap: 18px;
+    transform-origin: 0 0;
+}
+
+#modal-shop.portrait #shop-scene {
+    flex: 1 1 0;
+    min-height: 200px;
+}
+
+#modal-shop.portrait #shop-scene .battle-hud-left {
+    top: 18px;
+    left: 24px;
+    font-size: 26px;
+    padding: 6px 14px;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+#modal-shop.portrait #shop-panel {
+    flex: 0 0 auto;
+    height: 840px;
+    max-height: none;
+    box-sizing: border-box;
+    padding: 20px 22px 18px;
+    gap: 14px;
+    border-radius: 10px;
+    box-shadow: 0 5px 0 #000;
+}
+
+#modal-shop.portrait #shop-panel h3 {
+    font-size: 28px;
+    font-family: 'Zen Maru Gothic', sans-serif;
+}
+
+#modal-shop.portrait #shop-panel .text-lg {
+    font-size: 24px;
+}
+
+#modal-shop.portrait #shop-msg {
+    font-size: 21px;
+    margin: 4px 0 0;
+}
+
+/* --- 商品の行 --- */
+#modal-shop.portrait .shop-row {
+    min-height: 90px;
+    padding: 8px 14px;
+    border-radius: 10px;
+}
+
+#modal-shop.portrait #shop-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#modal-shop.portrait #shop-items>* {
+    margin: 0;
+}
+
+#modal-shop.portrait .shop-name {
+    font-size: 25px;
+}
+
+#modal-shop.portrait .shop-desc {
+    font-size: 17px;
+}
+
+#modal-shop.portrait .shop-buy {
+    min-width: 114px;
+    min-height: 60px;
+    font-size: 22px;
+    background: #fcd34d;
+    box-shadow: 3px 4px 0 #000;
+}
+
+/* 買えない商品: 薄いグレー */
+#modal-shop.portrait .shop-row.shop-off {
+    opacity: 1;
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+#modal-shop.portrait .shop-row.shop-off .shop-name,
+#modal-shop.portrait .shop-row.shop-off .shop-desc {
+    color: #94a3b8;
+}
+
+#modal-shop.portrait .shop-buy:disabled {
+    background: #e2e8f0;
+    color: #64748b;
+    border-color: #94a3b8;
+    box-shadow: none;
+}
+
+/* --- 一覧: 標準のスクロールバーは隠して、右に専用バーを出す --- */
+#modal-shop.portrait .shop-scroll {
+    scrollbar-width: none;
+    padding-right: 10px;
+}
+
+#modal-shop.portrait .shop-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+#modal-shop.portrait #shop-party {
+    display: none;
+}
+
+#modal-shop.portrait .shop-bar {
+    flex: none;
+    width: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.shop-bar-arrow {
+    flex: none;
+    font-size: 15px;
+    line-height: 1;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.shop-bar-track {
+    position: relative;
+    flex: 1 1 auto;
+    width: 12px;
+    min-height: 0;
+}
+
+.shop-bar-thumb {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 40px;
+    border-radius: 6px;
+    background: #8f949c;
+}
+
+/* --- パーティ(顔 + HP) --- */
+#modal-shop.portrait .shop-party-cards {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    box-sizing: border-box;
+    height: 152px;
+    padding: 6px 8px;
+    background: #f8fafc;
+    border: 3px solid #000;
+    border-radius: 8px;
+}
+
+.sp-card {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sp-name {
+    flex: none;
+    height: 26px;
+    font-size: 18px;
+    font-weight: 900;
+    line-height: 26px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+.sp-face {
+    flex: 1 1 auto;
+    min-height: 0;
+    background-size: cover;
+    background-position: 50% 0;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+.sp-hp {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 0 8px;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.15;
+    color: #1f2937;
+    background: rgba(241, 245, 249, 0.88);
+}
+
+.sp-card.sp-dead .sp-face {
+    filter: grayscale(1) brightness(0.8);
+}
+
+.sp-card.sp-dead .sp-hp {
+    color: #e11d48;
+}
+
+/* --- 下段: 出発する + 丸い ▲ ▼ --- */
+#modal-shop.portrait .shop-actions {
+    gap: 12px;
+}
+
+#modal-shop.portrait #shop-leave {
+    width: auto;
+    margin-right: 0;
+    height: 72px;
+    padding: 0;
+    font-size: 26px;
+    border-radius: 8px;
+    box-shadow: 4px 5px 0 #000;
+    background: #7dd3fc;
+}
+
+#modal-shop.portrait #shop-leave:active {
+    transform: translate(4px, 5px);
+    box-shadow: none;
+}
+
+#modal-shop.portrait .shop-scroll-btns {
+    position: static;
+    display: flex;
+    gap: 10px;
+}
+
+#modal-shop.portrait .shop-scroll-btn {
+    width: 68px;
+    height: 68px;
+    font-size: 28px;
+    box-shadow: 3px 4px 0 #000;
+}
+
+#modal-shop.portrait .shop-scroll-btn.disabled {
+    opacity: 1;
+    background: #fde68a;
+    color: #6b7280;
+    box-shadow: none;
+}
+
+
+/* 横画面: ▲▼ボタンは四隅のカードと重ならないよう、出発ボタンの右(パネル内)に置く */
+#modal-shop:not(.portrait) .shop-scroll-btns {
+    position: static;
+    gap: 8px;
+}
+
+#modal-shop:not(.portrait) #shop-leave {
+    margin-right: 0;
+}
+
+
+/* ============================================================
+   横画面(PC): お店の横幅を戦闘画面の中央カラム(720基準)に合わせる
+   fitStage() が #shop-wrap を戦闘画面と同じ倍率で拡縮します。
+   ============================================================ */
+#modal-shop:not(.portrait) {
+    padding: 0;
+}
+
+#modal-shop:not(.portrait) #shop-wrap {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 720px;
+    max-width: none;
+    box-sizing: border-box;
+    padding: 16px;
+    gap: 16px;
+    transform-origin: 0 0;
+}
+
+/* 町の絵を縦にもう少し大きく (その分、店のパネルを低くする) */
+#modal-shop:not(.portrait) #shop-panel {
+    max-height: min(calc(100% - 102px), max(48%, 330px));
+}
+
+#modal-shop.portrait #shop-panel {
+    height: 800px;
+}
+
+
+/* ============================================================
+   横画面(PC): 四隅のキャラクターは戦闘画面の左右カラムと同じ大きさ・配置
+   (#shop-corners は #stage と同じ倍率で拡縮される。中央720pxは店のぶん空ける)
+   ============================================================ */
+.shop-corners {
+    display: none;
+}
+
+#modal-shop:not(.portrait) .shop-corners {
+    display: flex;
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
+}
+
+.shop-side {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 14px;
+    gap: 14px;
+}
+
+.shop-mid {
+    flex: 0 0 720px;
+}
+
+/* ============================================================
+   町の絵は縦を狭く、下の文字は大きく
+   ============================================================ */
+#modal-shop:not(.portrait) #shop-panel {
+    max-height: min(calc(100% - 102px), max(64%, 330px));
+    padding: 20px 24px;
+    gap: 14px;
+}
+
+#modal-shop:not(.portrait) #shop-panel h3 {
+    font-size: 34px;
+}
+
+#modal-shop:not(.portrait) #shop-panel .text-lg {
+    font-size: 30px;
+}
+
+#modal-shop:not(.portrait) #shop-msg {
+    font-size: 24px;
+}
+
+#modal-shop:not(.portrait) .shop-row {
+    min-height: 92px;
+    padding: 10px 16px;
+}
+
+#modal-shop:not(.portrait) .shop-name {
+    font-size: 30px;
+}
+
+#modal-shop:not(.portrait) .shop-desc {
+    font-size: 21px;
+}
+
+#modal-shop:not(.portrait) .shop-buy {
+    min-width: 130px;
+    min-height: 64px;
+    font-size: 26px;
+}
+
+#modal-shop:not(.portrait) #shop-leave {
+    height: 76px;
+    padding: 0;
+    font-size: 30px;
+}
+
+#modal-shop:not(.portrait) .shop-scroll-btn {
+    width: 68px;
+    height: 68px;
+    font-size: 28px;
+}
+
+#modal-shop.portrait #shop-panel {
+    height: 860px;
+}
+
+#modal-shop.portrait #shop-msg {
+    font-size: 23px;
+}
+
+#modal-shop.portrait .shop-desc {
+    font-size: 19px;
+}
+
     </style>
 </head>
 
@@ -2397,6 +2829,8 @@ body {
 
     <!-- SHOP MODAL -->
     <div id="modal-shop" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3">
+        <!-- 横画面(PC): 画面の四隅に表示するキャラクターのステータス -->
+        <div id="shop-corners" class="shop-corners"></div>
         <div id="shop-wrap">
             <div id="shop-scene">
                 <div class="battle-hud battle-hud-left">町</div>
@@ -2408,22 +2842,34 @@ body {
                             id="shop-gold">0 G</span></div>
                 </div>
                 <p id="shop-msg" class="flex-none text-base font-bold text-slate-700"></p>
-                <div id="shop-scroll" class="shop-scroll">
-                    <div id="shop-items" class="space-y-2"></div>
-                    <div id="shop-party"
-                        class="mt-3 text-sm font-bold bg-slate-100 border-2 border-black rounded p-2 leading-relaxed">
+                <div id="shop-list-wrap" class="shop-list-wrap">
+                    <div id="shop-scroll" class="shop-scroll">
+                        <div id="shop-items" class="space-y-2"></div>
+                        <div id="shop-party"
+                            class="mt-3 text-sm font-bold bg-slate-100 border-2 border-black rounded p-2 leading-relaxed">
+                        </div>
+                    </div>
+                    <!-- スマホ(縦画面)用: 一覧の右に出す目に見えるスクロールバー -->
+                    <div id="shop-bar" class="shop-bar" aria-hidden="true">
+                        <span class="shop-bar-arrow" onclick="game.shopScroll(-1)">▲</span>
+                        <div class="shop-bar-track"><div id="shop-bar-thumb" class="shop-bar-thumb"></div></div>
+                        <span class="shop-bar-arrow" onclick="game.shopScroll(1)">▼</span>
                     </div>
                 </div>
-                <button id="shop-leave" onclick="game.leaveTown()"
-                    class="flex-none w-full sketch-button bg-sky-300 hover:bg-sky-400 text-black font-black py-3 rounded text-lg">
-                    出発する
-                </button>
+                <!-- スマホ(縦画面)用: パーティの顔とHP -->
+                <div id="shop-party-cards" class="shop-party-cards"></div>
+                <div id="shop-actions" class="shop-actions">
+                    <button id="shop-leave" onclick="game.leaveTown()"
+                        class="flex-none w-full sketch-button bg-sky-300 hover:bg-sky-400 text-black font-black py-3 rounded text-lg">
+                        出発する
+                    </button>
+                    <!-- 上下スクロール (横画面では画面の右下 / 縦画面では出発ボタンの右) -->
+                    <div id="shop-scroll-btns" class="shop-scroll-btns">
+                        <button class="shop-scroll-btn" onclick="game.shopScroll(-1)" aria-label="上へ">▲</button>
+                        <button class="shop-scroll-btn" onclick="game.shopScroll(1)" aria-label="下へ">▼</button>
+                    </div>
+                </div>
             </div>
-        </div>
-        <!-- 画面の右下: 上下スクロール -->
-        <div id="shop-scroll-btns" class="shop-scroll-btns">
-            <button class="shop-scroll-btn" onclick="game.shopScroll(-1)" aria-label="上へ">▲</button>
-            <button class="shop-scroll-btn" onclick="game.shopScroll(1)" aria-label="下へ">▼</button>
         </div>
     </div>
 
@@ -2474,6 +2920,16 @@ body {
             <div class="op-char" id="op-hero">
                 <!-- バストアップ画像: ../img/10/hero_bust.png (なければ ../img/10/hero.png を上半身だけ切り出して表示) -->
                 <img src="../img/10/hero_bust.png" alt="ヒーロー" onerror="this.onerror=null;this.src='../img/10/hero.png'">
+            </div>
+            <!-- 左側の仲間: しゃべっている人だけ左に出る (../img/10/XXX_bust.png がなければ全身絵を上半身だけ切り出す) -->
+            <div class="op-char" id="op-fighter">
+                <img src="../img/10/fighter_bust.png" alt="ファイター" onerror="this.onerror=null;this.src='../img/10/fighter.png'">
+            </div>
+            <div class="op-char" id="op-wizard">
+                <img src="../img/10/wizard_bust.png" alt="ウィザード" onerror="this.onerror=null;this.src='../img/10/magic.png'">
+            </div>
+            <div class="op-char" id="op-thief">
+                <img src="../img/10/thief_bust.png" alt="シーフ" onerror="this.onerror=null;this.src='../img/10/thief.png'">
             </div>
             <div class="op-char" id="op-king">
                 <img src="../img/10/king_bust.png" alt="王様" onerror="this.onerror=null;this.src='../img/10/king.png'">
@@ -4220,7 +4676,7 @@ window.ITEM_ICONS = {
       ["「マインクラフト」の世界のブロックは、主にどんな形？", "立方体(四角いブロック)", "丸い玉", "三角すい", "星形"],
       ["「クレヨンしんちゃん」で、しんちゃんが通っている幼稚園の名前は？", "ふたば幼稚園", "ひまわり幼稚園", "さくら幼稚園", "みどり幼稚園"],
       ["「クレヨンしんちゃん」で、しんちゃんの妹の名前は？", "ひまわり", "みさえ", "ネネちゃん", "あいちゃん"],
-      ["「サザエさん」で、サザエさんの息子の名前は？", "タラオ(タラちゃん)", "カツオ", "ワカメ", "イクラ"],
+      ["「サザエさん」で、サザエさんの息子の名前は？", "タラオ", "カツオ", "ワカメ", "イクラ"],
       ["「サザエさん」で、サザエさんの妹の名前は？", "ワカメ", "フネ", "タイコ", "ウキエ"],
       ["「ちびまる子ちゃん」の主人公、まる子の本名は？", "さくらももこ", "さくらさきこ", "穂波たまえ", "野口笑子"],
       ["「アンパンマン」で、パン工場でアンパンマンを作ったパン職人は？", "ジャムおじさん", "バタコさん", "チーズ", "かまめしどん"],
@@ -4406,7 +4862,7 @@ window.ITEM_ICONS = {
       ["日本の伝統楽器「和太鼓」は、何の仲間？", "打楽器", "弦楽器", "管楽器", "鍵盤楽器"],
       ["吹奏楽で、ラッパのように息を吹き込んで鳴らす金色の楽器の代表は？", "トランペット", "バイオリン", "ピアノ", "ギター"],
       ["ディズニーのキャラクター「ミニーマウス」が頭によくつけている飾りは？", "大きなリボン", "王冠", "ヘルメット", "サングラス"],
-      ["「くまのプーさん」が住んでいる森の名前は？", "100エーカーの森", "となりの森", "魔法の森", "黒の森"],
+      ["「くまのプーさん」が住んでいる森の名前は？", "100エーカーの森", "となりの森", "魔法の森", "10エーカーの林"],
       ["「アナと雪の女王」で、エルサが使う魔法の力は？", "氷や雪をあやつる力", "火を出す力", "空を飛ぶ力", "透明になる力"],
       ["「シンデレラ」が舞踏会に行くために、かぼちゃから変身した乗り物は？", "馬車", "自動車", "船", "列車"],
       ["「白雪姫」で、白雪姫が森の中で出会う小さな人たちは全部で何人？", "7人", "3人", "5人", "10人"],
@@ -4421,7 +4877,7 @@ window.ITEM_ICONS = {
       ["ディズニーのキャラクターで、水兵服を着たアヒルは？", "ドナルドダック", "グーフィー", "プルート", "ミッキーマウス"],
       ["「ドレミの歌」が出てくる有名な映画は？", "サウンド・オブ・ミュージック", "メリー・ポピンズ", "マイ・フェア・レディ", "オズの魔法使い"],
       ["「ピカチュウ」の声優さんの名前は？", "大谷育江", "林原めぐみ", "田中真弓", "野沢雅子"],
-      ["お笑いで、2人が漫才をするコンビのことを何という？", "コンビ", "トリオ", "ピン芸人", "一座"],
+      ["お笑いで、2人で漫才をすることを何という？", "コンビ", "トリオ", "ピン芸人", "一座"],
       ["クリスマスの定番の歌「ジングル・ベル」で、そりを引くのは？", "馬", "犬", "ラクダ", "牛"],
       ["「アンパンマンマーチ」の歌詞で、「何のために生まれて」のあとに続くのは？", "何をして生きるのか", "どこで生きるのか", "誰と生きるのか", "いつまで生きるのか"],
       ["「シンデレラ」がはいた靴は、何でできている？", "ガラス", "金", "木", "ゴム"],
@@ -5220,8 +5676,13 @@ window.OPENING_SCRIPT = [
   { who: "king", text: "それぞれ厳重に保管してあり、決して人が触れることはないと思っていたのだが…。" },
   { who: "hero", text: "分かりました。\nそれぞれのオーブを確認し、魔王城の結界を解いて参ります。" },
   { who: "king", text: "頼もしいぞ。\n先日の武術大会で優勝したそなたならば必ず成し遂げられるだろう。" },
-  { who: "king", text: "期待しておるぞ、勇者よ！" },
-  { who: "hero", text: "はい！行ってまいります！" },
+  { who: "king", text: "{fighter}、{wizard}、{thief}も頼んだぞ！" },
+  { who: "fighter", text: "武術大会で{hero}と何度もやりあったオレの実力、\n期待しててくださいよ！" },
+  { who: "wizard", text: "私の魔法がどれほどお役に立つかわかりませんが\n尽力いたします。" },
+  { who: "thief", text: "王家の墓に魔王城か…。\nお宝のにおいがプンプンするぜ。" },  
+  { who: "king", text: "ほっほっほっ。墓荒らしはほどほどにな。" },
+  { who: "king", text: "では、頼んだぞ。勇者よ！" },
+  { who: "hero", text: "はい！\n行ってまいります！" },
 ];
 
     </script>
@@ -6691,6 +7152,39 @@ function fitStage() {
 
   const title = document.getElementById("title-screen");
   if (title) title.classList.toggle("portrait-bg", portrait);
+
+  // 町(お店)の画面: スマホ縦画面では 720 幅基準で拡縮する
+  const shop = document.getElementById("modal-shop");
+  const shopWrap = document.getElementById("shop-wrap");
+  if (shop && shopWrap) {
+    shop.classList.toggle("portrait", portrait);
+    if (portrait) {
+      const sScale = Math.min(vw / 720, vh / 1280);
+      const sH = vh / sScale;
+      shopWrap.style.height = `${sH}px`;
+      shopWrap.style.transform = `scale(${sScale})`;
+      shopWrap.style.left = `${padL + (vw - 720 * sScale) / 2}px`;
+      shopWrap.style.top = `${padT}px`;
+    } else {
+      // 戦闘画面と同じ倍率で、同じ横幅(720基準)に拡縮する
+      const sScale = scale; // 戦闘画面(#stage)が実際に使っている倍率
+      shopWrap.style.height = `${vh / sScale}px`;
+      shopWrap.style.transform = `scale(${sScale})`;
+      shopWrap.style.left = `${padL + (vw - 720 * sScale) / 2}px`;
+      shopWrap.style.top = `${padT}px`;
+      // 四隅のステータス: 戦闘画面(#stage)と同じ大きさ・配置にする
+      const corners = document.getElementById("shop-corners");
+      if (corners) {
+        corners.style.left = `${padL}px`;
+        corners.style.top = `${padT}px`;
+        corners.style.width = `${vw / sScale}px`;
+        corners.style.height = `${vh / sScale}px`;
+        corners.style.transform = `scale(${sScale})`;
+      }
+    }
+    if (typeof game !== "undefined" && game && game.updateShopScroll)
+      game.updateShopScroll();
+  }
 }
 
 /**
@@ -7447,14 +7941,26 @@ class GameEngine {
       String(t).replace(/\{(\w+)\}/g, (m, k) => names[k] || m);
     const chars = {
       hero: document.getElementById("op-hero"),
+      fighter: document.getElementById("op-fighter"),
+      wizard: document.getElementById("op-wizard"),
+      thief: document.getElementById("op-thief"),
       king: document.getElementById("op-king"),
     };
+    // 左側に立つ4人 (しゃべった人が左に出る。王様は右)
+    const LEFT = ["hero", "fighter", "wizard", "thief"];
+    let leftWho = "hero";
+    const showLeft = () =>
+      LEFT.forEach((k) => chars[k] && chars[k].classList.toggle("off", k !== leftWho));
+    showLeft();
     const box = document.getElementById("op-box");
     const nameEl = document.getElementById("op-name");
     const textEl = document.getElementById("op-text");
     const skipBtn = document.getElementById("op-skip");
     const SPEAKER = {
       hero: { name: names.hero, right: false },
+      fighter: { name: names.fighter, right: false },
+      wizard: { name: names.wizard, right: false },
+      thief: { name: names.thief, right: false },
       king: { name: "王様", right: true },
     };
 
@@ -7474,6 +7980,8 @@ class GameEngine {
       const showLine = () => {
         const ln = lines[idx];
         const sp = SPEAKER[ln.who];
+        if (LEFT.includes(ln.who)) leftWho = ln.who;
+        showLeft();
         Object.keys(chars).forEach((k) =>
           chars[k].classList.toggle("active", k === ln.who),
         );
@@ -9046,11 +9554,7 @@ class GameEngine {
         this.buyItem(item.id);
       };
       row.appendChild(btn);
-      // 行のどこをタップしても買える (指で押しやすいように)
-      if (canBuy) {
-        row.classList.add("shop-tap");
-        row.onclick = () => this.buyItem(item.id);
-      }
+      // 購入は右側の黄色いボタンだけ (商品名や行をタップしても買えない)
       list.appendChild(row);
     });
 
@@ -9060,6 +9564,56 @@ class GameEngine {
           `<span class="${m.hp <= 0 ? "text-rose-600" : ""}">${m.name} ${m.hp}/${m.maxHp}</span>`,
       )
       .join(" ／ ");
+
+    // スマホ縦画面用: 顔 + HP のカード
+    const FACE = {
+      hero: "../img/10/hero.png",
+      fighter: "../img/10/fighter.png",
+      wizard: "../img/10/magic.png",
+      thief: "../img/10/thief.png",
+    };
+    const esc = (t) =>
+      String(t).replace(
+        /[&<>"]/g,
+        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+      );
+    const cards = document.getElementById("shop-party-cards");
+    if (cards)
+      cards.innerHTML = this.party
+        .map(
+          (m) => `<div class="sp-card${m.hp <= 0 ? " sp-dead" : ""}">
+            <div class="sp-name">${esc(m.name)}</div>
+            <div class="sp-face" style="background-image:url('${FACE[m.id] || ""}')"></div>
+            <div class="sp-hp">${m.hp}/${m.maxHp}</div>
+          </div>`,
+        )
+        .join("");
+    // 横画面用: 戦闘画面と同じ並びのステータスカード (左: ヒーロー/ファイター, 右: ウィザード/シーフ)
+    const corners = document.getElementById("shop-corners");
+    if (corners) {
+      const card = (m) => `<div class="char-card${m.hp <= 0 ? " dead" : ""}">
+            <img class="char-portrait" src="${FACE[m.id] || ""}" alt="">
+            <div class="char-info">
+              <div class="char-name hand-font">${esc(m.name)}</div>
+              <div class="char-lv">Lv ${m.lv}</div>
+              <div>HP ${m.hp}/${m.maxHp}</div>
+              <div>SP ${m.sp}%</div>
+              <div class="char-sub">
+                <div>パワー ${m.pow}</div>
+                <div>スキル ${m.skill}</div>
+                <div>ガード ${this.effectiveGrd(m)}</div>
+              </div>
+              <div class="char-effects">${this.statusTagHtml(m)}</div>
+            </div>
+          </div>`;
+      const by = (id) => this.party.find((m) => m.id === id);
+      const side = (a, b) =>
+        `<div class="shop-side">${[a, b].map((id) => (by(id) ? card(by(id)) : "")).join("")}</div>`;
+      corners.innerHTML =
+        side("hero", "fighter") +
+        '<div class="shop-mid"></div>' +
+        side("wizard", "thief");
+    }
     this.updateShopScroll();
   }
 
@@ -9073,18 +9627,37 @@ class GameEngine {
     });
   }
 
-  /** はみ出しているときだけスクロールボタンを出す。上端・下端では薄くする */
+  /** はみ出しているときだけスクロールボタンを出す。上端・下端では薄くする
+   *  (スマホ縦画面では常に表示し、右側の専用スクロールバーも更新する) */
   updateShopScroll() {
     const sc = document.getElementById("shop-scroll");
     const box = document.getElementById("shop-scroll-btns");
     if (!sc || !box) return;
+    const portraitShop = document
+      .getElementById("modal-shop")
+      .classList.contains("portrait");
     const over = sc.scrollHeight > sc.clientHeight + 2;
-    box.style.display = over ? "flex" : "none";
-    box.children[0].classList.toggle("disabled", sc.scrollTop <= 1);
-    box.children[1].classList.toggle(
-      "disabled",
-      sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1,
-    );
+    const atTop = !over || sc.scrollTop <= 1;
+    const atBottom = !over || sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 1;
+    box.style.display = over || portraitShop ? "flex" : "none";
+    box.children[0].classList.toggle("disabled", atTop);
+    box.children[1].classList.toggle("disabled", atBottom);
+
+    const track = document.querySelector("#shop-bar .shop-bar-track");
+    const thumb = document.getElementById("shop-bar-thumb");
+    if (track && thumb) {
+      const th = track.clientHeight;
+      if (!over || !th) {
+        thumb.style.visibility = "hidden";
+      } else {
+        const h = Math.max(36, (th * sc.clientHeight) / sc.scrollHeight);
+        const range = sc.scrollHeight - sc.clientHeight;
+        const top = range > 0 ? ((th - h) * sc.scrollTop) / range : 0;
+        thumb.style.visibility = "visible";
+        thumb.style.height = `${h}px`;
+        thumb.style.top = `${top}px`;
+      }
+    }
   }
 
   buyItem(id) {
